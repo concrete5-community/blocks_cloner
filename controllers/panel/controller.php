@@ -9,6 +9,7 @@ abstract class Controller extends CoreController
 {
     public function view()
     {
+        $this->set('cID', $this->request->query->getInt('cID'));
         if (version_compare(APP_VERSION, '9') < 0) {
             $this->requireAsset('javascript', 'vue');
         }

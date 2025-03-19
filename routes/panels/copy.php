@@ -12,3 +12,4 @@ defined('C5_EXECUTE') or die('Access Denied.');
  */
 
 $router->all('/copy', 'Copy::view');
+$router->get('/copy/export', 'Copy\Export::view');

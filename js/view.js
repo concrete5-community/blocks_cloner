@@ -11,49 +11,56 @@ if (global.blocksCloner?.getPageStructure) {
  */
 
 /**
- * @typedef {Object} Block
- * @property {'block'} type
- * @property {number} id
- * @property {string} typeHandle
- * @property {Array<Area|Block>} children
- */
-
-/**
- * @typedef {Object} Area
- * @property {'area'} type
+ * @typedef {Container} BaseItem
+ * @property {string} type
  * @property {number} id
  * @property {string} handle
  * @property {string} displayName
- * @property {Array<Area|Block>} children
  */
 
 /**
- * 
+ * @typedef {BaseItem} Block
+ * @property {'block'} type
+ */
+
+/**
+ * @typedef {BaseItem} Area
+ * @property {'area'} type
+ */
+
+/**
+ * @param {boolean|undefined} omitEmptyAreas
  * @returns {Area[]}
  */
-function getPageStructure()
+function getPageStructure(omitEmptyAreas)
 {
     if (!document.body) {
         return [];
     }
+    omitEmptyAreas = omitEmptyAreas ? true : false;
     const container = {children: []};
-    parse(document.body, container);
-    return container.children.filter(item => item.type === 'area');
+    parse(document.body, container, omitEmptyAreas);
+    return container.children.filter(item => item.type === 'area' && (!omitEmptyAreas || item.children.length > 0));
 }
 
 /**
  * @param {HTMLElement} element 
- * @param {Area|Block|Container} parent 
+ * @param {Container} parent 
+ * @param {boolean} omitEmptyAreas
  */
-function parse(element, parent)
+function parse(element, parent, omitEmptyAreas)
 {
-    const item = parseBlock(element) || parseArea(element);
-    if (item) {
-        parent.children.push(item);
-        parent = item;
+    const area = parseArea(element);
+    const itemForElement = area || parseBlock(element);
+    if (itemForElement) {
+        parent.children.push(itemForElement);
     }
+    const appendTo = itemForElement || parent;
     for (const childElement of element.children) {
-        parse(childElement, parent);
+        parse(childElement, appendTo, omitEmptyAreas);
+    }
+    if (omitEmptyAreas && area !== null && area.children.length === 0) {
+        parent.children.splice(parent.children.indexOf(area, 1));
     }
 }
 
@@ -103,14 +110,15 @@ function parseBlock(element)
     if (!id || isNaN(id) || id <= 0) {
         return null;
     }
-    const typeHandle = element.getAttribute('data-block-type-handle');
-    if (!typeHandle) {
+    const handle = element.getAttribute('data-block-type-handle');
+    if (!handle) {
         return null;
     }
     return {
         type: 'block',
         id,
-        typeHandle,
+        handle,
+        displayName: handle,
         children: [],
     };
 }
