@@ -4,12 +4,11 @@ namespace Concrete\Package\BlocksCloner;
 
 use Concrete\Core\Database\EntityManager\Provider\ProviderAggregateInterface;
 use Concrete\Core\Database\EntityManager\Provider\StandardPackageProvider;
+use Concrete\Core\Http\Request;
 use Concrete\Core\Package\Package;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Permission\Checker;
-use Concrete\Core\Routing\Route;
 use Concrete\Core\User\User;
-use Concrete\Core\Http\Request;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -113,6 +112,7 @@ class Controller extends Package implements ProviderAggregateInterface
                 'href' => false,
                 'linkAttributes' => [
                     'data-launch-panel' => 'blocks_cloner-copy',
+                    'title' => t('Copy Block'),
                 ],
             ]
         );
@@ -123,11 +123,12 @@ class Controller extends Package implements ProviderAggregateInterface
                 $this->pkgHandle,
                 [
                     'icon' => 'clipboard',
-                    'label' => t('Paste Blocks'),
+                    'label' => t('Paste Block'),
                     'position' => 'left',
                     'href' => false,
                     'linkAttributes' => [
                         'data-launch-panel' => 'blocks_cloner-paste',
+                        'title' => t('Paste Block'),
                     ],
                 ]
             );

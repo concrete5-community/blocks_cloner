@@ -11,4 +11,4 @@ defined('C5_EXECUTE') or die('Access Denied.');
  * @var \Concrete\Core\Routing\Router $router
  */
 
-$router->get('/copy', 'Copy::view');
+$router->all('/copy', 'Copy::view');

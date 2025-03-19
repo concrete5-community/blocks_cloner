@@ -11,4 +11,4 @@ defined('C5_EXECUTE') or die('Access Denied.');
  * @var \Concrete\Core\Routing\Router $router
  */
 
-$router->get('/paste', 'Paste::view');
+$router->all('/paste', 'Paste::view');
