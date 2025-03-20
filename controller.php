@@ -145,8 +145,8 @@ class Controller extends Package implements ProviderAggregateInterface
             ->buildGroup()
             ->setPrefix('/ccm/blocks_cloner')
             ->setNamespace('Concrete\Package\BlocksCloner\Controller')
-            ->routes('panels/copy.php', $this->pkgHandle)
-            ->routes('panels/paste.php', $this->pkgHandle)
+            ->routes('copy.php', $this->pkgHandle)
+            ->routes('paste.php', $this->pkgHandle)
         ;
     }
 }

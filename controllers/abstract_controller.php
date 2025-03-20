@@ -5,15 +5,32 @@ namespace Concrete\Package\BlocksCloner\Controller;
 use Concrete\Core\Asset\AssetList;
 use Concrete\Core\Controller\Controller as CoreController;
 use Concrete\Core\Entity\Block\BlockType\BlockType;
+use Concrete\Core\Page\Page;
 use Doctrine\ORM\EntityManagerInterface;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
 abstract class AbstractController extends CoreController
 {
+    /**
+     * @var int
+     */
+    protected $cID;
+
+    /**
+     * @var \Concrete\Core\Page\Page|null
+     */
+    private $page;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->cID = $this->request->query->getInt('cID');
+    }
+
     public function view()
     {
-        $this->set('cID', $this->request->query->getInt('cID'));
+        $this->set('cID', $this->cID);
         $al = AssetList::getInstance();
         if (!$al->getAsset('javascript', 'blocks_cloner-view')) {
             $al->register('javascript', 'blocks_cloner-view', 'js/view.js', ['minify' => false, 'combine' => false], 'blocks_cloner');
@@ -33,5 +50,17 @@ abstract class AbstractController extends CoreController
         }
 
         return $result;
+    }
+
+    /**
+     * @return \Concrete\Core\Page\Page
+     */
+    protected function getPage()
+    {
+        if ($this->page === null) {
+            $this->page = Page::getByID($this->cID);
+        }
+
+        return $this->page;
     }
 }

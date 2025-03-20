@@ -66,7 +66,10 @@ $view->markHeaderAssetPosition();
                 v-on:mouseenter="highlight(item, true)"
                 v-on:mouseleave="highlight(item, false)"
             >
-                <strong>{{item.displayName }}</strong>
+                <strong>
+                    {{ item.displayName }}
+                    <span v-if="item.isGlobal">(<?= tc('Area', 'sitewide') ?>)</span>
+                </strong>
             </a>
         </li>
     </menu>

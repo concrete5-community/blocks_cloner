@@ -12,3 +12,4 @@ defined('C5_EXECUTE') or die('Access Denied.');
  */
 
 $router->all('panels/paste', 'Panel\Paste::view');
+$router->get('dialogs/paste/import', 'Dialog\Paste\Import::view');
