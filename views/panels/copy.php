@@ -28,7 +28,7 @@ $view->markHeaderAssetPosition();
 }
 </style>
 <section id="blocks_cloner-copy" v-cloak>
-    <header><?= t('Copy Block') ?></header>
+    <header><?= t('Export Block') ?></header>
     <div v-if="items.length === 0" class="alert alert-info">
         <?= t('No blocks found in the page') ?>
     </div>
@@ -79,7 +79,7 @@ $view->markFooterAssetPosition();
 new Vue({
     el: '#blocks_cloner-copy',
     data() {
-        const items = window.blocksCloner.getPageStructure({
+        const items = window.ccmBlocksCloner.getPageStructure({
             skipAreasWithoutBlocks: true,
             blockTypeNames: <?= json_encode($blockTypeNames) ?>,
         });
@@ -112,7 +112,7 @@ new Vue({
     },
     methods: {
         highlight(item, highlight) {
-            window.blocksCloner.setItemHighlighted(item, highlight, highlight);
+            window.ccmBlocksCloner.setItemHighlighted(item, highlight, highlight);
         },
     },
 });

@@ -1,7 +1,7 @@
 ;(function(global) {
 'use strict';
 
-if (global.blocksCloner && global.blocksCloner.getPageStructure) {
+if (global.ccmBlocksCloner) {
     return;
 }
 
@@ -57,7 +57,7 @@ function getPageStructure(options)
     }, options || {});
     const container = {children: []};
     parse(document.body, container, options);
-    return container.children.filter(item => item.type === TYPE_AREA && (!options.skipAreasWithoutBlocks || item.children.length > 0));
+    return container.children.filter((item) => item.type === TYPE_AREA && (!options.skipAreasWithoutBlocks || item.children.length > 0));
 }
 
 /**
@@ -94,15 +94,15 @@ function parse(element, parent, options)
 
 function itemHasChildrenOfType(item, type)
 {
-    if (item.children.some(child => child.type === type)) {
+    if (item.children.some((child) => child.type === type)) {
         return true;
     }
-    return item.children.some(child => itemHasChildrenOfType(child, type));
+    return item.children.some((child) => itemHasChildrenOfType(child, type));
 }
 
 /**
  * @param {HTMLElement} element
- * @param {BlocksClonerOptions} options
+ * @param {BlocksClonerOptions|undefined} options
  *
  * @returns {BlocksClonerArea|null}
  */
@@ -137,7 +137,7 @@ function parseArea(element, options)
 
 /**
  * @param {HTMLElement} element
- * @param {BlocksClonerOptions} options
+ * @param {BlocksClonerOptions|undefined} options
  *
  * @returns {BlocksClonerBlock|null}
  */
@@ -154,7 +154,7 @@ function parseBlock(element, options)
     if (!handle) {
         return null;
     }
-    const displayName = options.blockTypeNames[handle] || handle;
+    const displayName = options && options.blockTypeNames && options.blockTypeNames.hasOwnProperty(handle) ? options.blockTypeNames[handle] : handle;
     return {
         type: TYPE_BLOCK,
         element,
@@ -175,7 +175,7 @@ let currentItemHighlighed = null;
  */
 function checkElementInViewport(el, callback) {
     const onIntersection = function(entries, observer) {
-        callback(entries.some(entry => entry.isIntersecting));
+        callback(entries.some((entry) => entry.isIntersecting));
         observer.disconnect();
     };
     const options = {
@@ -248,8 +248,74 @@ function setItemHighlighted(item, highlight, ensureVisible)
     }
 }
 
-global.blocksCloner = global.blocksCloner || {};
-global.blocksCloner.getPageStructure = getPageStructure;
-global.blocksCloner.setItemHighlighted = setItemHighlighted;
+function injectMenuItems(menu, menuElement)
+{
+    const sourceElement = menu.$element && menu.$element.length === 1 ? menu.$element[0] : null;
+    if (!sourceElement) {
+        return;
+    }
+    const area = parseArea(sourceElement);
+    if (area !== null) {
+        setupAreaMenu(menu, menuElement, area);
+    } else {
+        const block = parseBlock(sourceElement);
+        if (block !== null) {
+            setupBlockMenu(menu, menuElement, block);
+        }
+    }
+}
+
+function setupAreaMenu(menu, menuElement, area)
+{
+    if (menuElement.find('a[data-ccm-blocks-cloner]').length) {
+        return;
+    }
+    const $after = menuElement.find('a:last');
+    if (!$after.length) {
+        return;
+    }
+    $after.after($('<a data-ccm-blocks-cloner />')
+        .attr('dialog-title', `Import to ${area.displayName}`)
+        .attr('class', 'dialog-launch')
+        .attr('dialog-width', '90%')
+        .attr('dialog-height', '80%')
+        .attr('href', `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/paste/import?cID=${CCM_CID}&aID=${area.id}&aHandle=${encodeURIComponent(area.handle)}`)
+        .text('Import')
+        .dialog()
+    );
+}
+
+function setupBlockMenu(menu, menuElement, block)
+{
+    if (menuElement.find('a[data-ccm-blocks-cloner]').length) {
+        return;
+    }
+    const $after = menuElement.find('a:last');
+    if (!$after.length) {
+        return;
+    }
+    $after.after($('<a data-ccm-blocks-cloner />')
+        .attr('dialog-title', `Export ${block.displayName}`)
+        .attr('class', 'dialog-launch')
+        .attr('dialog-width', '90%')
+        .attr('dialog-height', '80%')
+        .attr('href', `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/copy/export?cID=${CCM_CID}&bID=${block.id}`)
+        .text('Export')
+        .dialog()
+    );
+}
+
+global.ccmBlocksCloner = {
+    getPageStructure,
+    setItemHighlighted,
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    ConcreteEvent.subscribe('ConcreteMenuShow', function(e, args) {
+        if (args && args.menu && args.menuElement) {
+            injectMenuItems(args.menu, args.menuElement);
+        }
+    });  
+});
 
 })(window);

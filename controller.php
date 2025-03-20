@@ -2,10 +2,13 @@
 
 namespace Concrete\Package\BlocksCloner;
 
+use Concrete\Core\Asset\AssetList;
 use Concrete\Core\Database\EntityManager\Provider\ProviderAggregateInterface;
 use Concrete\Core\Database\EntityManager\Provider\StandardPackageProvider;
 use Concrete\Core\Http\Request;
+use Concrete\Core\Http\ResponseAssetGroup;
 use Concrete\Core\Package\Package;
+use Concrete\Core\Page\Event as PageEvent;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Permission\Checker;
 use Concrete\Core\User\User;
@@ -64,15 +67,15 @@ class Controller extends Package implements ProviderAggregateInterface
         $this->app->make('director')->addListener(
             'on_page_view',
             function ($event) {
-                if (!$event instanceof \Concrete\Core\Page\Event) {
+                if (!$event instanceof PageEvent) {
                     return;
                 }
-                $this->setupMenu($event->getPageObject(), $event->getUserObject());
+                $this->inject($event->getPageObject(), $event->getUserObject());
             }
         );
         $request = $this->app->make(Request::class);
         if (strpos($request->getPath(), '/ccm/blocks_cloner/') === 0) {
-            $this->registerPanelRoutes($request->query->getInt('cID'));
+            $this->registerRoutes($request->query->getInt('cID'));
         }
     }
 
@@ -82,7 +85,7 @@ class Controller extends Package implements ProviderAggregateInterface
      *
      * @return void
      */
-    private function setupMenu($page, $user)
+    private function inject($page, $user)
     {
         if (!$page instanceof Page || $page->isError() || !$page->isEditMode()) {
             return;
@@ -102,7 +105,7 @@ class Controller extends Package implements ProviderAggregateInterface
                 'href' => false,
                 'linkAttributes' => [
                     'data-launch-panel' => 'blocks_cloner-copy',
-                    'title' => t('Copy Block'),
+                    'title' => t('Export Block'),
                 ],
             ]
         );
@@ -116,10 +119,17 @@ class Controller extends Package implements ProviderAggregateInterface
                 'href' => false,
                 'linkAttributes' => [
                     'data-launch-panel' => 'blocks_cloner-paste',
-                    'title' => t('Paste Block'),
+                    'title' => t('Import Block'),
                 ],
             ]
         );
+        $assetList = AssetList::getInstance();
+        $assetList->register('javascript', 'blocks_cloner-view', 'js/view.js', ['minify' => false, 'combine' => false, 'version' => $this->pkgVersion], 'blocks_cloner');
+        $responseAssets = ResponseAssetGroup::get();
+        if (version_compare(APP_VERSION, '9') < 0) {
+            $responseAssets->requireAsset('javascript', 'vue');
+        }
+        $responseAssets->requireAsset('javascript', 'blocks_cloner-view');
     }
 
     /**
@@ -127,7 +137,7 @@ class Controller extends Package implements ProviderAggregateInterface
      *
      * @return void
      */
-    private function registerPanelRoutes($cID)
+    private function registerRoutes($cID)
     {
         if (!$cID || $cID < 1) {
             return;

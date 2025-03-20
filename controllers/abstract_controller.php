@@ -2,7 +2,6 @@
 
 namespace Concrete\Package\BlocksCloner\Controller;
 
-use Concrete\Core\Asset\AssetList;
 use Concrete\Core\Controller\Controller as CoreController;
 use Concrete\Core\Entity\Block\BlockType\BlockType;
 use Concrete\Core\Page\Page;
@@ -31,10 +30,6 @@ abstract class AbstractController extends CoreController
     public function view()
     {
         $this->set('cID', $this->cID);
-        $al = AssetList::getInstance();
-        if (!$al->getAsset('javascript', 'blocks_cloner-view')) {
-            $al->register('javascript', 'blocks_cloner-view', 'js/view.js', ['minify' => false, 'combine' => false], 'blocks_cloner');
-        }
     }
 
     /**

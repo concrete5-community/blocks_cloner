@@ -28,7 +28,7 @@ $view->markHeaderAssetPosition();
 }
 </style>
 <section id="blocks_cloner-paste" v-cloak>
-    <header><?= t('Paste Block') ?></header>
+    <header><?= t('Import Block') ?></header>
     <div v-if="items.length === 0" class="alert alert-info">
         <?= t('No areas found in the page') ?>
     </div>
@@ -81,7 +81,7 @@ $view->markFooterAssetPosition();
 new Vue({
     el: '#blocks_cloner-paste',
     data() {
-        const items = window.blocksCloner.getPageStructure({
+        const items = window.ccmBlocksCloner.getPageStructure({
             skipBlocksWithoutChildAreas: true,
         });
         const walk = function(item, depth) {
@@ -113,7 +113,7 @@ new Vue({
     },
     methods: {
         highlight(item, highlight) {
-            window.blocksCloner.setItemHighlighted(item, highlight, highlight);
+            window.ccmBlocksCloner.setItemHighlighted(item, highlight, highlight);
         },
     },
 });

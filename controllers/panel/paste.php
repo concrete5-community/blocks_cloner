@@ -14,18 +14,4 @@ class Paste extends AbstractController
      * @see \Concrete\Core\Controller\Controller::$viewPath
      */
     protected $viewPath = '/panels/paste';
-    
-    /**
-     * {@inheritdoc}
-     *
-     * @see \Concrete\Package\BlocksCloner\Controller\AbstractController::view()
-     */
-    public function view()
-    {
-        parent::view();
-        if (version_compare(APP_VERSION, '9') < 0) {
-            $this->requireAsset('javascript', 'vue');
-        }
-        $this->requireAsset('javascript', 'blocks_cloner-view');
-    }
 }
