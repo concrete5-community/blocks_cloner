@@ -32,7 +32,7 @@ class Export extends AbstractController
     public function view()
     {
         parent::view();
-        $bID = $this->request->query->getInt('bId');
+        $bID = $this->request->query->getInt('bID');
         if (!$bID) {
             throw new UserMessageException(t('Access Denied'));
         }

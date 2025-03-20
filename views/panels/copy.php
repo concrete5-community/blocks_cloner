@@ -63,7 +63,7 @@ $view->markHeaderAssetPosition();
                 class="dialog-launch"
                 dialog-width="90%"
                 dialog-height="80%"
-                v-bind:href="`${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/copy/export?cID=<?= $cID ?>&&bId=${item.id}`"
+                v-bind:href="`${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/copy/export?cID=<?= $cID ?>&&bID=${item.id}`"
                 v-on:mouseenter="highlight(item, true)"
                 v-on:mouseleave="highlight(item, false)"
             >

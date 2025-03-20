@@ -23,6 +23,9 @@ class Copy extends AbstractController
     public function view()
     {
         parent::view();
+        if (version_compare(APP_VERSION, '9') < 0) {
+            $this->requireAsset('javascript', 'vue');
+        }
         $this->requireAsset('javascript', 'blocks_cloner-view');
         $this->set('blockTypeNames', $this->getBlockTypeNames());
     }
