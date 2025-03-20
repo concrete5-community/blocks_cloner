@@ -14,9 +14,6 @@ defined('C5_EXECUTE') or die('Access Denied.');
 
 class Controller extends Package implements ProviderAggregateInterface
 {
-    const PANELFLAG_COPY = 1;
-    const PANELFLAG_PASTE = 2;
-
     protected $pkgHandle = 'blocks_cloner';
 
     protected $pkgVersion = '0.9.0';
@@ -74,19 +71,8 @@ class Controller extends Package implements ProviderAggregateInterface
             }
         );
         $request = $this->app->make(Request::class);
-        if (strpos($request->getPath(), '/ccm/blocks_cloner/panels/') === 0) {
-            $cID = $request->query->getInt('cID');
-            if ($cID > 0) {
-                $page = Page::getByID($cID);
-                if ($page && !$page->isError() && $page->isEditMode()) {
-                    $panelFlags = self::PANELFLAG_COPY;
-                    $checker = new Checker($page);
-                    if ($checker->canEditPageContents()) {
-                        $panelFlags |= self::PANELFLAG_PASTE;
-                    }
-                    $this->registerPanelRoutes($panelFlags);
-                }
-            }
+        if (strpos($request->getPath(), '/ccm/blocks_cloner/') === 0) {
+            $this->registerPanelRoutes($request->query->getInt('cID'));
         }
     }
 
@@ -99,6 +85,10 @@ class Controller extends Package implements ProviderAggregateInterface
     private function setupMenu($page, $user)
     {
         if (!$page instanceof Page || $page->isError() || !$page->isEditMode()) {
+            return;
+        }
+        $checker = new Checker($page);
+        if (!$checker->canEditPageContents()) {
             return;
         }
         $menu = $this->app->make('helper/concrete/ui/menu');
@@ -116,44 +106,47 @@ class Controller extends Package implements ProviderAggregateInterface
                 ],
             ]
         );
-        $checker = new Checker($page);
-        if ($checker->canEditPageContents()) {
-            $menu->addPageHeaderMenuItem(
-                'paste',
-                $this->pkgHandle,
-                [
-                    'icon' => 'clipboard',
-                    'label' => t('Paste Block'),
-                    'position' => 'left',
-                    'href' => false,
-                    'linkAttributes' => [
-                        'data-launch-panel' => 'blocks_cloner-paste',
-                        'title' => t('Paste Block'),
-                    ],
-                ]
-            );
-        }
+        $menu->addPageHeaderMenuItem(
+            'paste',
+            $this->pkgHandle,
+            [
+                'icon' => 'clipboard',
+                'label' => t('Paste Block'),
+                'position' => 'left',
+                'href' => false,
+                'linkAttributes' => [
+                    'data-launch-panel' => 'blocks_cloner-paste',
+                    'title' => t('Paste Block'),
+                ],
+            ]
+        );
     }
 
     /**
-     * @param int $panelFlags
+     * @param int $cID
      *
      * @return void
      */
-    private function registerPanelRoutes($panelFlags)
+    private function registerPanelRoutes($cID)
     {
+        if (!$cID || $cID < 1) {
+            return;
+        }
+        $page = Page::getByID($cID);
+        if (!$page || $page->isError()) {
+            return;
+        }
+        $checker = new Checker($page);
+        if (!$checker->canEditPageContents()) {
+            return;
+        }
         $router = $this->app->make('router');
-        $group = $router
+        $router
             ->buildGroup()
-            ->setPrefix('/ccm/blocks_cloner/panels')
-            ->setNamespace('Concrete\Package\BlocksCloner\Controller\Panel')
+            ->setPrefix('/ccm/blocks_cloner')
+            ->setNamespace('Concrete\Package\BlocksCloner\Controller')
+            ->routes('panels/copy.php', $this->pkgHandle)
+            ->routes('panels/paste.php', $this->pkgHandle)
         ;
-        
-        if ($panelFlags & self::PANELFLAG_COPY) {
-            $group->routes('panels/copy.php', $this->pkgHandle);
-        }
-        if ($panelFlags & self::PANELFLAG_PASTE) {
-            $group->routes('panels/paste.php', $this->pkgHandle);
-        }
     }
 }

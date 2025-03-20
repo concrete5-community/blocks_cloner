@@ -2,7 +2,11 @@
 
 namespace Concrete\Package\BlocksCloner\Controller\Panel;
 
-class Paste extends Controller
+use Concrete\Package\BlocksCloner\Controller\AbstractController;
+
+defined('C5_EXECUTE') or die('Access Denied.');
+
+class Paste extends AbstractController
 {
     /**
      * {@inheritdoc}

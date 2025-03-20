@@ -3,12 +3,12 @@
 defined('C5_EXECUTE') or die('Access Denied.');
 
 /*
- * Base path: /ccm/blocks_cloner/panels
- * Base namespace: Concrete\Package\BlocksCloner\Controller\Panel
+ * Base path: /ccm/blocks_cloner
+ * Base namespace: Concrete\Package\BlocksCloner\Controller
  */
 
 /**
  * @var \Concrete\Core\Routing\Router $router
  */
 
-$router->all('/paste', 'Paste::view');
+$router->all('panels/paste', 'Panel\Paste::view');

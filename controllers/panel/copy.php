@@ -2,7 +2,11 @@
 
 namespace Concrete\Package\BlocksCloner\Controller\Panel;
 
-class Copy extends Controller
+use Concrete\Package\BlocksCloner\Controller\AbstractController;
+
+defined('C5_EXECUTE') or die('Access Denied.');
+
+class Copy extends AbstractController
 {
     /**
      * {@inheritdoc}
@@ -10,4 +14,16 @@ class Copy extends Controller
      * @see \Concrete\Core\Controller\Controller::$viewPath
      */
     protected $viewPath = '/panels/copy';
+
+    /**
+     * {@inheritdoc}
+     *
+     * @see \Concrete\Package\BlocksCloner\Controller\AbstractController::view()
+     */
+    public function view()
+    {
+        parent::view();
+        $this->requireAsset('javascript', 'blocks_cloner-view');
+        $this->set('blockTypeNames', $this->getBlockTypeNames());
+    }
 }
