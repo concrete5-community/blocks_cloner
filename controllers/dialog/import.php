@@ -228,6 +228,7 @@ class Import extends AbstractController
             }
             if (!isset($blockTypes[$type])) {
                 $errors[] = t('The XML references to a block type with handle %s which is not currently installed.', $type);
+                continue;
             }
             $blockType = $blockTypes[$type];
             if (!in_array($blockType, $result, true)) {
