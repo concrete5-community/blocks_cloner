@@ -7,6 +7,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
  * @var Concrete\Core\View\View $view
  * @var int $cID
  * @var Concrete\Core\Area\Area $area
+ * @var Concrete\Core\Validation\CSRF\Token $token
  */
 
 ?>
@@ -114,7 +115,8 @@ defined('C5_EXECUTE') or die('Access Denied.');
         </div>
         <div class="text-right text-end">
             <button v-on:click.prevent="step = STEPS.INPUT" v-bind:disabled="busy" class="btn btn-secondary btn-default"><?= t('Back') ?></button>
-            <button v-on:click.prevent="importXml(1)" v-bind:disabled="busy" class="btn btn-primary"><?= t('Import') ?></button>
+            <button v-on:click.prevent="analyzeXml()" v-bind:disabled="busy" class="btn btn-secondary btn-default"><?= t('Reanalyze') ?></button>
+            <button v-on:click.prevent="importXml()" v-bind:disabled="busy" class="btn btn-primary"><?= t('Import') ?></button>
         </div>
     </div>
 </div>
@@ -159,6 +161,7 @@ new Vue({
             xml: '',
             addBefore: null,
             existingBlocksInArea: getExistingBlocksInArea(),
+            importToken: '',
             referenced: {
                 blockTypes: [],
                 files: [],
@@ -218,6 +221,8 @@ new Vue({
                 if (responseData.error) {
                     throw new Error(responseData.error);
                 }
+                this.importToken = responseData.importToken;
+                delete responseData.importToken;
                 const referencedKeys = Object.keys(this.referenced);
                 referencedKeys.forEach((key) => this.referenced[key].splice(0, this.referenced[key].length));
                 Object.keys(responseData).forEach((key) => {
@@ -241,9 +246,38 @@ new Vue({
             if (this.busy) {
                 return false;
             }
-            window.ConcreteAlert.error({
-                message: '@wip',
-            });
+            this.busy = true;
+            try {
+                const request = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams([
+                        [<?= json_encode($token::DEFAULT_TOKEN_NAME) ?>, this.importToken],
+                        ['xml', this.xml],
+                        ['areaHandle', <?= json_encode($area->arHandle) ?>],
+                        ['beforeBlockID', this.addBefore?.id || ''],
+                    ]),
+                };
+                const response = await window.fetch(
+                    `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/import?cID=<?= $cID ?>`,
+                    request
+                );
+                const responseData = await response.json();
+                if (responseData.error) {
+                    throw new Error(responseData.error);
+                }
+            } catch (e) {
+                window.ConcreteAlert.error({
+                    message: e?.messsage || e?.toString() || <?= json_encode(t('Unknown error')) ?>,
+                    delay: 5000,
+                });
+                return;
+            } finally {
+                this.busy = false;
+            }
+            this.step = this.STEPS.IMPORTED;
         },
     },
 });

@@ -4,18 +4,19 @@ namespace Concrete\Package\BlocksCloner\Controller\Dialog;
 
 use Concrete\Core\Area\Area;
 use Concrete\Core\Entity\Block\BlockType\BlockType;
+use Concrete\Core\Entity\File\Version;
+use Concrete\Core\Entity\Package;
 use Concrete\Core\Error\UserMessageException;
-use Concrete\Package\BlocksCloner\Controller\AbstractController;
-use Concrete\Core\Permission\Checker;
 use Concrete\Core\Http\ResponseFactoryInterface;
+use Concrete\Core\Page\Page;
+use Concrete\Core\Permission\Checker;
+use Concrete\Core\Validation\CSRF\Token;
+use Concrete\Package\BlocksCloner\Controller\AbstractController;
+use Concrete\Package\BlocksCloner\XmlParser;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use SimpleXMLElement;
 use Throwable;
-use Concrete\Package\BlocksCloner\XmlParser;
-use Concrete\Core\Entity\File\Version;
-use Concrete\Core\Page\Page;
-use Concrete\Core\Entity\Package;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -79,6 +80,7 @@ class Import extends AbstractController
             }
         }
         $this->set('area', $area);
+        $this->set('token', $this->app->make(Token::class));
     }
 
     /**
@@ -87,8 +89,11 @@ class Import extends AbstractController
     public function analyze()
     {
         try {
-            $sx = $this->loadXml($this->request->request->get('xml'));
-            $result = [];
+            $xml = $this->request->request->get('xml');
+            $sx = $this->loadXml($xml);
+            $result = [
+                'importToken' => $this->app->make(Token::class)->generate('blocks_cloner:import:' . md5($xml)),
+            ];
             $result['blockTypes'] = [];
             $installedPackages = $this->getInstalledPackages();
             foreach ($this->extractBlockTypes($sx) as $blockType) {
@@ -139,6 +144,61 @@ class Import extends AbstractController
             }
 
             return $this->app->make(ResponseFactoryInterface::class)->json($result);
+        } catch (Exception $x) {
+            return $this->buildErrorResponse($x);
+        } catch (Exception $x) {
+            return $this->buildErrorResponse($x);
+        }
+    }
+
+    /**
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function import()
+    {
+        try {
+            $xml = $this->request->request->get('xml');
+            if (!$xml || !is_string($xml)) {
+                throw new UserMessageException(t('Access Denied'));
+            }
+            $token = $this->app->make(Token::class);
+            if (!$token->validate('blocks_cloner:import:' . md5($xml))) {
+                throw new UserMessageException($token->getErrorMessage());
+            }
+            $areaHandle = (string) $this->request->request->get('areaHandle');
+            if ($areaHandle === '') {
+                throw new UserMessageException(t('Access Denied'));
+            }
+            $sx = $this->loadXml($xml);
+            $area = Area::get($this->getPage(), $areaHandle);
+            if (!$area || $area->isError()) {
+                throw new UserMessageException(t('Unable to find the requested area'));
+            }
+            $blockTypeHandle = (string) $sx['type'];
+            $blockTypes = $this->getInstalledBlockTypes();
+            if (!isset($blockTypes[$blockTypeHandle])) {
+                throw new UserMessageException(t('The XML references to a block type with handle %s which is not currently installed.', $blockTypeHandle));
+            }
+            $blockType = $blockTypes[$blockTypeHandle];
+            $blockIDsInArea = array_map(
+                static function (array $arr) { return (int) $arr['bID']; },
+                $this->getPage()->getBlockIDs($area->getAreaHandle())
+            );
+            $beforeBlockID = $this->request->request->getInt('beforeBlockID');
+            if ($beforeBlockID && !in_array($beforeBlockID, $blockIDsInArea, true)) {
+                throw new UserMessageException(t('Unable to find the requested block'));
+            }
+            $blockController = $blockType->getController();
+            if (!$blockController) {
+                $blockType->loadController();
+                $blockController = $blockType->getController();
+            }
+            $blockController->import($this->getPage(), $area, $sx);
+            // @todo check permissions
+            // @todo check # objects in area
+            // @todo return code so that the block is rendered in the page
+
+            return $this->app->make(ResponseFactoryInterface::class)->json([]);
         } catch (Exception $x) {
             return $this->buildErrorResponse($x);
         } catch (Exception $x) {
