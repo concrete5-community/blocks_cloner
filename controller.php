@@ -101,7 +101,7 @@ class Controller extends Package implements ProviderAggregateInterface
             'export',
             $this->pkgHandle,
             [
-                'icon' => 'clone',
+                'icon' => 'download',
                 'label' => t('Export Block'),
                 'position' => 'left',
                 'href' => false,
@@ -115,7 +115,7 @@ class Controller extends Package implements ProviderAggregateInterface
             'import',
             $this->pkgHandle,
             [
-                'icon' => 'clipboard',
+                'icon' => 'upload',
                 'label' => t('Import Block'),
                 'position' => 'left',
                 'href' => false,
@@ -134,6 +134,7 @@ class Controller extends Package implements ProviderAggregateInterface
         ]);
         $responseAssets = ResponseAssetGroup::get();
         if (version_compare(APP_VERSION, '9') < 0) {
+            $responseAssets->addHeaderAsset('<style>.ccm-ui [v-cloak] { display: none; }');
             $responseAssets->requireAsset('javascript', 'vue');
         }
         $responseAssets->requireAsset('blocks_cloner-view');

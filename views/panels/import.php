@@ -28,7 +28,7 @@ $view->markHeaderAssetPosition();
 }
 </style>
 <section id="blocks_cloner-import" v-cloak>
-    <header><?= t('Import Block') ?></header>
+    <header><?= t('Import Block Into') ?></header>
     <div v-if="items.length === 0" class="alert alert-info">
         <?= t('No areas found in the page') ?>
     </div>

@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
         identifier: 'blocks_cloner-import',
         position: 'left',
         url: CCM_DISPATCHER_FILENAME + '/ccm/blocks_cloner/panels/import?cID=' + CCM_CID,
-        pinable: true,
+        pinable: false,
     });
 });
 })();
