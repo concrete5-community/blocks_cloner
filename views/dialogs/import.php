@@ -227,7 +227,10 @@ new Vue({
                     responseData[key].forEach((value) => this.referenced[key].push(value));
                 });
             } catch (e) {
-                window.alert(e?.messsage || e?.toString() || <?= json_encode(t('Unknown error')) ?>);
+                window.ConcreteAlert.error({
+                    message: e?.messsage || e?.toString() || <?= json_encode(t('Unknown error')) ?>,
+                    delay: 5000,
+                });
                 return;
             } finally {
                 this.busy = false;
@@ -238,7 +241,9 @@ new Vue({
             if (this.busy) {
                 return false;
             }
-            window.alert('@wip');
+            window.ConcreteAlert.error({
+                message: '@wip',
+            });
         },
     },
 });

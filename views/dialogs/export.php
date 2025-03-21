@@ -171,7 +171,9 @@ function copied()
 }
 function failed(e)
 {
-    window.alert(e.message || e || <?= json_encode(t('Unknown error')) ?>);
+    window.ConcreteAlert.error({
+        message: e.message || e || <?= json_encode(t('Unknown error')) ?>,
+    });
 }
 
 btn.addEventListener('click', (e) => {
