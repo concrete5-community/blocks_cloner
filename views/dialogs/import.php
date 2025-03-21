@@ -3,7 +3,7 @@
 defined('C5_EXECUTE') or die('Access Denied.');
 
 /**
- * @var Concrete\Package\BlocksCloner\Controller\Dialog\Paste\Import $controller
+ * @var Concrete\Package\BlocksCloner\Controller\Dialog\Import $controller
  * @var Concrete\Core\View\View $view
  * @var int $cID
  * @var Concrete\Core\Area\Area $area

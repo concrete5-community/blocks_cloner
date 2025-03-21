@@ -98,29 +98,29 @@ class Controller extends Package implements ProviderAggregateInterface
         }
         $menu = $this->app->make('helper/concrete/ui/menu');
         $menu->addPageHeaderMenuItem(
-            'copy',
+            'export',
             $this->pkgHandle,
             [
                 'icon' => 'clone',
-                'label' => t('Copy Block'),
+                'label' => t('Export Block'),
                 'position' => 'left',
                 'href' => false,
                 'linkAttributes' => [
-                    'data-launch-panel' => 'blocks_cloner-copy',
+                    'data-launch-panel' => 'blocks_cloner-export',
                     'title' => t('Export Block'),
                 ],
             ]
         );
         $menu->addPageHeaderMenuItem(
-            'paste',
+            'import',
             $this->pkgHandle,
             [
                 'icon' => 'clipboard',
-                'label' => t('Paste Block'),
+                'label' => t('Import Block'),
                 'position' => 'left',
                 'href' => false,
                 'linkAttributes' => [
-                    'data-launch-panel' => 'blocks_cloner-paste',
+                    'data-launch-panel' => 'blocks_cloner-import',
                     'title' => t('Import Block'),
                 ],
             ]
@@ -162,8 +162,8 @@ class Controller extends Package implements ProviderAggregateInterface
             ->buildGroup()
             ->setPrefix('/ccm/blocks_cloner')
             ->setNamespace('Concrete\Package\BlocksCloner\Controller')
-            ->routes('copy.php', $this->pkgHandle)
-            ->routes('paste.php', $this->pkgHandle)
+            ->routes('export.php', $this->pkgHandle)
+            ->routes('import.php', $this->pkgHandle)
         ;
     }
 }

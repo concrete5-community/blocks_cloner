@@ -1,6 +1,6 @@
 <?php
 
-namespace Concrete\Package\BlocksCloner\Controller\Dialog\Copy;
+namespace Concrete\Package\BlocksCloner\Controller\Dialog;
 
 use Concrete\Core\Block\Block;
 use Concrete\Core\Entity\File\File;
@@ -22,7 +22,7 @@ class Export extends AbstractController
      *
      * @see \Concrete\Core\Controller\Controller::$viewPath
      */
-    protected $viewPath = '/dialogs/copy/export';
+    protected $viewPath = '/dialogs/export';
 
     /**
      * {@inheritdoc}

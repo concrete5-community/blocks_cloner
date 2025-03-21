@@ -1,6 +1,6 @@
 <?php
 
-namespace Concrete\Package\BlocksCloner\MenuItem\Paste;
+namespace Concrete\Package\BlocksCloner\MenuItem\Export;
 
 use Concrete\Core\Application\UserInterface\Menu\Item\Controller as CoreController;
 

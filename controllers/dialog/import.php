@@ -1,6 +1,6 @@
 <?php
 
-namespace Concrete\Package\BlocksCloner\Controller\Dialog\Paste;
+namespace Concrete\Package\BlocksCloner\Controller\Dialog;
 
 use Concrete\Core\Area\Area;
 use Concrete\Core\Error\UserMessageException;
@@ -16,7 +16,7 @@ class Import extends AbstractController
      *
      * @see \Concrete\Core\Controller\Controller::$viewPath
      */
-    protected $viewPath = '/dialogs/paste/import';
+    protected $viewPath = '/dialogs/import';
 
     /**
      * {@inheritdoc}

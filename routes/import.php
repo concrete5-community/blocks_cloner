@@ -11,5 +11,5 @@ defined('C5_EXECUTE') or die('Access Denied.');
  * @var \Concrete\Core\Routing\Router $router
  */
 
-$router->all('panels/paste', 'Panel\Paste::view');
-$router->get('dialogs/paste/import', 'Dialog\Paste\Import::view');
+$router->all('panels/import', 'Panel\Import::view');
+$router->get('dialogs/import', 'Dialog\Import::view');

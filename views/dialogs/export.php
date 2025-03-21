@@ -3,7 +3,7 @@
 defined('C5_EXECUTE') or die('Access Denied.');
 
 /**
- * @var Concrete\Package\BlocksCloner\Controller\Dialog\Copy\Export $controller
+ * @var Concrete\Package\BlocksCloner\Controller\Dialog\Export $controller
  * @var Concrete\Core\View\View $view
  * @var int $cID
  * @var string $xml
@@ -85,7 +85,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
                                     <?php
                                 } else {
                                     ?>
-                                    <a class="btn btn-sm btn-xs btn-primary" href="<?= h($resolverManager->resolve(['/ccm/blocks_cloner/dialogs/copy/export/files']) . "?cID={$cID}&fIDs={$fileVersion->getFileID()}") ?>">
+                                    <a class="btn btn-sm btn-xs btn-primary" href="<?= h($resolverManager->resolve(['/ccm/blocks_cloner/dialogs/export/files']) . "?cID={$cID}&fIDs={$fileVersion->getFileID()}") ?>">
                                         <?= t('Download') ?>
                                     </a>
                                     <?php
@@ -119,7 +119,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
                     <tfoot>
                         <tr>
                             <td>
-                                <a class="btn btn-sm btn-xs btn-primary" href="<?= h($resolverManager->resolve(['/ccm/blocks_cloner/dialogs/copy/export/files']) . "?cID={$cID}&fIDs=" . implode(',', $fileIDs)) ?>">
+                                <a class="btn btn-sm btn-xs btn-primary" href="<?= h($resolverManager->resolve(['/ccm/blocks_cloner/dialogs/export/files']) . "?cID={$cID}&fIDs=" . implode(',', $fileIDs)) ?>">
                                     <?= t('Download All') ?>
                                 </a>
                             </td>
@@ -138,9 +138,9 @@ defined('C5_EXECUTE') or die('Access Denied.');
             <div>
                 <strong style="color: #777777"><?= t('XML Data')?></strong>
             </div>
-            <textarea  id="blocks_cloner-copy-xml" readonly nowrap class="form-control" style="flex-grow: 1; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 0.9em; resize: none"><?= htmlspecialchars($xml, ENT_QUOTES, APP_CHARSET) ?></textarea>
+            <textarea  id="blocks_cloner-export-xml" readonly nowrap class="form-control" style="flex-grow: 1; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 0.9em; resize: none"><?= htmlspecialchars($xml, ENT_QUOTES, APP_CHARSET) ?></textarea>
             <div class="text-end text-right">
-                <button type="button" class="btn btn-sm btn-primary" id="blocks_cloner-copy-export"><?= t('Copy') ?></button>
+                <button type="button" class="btn btn-sm btn-primary" id="blocks_cloner-export-copy"><?= t('Copy') ?></button>
             </div>
         </div>
     </div>
@@ -149,8 +149,8 @@ defined('C5_EXECUTE') or die('Access Denied.');
 <script>
 (function() {
 
-const btn = document.querySelector('#blocks_cloner-copy-export');
-const ta = document.querySelector('#blocks_cloner-copy-xml');
+const btn = document.querySelector('#blocks_cloner-export-copy');
+const ta = document.querySelector('#blocks_cloner-export-xml');
 const btnText = btn.textContent;
 
 setTimeout(() => ta.focus(), 50);

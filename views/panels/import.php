@@ -3,7 +3,7 @@
 defined('C5_EXECUTE') or die('Access Denied.');
 
 /**
- * @var Concrete\Package\BlocksCloner\Controller\Panel\Paste $controller
+ * @var Concrete\Package\BlocksCloner\Controller\Panel\Import $controller
  * @var array $scopeItems
  * @var Concrete\Core\View\View $view
  * @var int $cID
@@ -12,22 +12,22 @@ defined('C5_EXECUTE') or die('Access Denied.');
 $view->markHeaderAssetPosition();
 ?>
 <style>
-#ccm-panel-blocks_cloner-paste {
+#ccm-panel-blocks_cloner-import {
     background-color: #2a2c30;
     color: #999;
 }
-#ccm-panel-blocks_cloner-paste header {
+#ccm-panel-blocks_cloner-import header {
     color: #3baaf7;
     background-color: #202226;
 }
-#ccm-panel-blocks_cloner-paste li {
+#ccm-panel-blocks_cloner-import li {
     color: #999;
 }
-#ccm-panel-blocks_cloner-paste li a {
+#ccm-panel-blocks_cloner-import li a {
     padding: 0;
 }
 </style>
-<section id="blocks_cloner-paste" v-cloak>
+<section id="blocks_cloner-import" v-cloak>
     <header><?= t('Import Block') ?></header>
     <div v-if="items.length === 0" class="alert alert-info">
         <?= t('No areas found in the page') ?>
@@ -62,7 +62,7 @@ $view->markHeaderAssetPosition();
                 class="dialog-launch"
                 dialog-width="90%"
                 dialog-height="80%"
-                v-bind:href="`${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/paste/import?cID=<?= $cID ?>&aID=${item.id}&aHandle=${encodeURIComponent(item.handle)}`"
+                v-bind:href="`${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import?cID=<?= $cID ?>&aID=${item.id}&aHandle=${encodeURIComponent(item.handle)}`"
                 v-on:mouseenter="highlight(item, true)"
                 v-on:mouseleave="highlight(item, false)"
             >
@@ -79,7 +79,7 @@ $view->markFooterAssetPosition();
 ?>
 <script>$(document).ready(function() {
 new Vue({
-    el: '#blocks_cloner-paste',
+    el: '#blocks_cloner-import',
     data() {
         const items = window.ccmBlocksCloner.getPageStructure({
             skipBlocksWithoutChildAreas: true,
@@ -105,7 +105,7 @@ new Vue({
             };
             this.items.forEach((item) => walk(item));
             this.$nextTick(() => setTimeout(
-                () => $('#blocks_cloner-paste').find('.dialog-launch').dialog(),
+                () => $('#blocks_cloner-import').find('.dialog-launch').dialog(),
                 10
             ));
             return result;
@@ -113,7 +113,7 @@ new Vue({
     },
     methods: {
         highlight(item, highlight) {
-            window.ccmBlocksCloner.setItemHighlighted(item, highlight, highlight);
+            window.ccmBlocksCloner.setElementHighlighted(item.element, highlight, highlight);
         },
     },
 });

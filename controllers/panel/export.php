@@ -6,12 +6,12 @@ use Concrete\Package\BlocksCloner\Controller\AbstractController;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
-class Paste extends AbstractController
+class Export extends AbstractController
 {
     /**
      * {@inheritdoc}
      *
      * @see \Concrete\Core\Controller\Controller::$viewPath
      */
-    protected $viewPath = '/panels/paste';
+    protected $viewPath = '/panels/export';
 }

@@ -3,7 +3,7 @@
 defined('C5_EXECUTE') or die('Access Denied.');
 
 /**
- * @var Concrete\Package\BlocksCloner\Controller\Panel\Copy $controller
+ * @var Concrete\Package\BlocksCloner\Controller\Panel\Export $controller
  * @var Concrete\Core\View\View $view
  * @var int $cID
  */
@@ -11,22 +11,22 @@ defined('C5_EXECUTE') or die('Access Denied.');
 $view->markHeaderAssetPosition();
 ?>
 <style>
-#ccm-panel-blocks_cloner-copy {
+#ccm-panel-blocks_cloner-export {
     background-color: #2a2c30;
     color: #999;
 }
-#ccm-panel-blocks_cloner-copy header {
+#ccm-panel-blocks_cloner-export header {
     color: #3baaf7;
     background-color: #202226;
 }
-#ccm-panel-blocks_cloner-copy li {
+#ccm-panel-blocks_cloner-export li {
     color: #999;
 }
-#ccm-panel-blocks_cloner-copy li a {
+#ccm-panel-blocks_cloner-export li a {
     padding: 0;
 }
 </style>
-<section id="blocks_cloner-copy" v-cloak>
+<section id="blocks_cloner-export" v-cloak>
     <header><?= t('Export Block') ?></header>
     <div v-if="items.length === 0" class="alert alert-info">
         <?= t('No blocks found in the page') ?>
@@ -62,7 +62,7 @@ $view->markHeaderAssetPosition();
                 class="dialog-launch"
                 dialog-width="90%"
                 dialog-height="80%"
-                v-bind:href="`${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/copy/export?cID=<?= $cID ?>&&bID=${item.id}`"
+                v-bind:href="`${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export?cID=<?= $cID ?>&&bID=${item.id}`"
                 v-on:mouseenter="highlight(item, true)"
                 v-on:mouseleave="highlight(item, false)"
             >
@@ -76,7 +76,7 @@ $view->markFooterAssetPosition();
 ?>
 <script>$(document).ready(function() {
 new Vue({
-    el: '#blocks_cloner-copy',
+    el: '#blocks_cloner-export',
     data() {
         const items = window.ccmBlocksCloner.getPageStructure({
             skipAreasWithoutBlocks: true,
@@ -102,7 +102,7 @@ new Vue({
             };
             this.items.forEach((item) => walk(item));
             this.$nextTick(() => setTimeout(
-                () => $('#blocks_cloner-copy').find('.dialog-launch').dialog(),
+                () => $('#blocks_cloner-export').find('.dialog-launch').dialog(),
                 10
             ));
             return result;
@@ -110,7 +110,7 @@ new Vue({
     },
     methods: {
         highlight(item, highlight) {
-            window.ccmBlocksCloner.setItemHighlighted(item, highlight, highlight);
+            window.ccmBlocksCloner.setElementHighlighted(item.element, highlight, highlight);
         },
     },
 });
