@@ -10,6 +10,6 @@ defined('C5_EXECUTE') or die('Access Denied.');
  */
 
 ?>
-<?= t('Paste here the XML of the block to be added to the area') ?><br /> 
+<?= t('Paste here the XML of the block to be added to the area') ?><br />
 <textarea class="form-control"></textarea>
 

@@ -11,7 +11,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
 
 class ViewLocalization extends Controller
 {
-    /** 
+    /**
      * @return \Symfony\Component\HttpFoundation\Response
      */
     public function view()
@@ -23,9 +23,8 @@ class ViewLocalization extends Controller
             'importIntoAreaName' => t('Import into %s'),
             'blockTypeNames' => $this->getBlockTypeNames(),
         ]) . ';';
-            
         $responseFactory = $this->app->make(ResponseFactoryInterface::class);
-        
+
         return $responseFactory->create(
             $content,
             200,
@@ -47,7 +46,7 @@ class ViewLocalization extends Controller
         foreach ($repo->findAll() as $blockType) {
             $result[$blockType->getBlockTypeHandle()] = t($blockType->getBlockTypeName());
         }
-        
+
         return $result;
     }
 }
