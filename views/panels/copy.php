@@ -6,7 +6,6 @@ defined('C5_EXECUTE') or die('Access Denied.');
  * @var Concrete\Package\BlocksCloner\Controller\Panel\Copy $controller
  * @var Concrete\Core\View\View $view
  * @var int $cID
- * @var array $blockTypeNames
  */
 
 $view->markHeaderAssetPosition();
@@ -81,7 +80,6 @@ new Vue({
     data() {
         const items = window.ccmBlocksCloner.getPageStructure({
             skipAreasWithoutBlocks: true,
-            blockTypeNames: <?= json_encode($blockTypeNames) ?>,
         });
         const walk = function(item, depth) {
             item.depth = depth;

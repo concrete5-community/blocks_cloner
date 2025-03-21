@@ -12,7 +12,6 @@ const TYPE_BLOCK = 'block';
  * @typedef {Object} BlocksClonerOptions
  * @property {boolean|undefined} skipAreasWithoutBlocks
  * @property {boolean|undefined} skipBlocksWithoutChildAreas
- * @property {Record<string,string>|undefined) blockTypeNames
  */
 
 /**
@@ -44,6 +43,32 @@ const TYPE_BLOCK = 'block';
  */
 
 /**
+ * @param {string} key 
+ *
+ * @returns {string|null}
+ */
+function localize(key)
+{
+    if (global.ccmBlocksClonerI18N && global.ccmBlocksClonerI18N.hasOwnProperty(key)) {
+        return global.ccmBlocksClonerI18N[key];
+    }
+    return null;
+}
+
+/**
+ * @param {string} handle
+ *
+ * @returns {string|null}
+ */
+function getBlockTypeName(handle)
+{
+    if (global.ccmBlocksClonerI18N && global.ccmBlocksClonerI18N && global.ccmBlocksClonerI18N.blockTypeNames && global.ccmBlocksClonerI18N.blockTypeNames.hasOwnProperty(handle)) {
+        return global.ccmBlocksClonerI18N.blockTypeNames[handle];
+    }
+    return null;
+
+}
+/**
  * @param {BlocksClonerOptions|undefined} options
  *
  * @returns {BlocksClonerArea[]}
@@ -53,7 +78,6 @@ function getPageStructure(options)
     options = Object.assign({
         skipAreasWithoutBlocks: false,
         skipBlocksWithoutChildAreas: false,
-        blockTypeNames: {},
     }, options || {});
     const container = {children: []};
     parse(document.body, container, options);
@@ -154,7 +178,7 @@ function parseBlock(element, options)
     if (!handle) {
         return null;
     }
-    const displayName = options && options.blockTypeNames && options.blockTypeNames.hasOwnProperty(handle) ? options.blockTypeNames[handle] : handle;
+    const displayName = getBlockTypeName(handle) || handle;
     return {
         type: TYPE_BLOCK,
         element,
@@ -280,7 +304,7 @@ function setupAreaMenu(menu, menuElement, area)
         .attr('dialog-width', '90%')
         .attr('dialog-height', '80%')
         .attr('href', `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/paste/import?cID=${CCM_CID}&aID=${area.id}&aHandle=${encodeURIComponent(area.handle)}`)
-        .text('Import')
+        .text(localize('import') || 'Import')
         .dialog()
     );
 }
@@ -300,7 +324,7 @@ function setupBlockMenu(menu, menuElement, block)
         .attr('dialog-width', '90%')
         .attr('dialog-height', '80%')
         .attr('href', `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/copy/export?cID=${CCM_CID}&bID=${block.id}`)
-        .text('Export')
+        .text(localize('export')|| 'Export')
         .dialog()
     );
 }

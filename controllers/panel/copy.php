@@ -14,15 +14,4 @@ class Copy extends AbstractController
      * @see \Concrete\Core\Controller\Controller::$viewPath
      */
     protected $viewPath = '/panels/copy';
-
-    /**
-     * {@inheritdoc}
-     *
-     * @see \Concrete\Package\BlocksCloner\Controller\AbstractController::view()
-     */
-    public function view()
-    {
-        parent::view();
-        $this->set('blockTypeNames', $this->getBlockTypeNames());
-    }
 }

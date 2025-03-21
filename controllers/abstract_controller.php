@@ -3,9 +3,7 @@
 namespace Concrete\Package\BlocksCloner\Controller;
 
 use Concrete\Core\Controller\Controller as CoreController;
-use Concrete\Core\Entity\Block\BlockType\BlockType;
 use Concrete\Core\Page\Page;
-use Doctrine\ORM\EntityManagerInterface;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -30,21 +28,6 @@ abstract class AbstractController extends CoreController
     public function view()
     {
         $this->set('cID', $this->cID);
-    }
-
-    /**
-     * @return array
-     */
-    protected function getBlockTypeNames()
-    {
-        $result = [];
-        $em = $this->app->make(EntityManagerInterface::class);
-        $repo = $em->getRepository(BlockType::class);
-        foreach ($repo->findAll() as $blockType) {
-            $result[$blockType->getBlockTypeHandle()] = t($blockType->getBlockTypeName());
-        }
-
-        return $result;
     }
 
     /**

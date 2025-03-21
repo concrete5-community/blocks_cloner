@@ -12,6 +12,7 @@ use Concrete\Core\Page\Event as PageEvent;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Permission\Checker;
 use Concrete\Core\User\User;
+use Concrete\Package\BlocksCloner\Controller\ViewLocalization;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -64,6 +65,7 @@ class Controller extends Package implements ProviderAggregateInterface
         if (!$user->isRegistered()) {
             return;
         }
+        $this->app->make('router')->get('/ccm/blocks-cloner/view-localization', ViewLocalization::class . '::view');
         $this->app->make('director')->addListener(
             'on_page_view',
             function ($event) {
@@ -124,12 +126,17 @@ class Controller extends Package implements ProviderAggregateInterface
             ]
         );
         $assetList = AssetList::getInstance();
+        $assetList->register('javascript-localized', 'blocks_cloner-view', "/ccm/blocks-cloner/view-localization", ['minify' => false, 'combine' => false, 'version' => $this->pkgVersion], 'blocks_cloner');
         $assetList->register('javascript', 'blocks_cloner-view', 'js/view.js', ['minify' => false, 'combine' => false, 'version' => $this->pkgVersion], 'blocks_cloner');
+        $assetList->registerGroup('blocks_cloner-view', [
+            ['javascript-localized', 'blocks_cloner-view'],
+            ['javascript', 'blocks_cloner-view'],
+        ]);
         $responseAssets = ResponseAssetGroup::get();
         if (version_compare(APP_VERSION, '9') < 0) {
             $responseAssets->requireAsset('javascript', 'vue');
         }
-        $responseAssets->requireAsset('javascript', 'blocks_cloner-view');
+        $responseAssets->requireAsset('blocks_cloner-view');
     }
 
     /**
