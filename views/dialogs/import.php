@@ -52,13 +52,69 @@ defined('C5_EXECUTE') or die('Access Denied.');
     </div>
     <div v-else-if="step === STEPS.CHECK" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
         <div style="flex-grow: 1">
-            Block types: <pre>{{ referenced.blockTypes }}</pre><br />
-            Files: <pre>{{ referenced.files }}</pre><br />
-            Pages: <pre>{{ referenced.pages }}</pre><br />
+            <table class="table table-sm table-contensed caption-top">
+                <caption><?= t('Block Types') ?></caption>
+                <thead>
+                    <tr>
+                        <th><?= t('Name') ?></th>
+                        <th><?= t('Handle') ?></th>
+                        <th><?= t('Package') ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="i in referenced.blockTypes">
+                        <td>{{ i.displayName }}</td>
+                        <td><code>{{ i.handle }}</code></td>
+                        <td>
+                            <span v-if="i.package" v-bind:title="`<?= t('Handle: %s', '${i.package.handle}') ?>`">
+                                {{ i.package.displayName }}
+                            </span>
+                            <i v-else><?= tc('Package', 'none') ?></i>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <table v-if="referenced.files.length" class="table table-sm table-contensed caption-top">
+                <caption><?= t('Referenced Files') ?></caption>
+                <thead>
+                    <tr>
+                        <th><?= t('Key') ?></th>
+                        <th><?= t('File Name') ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="i in referenced.files">
+                        <td><code>{{ i.key }}</code></td>
+                        <td>
+                            <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
+                            <code v-else v-bind:title="`<?= t('Prefix: %s', '${i.prefix}') ?>`">{{ i.name }}</code>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <table v-if="referenced.pages.length" class="table table-sm table-contensed caption-top">
+                <caption><?= t('Referenced Pages') ?></caption>
+                <thead>
+                    <tr>
+                        <th><?= t('Path') ?></th>
+                        <th><?= t('Name') ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="i in referenced.pages">
+                        <td><code>{{ i.path }}</code></td>
+                        <td>
+                        <td>
+                            <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
+                            <a v-else target="_blank" v-bind:href="i.link" v-bind:title="`<?= t('ID: %s', '${i.cID}') ?>`">{{ i.name }}</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
         <div class="text-right text-end">
             <button v-on:click.prevent="step = STEPS.INPUT" v-bind:disabled="busy" class="btn btn-secondary btn-default"><?= t('Back') ?></button>
-            <button v-on:click.prevent="import(1)" v-bind:disabled="busy" class="btn btn-primary"><?= t('Import') ?></button>
+            <button v-on:click.prevent="importXml(1)" v-bind:disabled="busy" class="btn btn-primary"><?= t('Import') ?></button>
         </div>
     </div>
 </div>
@@ -82,7 +138,7 @@ function getExistingBlocksInArea()
                 id: child.id,
                 handle: child.handle,
                 displayName: child.displayName,
-           });
+            });
         }
     });
 
@@ -135,7 +191,7 @@ new Vue({
         },
     },
     methods: {
-        async analyzeXml(delta) {
+        async analyzeXml() {
             if (this.busy) {
                 return false;
             }
@@ -177,6 +233,12 @@ new Vue({
                 this.busy = false;
             }
             this.step = this.STEPS.CHECK;
+        },
+        async importXml() {
+            if (this.busy) {
+                return false;
+            }
+            window.alert('@wip');
         },
     },
 });

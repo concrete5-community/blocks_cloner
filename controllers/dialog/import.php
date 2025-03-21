@@ -37,7 +37,7 @@ class Import extends AbstractController
      * @var \Concrete\Core\Entity\Package[]|null
      */
     private $installedPackages;
-    
+
     /**
      * {@inheritdoc}
      *
@@ -97,6 +97,7 @@ class Import extends AbstractController
                 $result['blockTypes'][] = [
                     'id' => (int) $blockType->getBlockTypeID(),
                     'handle' => $blockType->getBlockTypeHandle(),
+                    'displayName' => t($blockType->getBlockTypeName()),
                     'package' => $package ? [
                         'handle' => $package->getPackageHandle(),
                         'displayName' => t($package->getPackageName()),
@@ -111,31 +112,28 @@ class Import extends AbstractController
                 ];
                 if ($item instanceof Version) {
                     $serialized += [
-                        'data' => [
-                            'fID' => $item->getFileID(),
-                            'prefix' => $item->getPrefix(),
-                            'name' => $item->getFileName(),
-                        ],
+                        'fID' => $item->getFileID(),
+                        'prefix' => $item->getPrefix(),
+                        'name' => $item->getFileName(),
                     ];
                 } else {
-                    $serialized['result'] = $item;
+                    $serialized['error'] = $item;
                 }
                 $result['files'][] = $serialized;
             }
             $result['pages'] = [];
             foreach ($parser->findPages($sx) as $key => $item) {
                 $serialized = [
-                    'key' => $key,
+                    'path' => $key,
                 ];
                 if ($item instanceof Page) {
                     $serialized += [
-                        'data' => [
-                            'cID' => (int) $item->getCollectionID(),
-                            'name' => (string) $item->getCollectionName(),
-                        ],
+                        'cID' => (int) $item->getCollectionID(),
+                        'name' => (string) $item->getCollectionName(),
+                        'link' => (string) $item->getCollectionLink(),
                     ];
                 } else {
-                    $serialized['result'] = $item;
+                    $serialized['error'] = $item;
                 }
                 $result['pages'][] = $serialized;
             }
@@ -266,7 +264,7 @@ class Import extends AbstractController
             }
         }
     }
-    
+
     /**
      * @return \Concrete\Core\Entity\Block\BlockType\BlockType[]
      */
@@ -281,11 +279,10 @@ class Import extends AbstractController
             }
             $this->installedBlockTypes = $installedBlockTypes;
         }
-        
+
         return $this->installedBlockTypes;
     }
 
-    
     /**
      * @return \Concrete\Core\Entity\Block\BlockType\BlockType[]
      */
@@ -300,7 +297,7 @@ class Import extends AbstractController
             }
             $this->installedPackages = $installedPackages;
         }
-        
+
         return $this->installedPackages;
     }
 }

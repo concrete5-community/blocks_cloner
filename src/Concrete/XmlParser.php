@@ -7,6 +7,7 @@ use Concrete\Core\Backup\ContentImporter\ValueInspector\InspectionRoutine\ImageR
 use Concrete\Core\Backup\ContentImporter\ValueInspector\InspectionRoutine\PageRoutine;
 use Concrete\Core\Backup\ContentImporter\ValueInspector\InspectionRoutine\PictureRoutine;
 use Concrete\Core\Entity\File\File;
+use Concrete\Core\Entity\File\Version;
 use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Permission\Checker;
@@ -51,7 +52,7 @@ final class XmlParser
      *
      * @throws \Concrete\Core\Error\UserMessageException
      *
-     * @return array Array keys are the page paths, array values are Page instances (or NULL if not found)
+     * @return array Array keys are the page paths, array values are Page instances (or a string in case of errors)
      */
     public function findPages($xml)
     {
@@ -69,7 +70,7 @@ final class XmlParser
      *
      * @throws \Concrete\Core\Error\UserMessageException
      *
-     * @return array Array keys are the file identifiers, array values are File Version instances (or NULL if not found)
+     * @return array Array keys are the file identifiers, array values are File Version instances (or a string in case of errors)
      */
     public function findFileVersions($xml)
     {
@@ -152,7 +153,7 @@ final class XmlParser
             $key = '/' . trim($item->getReference(), '/');
             if (!array_key_exists($key, $result)) {
                 $page = $item->getContentObject();
-                $result[$key] = $page instanceof Page && !$page->isError() ? $page : null;
+                $result[$key] = $page instanceof Page && !$page->isError() ? $page : t('Page not found');
             }
         }
     }
@@ -179,7 +180,8 @@ final class XmlParser
             $key = $item->getReference();
             if (!array_key_exists($key, $result)) {
                 $file = $item->getContentObject();
-                $result[$key] = $file instanceof File ? $file->getApprovedVersion() : null;
+                $fileVersion = $file instanceof File ? $file->getApprovedVersion() : null;
+                $result[$key] = $fileVersion instanceof Version ? $fileVersion : t('File not found');
             }
         }
     }
@@ -196,7 +198,7 @@ final class XmlParser
             }
             $item = $remainingItems[$key];
             unset($remainingItems[$key]);
-            if ($item !== null && in_array($item, $remainingItems, true)) {
+            if ($item instanceof Version && in_array($item, $remainingItems, true)) {
                 unset($list[$key]);
             }
         }
@@ -206,12 +208,12 @@ final class XmlParser
     {
         foreach (array_keys($list) as $key) {
             $fileVersion = $list[$key];
-            if ($fileVersion === null) {
+            if (!$fileVersion instanceof Version) {
                 continue;
             }
             $checker = new Checker($fileVersion->getFile());
             if (!$checker->canRead()) {
-                $list[$key] = null;
+                $list[$key] = t('Access Denied');
             }
         }
     }

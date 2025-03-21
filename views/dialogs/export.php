@@ -1,5 +1,8 @@
 <?php
 
+use Concrete\Core\Entity\File\Version;
+use Concrete\Core\Page\Page;
+
 defined('C5_EXECUTE') or die('Access Denied.');
 
 /**
@@ -7,8 +10,8 @@ defined('C5_EXECUTE') or die('Access Denied.');
  * @var Concrete\Core\View\View $view
  * @var int $cID
  * @var string $xml
- * @var Concrete\Core\Page\Page[]|array $pages
- * @var Concrete\Core\Entity\File\Version[]|array $fileVersions
+ * @var Concrete\Core\Page\Page[]|string[] $pages
+ * @var Concrete\Core\Entity\File\Version[]|string[] $fileVersions
  * @var Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface $resolverManager
  */
 
@@ -27,13 +30,13 @@ defined('C5_EXECUTE') or die('Access Denied.');
                         <tr>
                             <td>
                                 <?php
-                                if ($page === null) {
+                                if ($page instanceof Page) {
                                     ?>
-                                    <button class="btn btn-sm btn-xs btn-primary" disabled><?= t('Visit') ?></button>
+                                    <a class="btn btn-sm btn-xs btn-primary" target="_blank" href="<?= h($page->getCollectionLink()) ?>"><?= t('Visit') ?></a>
                                     <?php
                                 } else {
                                     ?>
-                                    <a class="btn btn-sm btn-xs btn-primary" target="_blank" href="<?= h($page->getCollectionLink()) ?>"><?= t('Visit') ?></a>
+                                    <button class="btn btn-sm btn-xs btn-primary" disabled><?= t('Visit') ?></button>
                                     <?php
                                 }
                                 ?>
@@ -43,13 +46,13 @@ defined('C5_EXECUTE') or die('Access Denied.');
                             </td>
                             <td>
                                 <?php
-                                if ($page === null) {
+                                if ($page instanceof Page) {
                                     ?>
-                                    <i><?= tc('Page', 'Not found') ?></i>
+                                    <?= h($page->getCollectionName()) ?>
                                     <?php
                                 } else {
                                     ?>
-                                    <?= h($page->getCollectionName()) ?>
+                                    <i><?= h($page) ?></i>
                                     <?php
                                 }
                                 ?>
@@ -72,22 +75,22 @@ defined('C5_EXECUTE') or die('Access Denied.');
                     <?php
                     $fileIDs = [];
                     foreach ($fileVersions as $key => $fileVersion) {
-                        if ($fileVersion !== null) {
+                        if ($fileVersion instanceof Version) {
                             $fileIDs[] = $fileVersion->getFileID();
                         }
                         ?>
                         <tr>
                             <td>
                                 <?php
-                                if ($fileVersion === null) {
-                                    ?>
-                                    <button class="btn btn-sm btn-xs btn-primary" disabled><?= t('Download') ?></button>
-                                    <?php
-                                } else {
+                                if ($fileVersion instanceof Version) {
                                     ?>
                                     <a class="btn btn-sm btn-xs btn-primary" href="<?= h($resolverManager->resolve(['/ccm/blocks_cloner/dialogs/export/files']) . "?cID={$cID}&fIDs={$fileVersion->getFileID()}") ?>">
                                         <?= t('Download') ?>
                                     </a>
+                                    <?php
+                                } else {
+                                    ?>
+                                    <button class="btn btn-sm btn-xs btn-primary" disabled><?= t('Download') ?></button>
                                     <?php
                                 }
                                 ?>
@@ -97,13 +100,13 @@ defined('C5_EXECUTE') or die('Access Denied.');
                             </td>
                             <td>
                                 <?php
-                                if ($fileVersion === null) {
+                                if ($fileVersion instanceof Version) {
                                     ?>
-                                    <i><?= tc('File', 'Not found') ?></i>
+                                    <?= h($fileVersion->getFileName()) ?>
                                     <?php
                                 } else {
                                     ?>
-                                    <?= h($fileVersion->getFileName()) ?>
+                                    <i><?= h($fileVersion) ?></i>
                                     <?php
                                 }
                                 ?>
