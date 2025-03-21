@@ -31,7 +31,7 @@ function setupAreaMenu(menu: Menu, menuElement: JQuery, area: Area): void {
   }
   $after.after(
     $('<a data-ccm-blocks-cloner />')
-      .attr('dialog-title', `Import to ${area.displayName}`)
+      .attr('dialog-title', (localize('importIntoAreaName') || 'Import into %s').replace('%s', area.displayName))
       .attr('class', 'dialog-launch dropdown-item')
       .attr('dialog-width', '90%')
       .attr('dialog-height', '80%')
@@ -50,7 +50,7 @@ function setupBlockMenu(menu: Menu, menuElement: JQuery, block: Block): void {
   }
   $after.after(
     $('<a data-ccm-blocks-cloner />')
-      .attr('dialog-title', `Export ${block.displayName}`)
+      .attr('dialog-title', (localize('exportBlockTypeName') || 'Export %s').replace('%s', block.displayName))
       .attr('class', 'dialog-launch dropdown-item')
       .attr('dialog-width', '90%')
       .attr('dialog-height', '80%')
@@ -63,7 +63,6 @@ function setupBlockMenu(menu: Menu, menuElement: JQuery, block: Block): void {
 export function hook(): void {
   document.addEventListener('DOMContentLoaded', () => {
     window.ConcreteEvent?.subscribe('ConcreteMenuShow', function (e: any, args: any): void {
-      debugger;
       const menu: Menu | undefined = args?.menu;
       const menuElement: JQuery | undefined = args?.menuElement;
       if (menu && menuElement) {

@@ -18,7 +18,9 @@ class ViewLocalization extends Controller
     {
         $content = 'window.ccmBlocksClonerI18N = window.ccmBlocksClonerI18N || ' . json_encode([
             'export' => t('Export'),
+            'exportBlockTypeName' => t('Export %s'),
             'import' => t('Import'),
+            'importIntoAreaName' => t('Import into %s'),
             'blockTypeNames' => $this->getBlockTypeNames(),
         ]) . ';';
             

@@ -58,7 +58,7 @@ $view->markHeaderAssetPosition();
             <a
                 v-if="item.type === 'area'"
                 style="text-decoration: none; display: inline"
-                v-bind:dialog-title="`<?= t('Import to %s', '${item.displayName}') ?>`"
+                v-bind:dialog-title="`<?= t('Import into %s', '${item.displayName}') ?>`"
                 class="dialog-launch"
                 dialog-width="90%"
                 dialog-height="80%"
