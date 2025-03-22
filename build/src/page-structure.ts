@@ -23,6 +23,7 @@ interface BaseItem extends Container {
 export interface Area extends BaseItem {
   type: Type.Area;
   isGlobal: boolean;
+  enableGridContainer: boolean;
 }
 export interface Block extends BaseItem {
   type: Type.Block;
@@ -51,6 +52,7 @@ export function parseArea(element: HTMLElement): Area | null {
     handle,
     displayName,
     isGlobal: element.classList.contains('ccm-global-area'),
+    enableGridContainer: ['1', 'true'].includes(element.dataset.areaEnableGridContainer || ''),
     children: [],
   };
 }
@@ -93,9 +95,7 @@ export function getPageStructure(options?: GetPageStructureOptions): Area[] {
   const container: Container = {children: []};
   parse(document.body, container, options);
 
-  return container.children.filter(
-    (item) => item.type === Type.Area && (!options.skipAreasWithoutBlocks || item.children.length > 0),
-  ) as Area[];
+  return container.children.filter((item) => item.type === Type.Area && (!options.skipAreasWithoutBlocks || item.children.length > 0)) as Area[];
 }
 
 /**
