@@ -4,6 +4,7 @@ namespace Concrete\Package\BlocksCloner\Controller\Dialog;
 
 use Concrete\Core\Area\Area;
 use Concrete\Core\Block\Block;
+use Concrete\Core\Database\Connection\Connection;
 use Concrete\Core\Entity\Block\BlockType\BlockType;
 use Concrete\Core\Entity\File\Version;
 use Concrete\Core\Entity\Package;
@@ -182,12 +183,9 @@ class Import extends AbstractController
                 throw new UserMessageException(t('The XML references to a block type with handle %s which is not currently installed.', $blockTypeHandle));
             }
             $blockType = $blockTypes[$blockTypeHandle];
-            $blockIDsInArea = array_map(
-                static function (array $arr) { return (int) $arr['bID']; },
-                $this->getPage()->getBlockIDs($area->getAreaHandle())
-            );
+            $initialBlockIDsInArea = $this->getBlockIDsInArea($area);
             $beforeBlockID = $this->request->request->getInt('beforeBlockID');
-            if ($beforeBlockID && !in_array($beforeBlockID, $blockIDsInArea, true)) {
+            if ($beforeBlockID && !in_array($beforeBlockID, $initialBlockIDsInArea, true)) {
                 throw new UserMessageException(t('Unable to find the requested block'));
             }
             $blockController = $blockType->getController();
@@ -196,31 +194,45 @@ class Import extends AbstractController
                 $blockController = $blockType->getController();
             }
             /** @var \Concrete\Core\Block\BlockController $blockController */
-            $newBlock = $blockController->import($this->getPage(), $area, $sx);
-            $this->app->make('cache/request')->flush();
-            if (!$newBlock) {
-                $newBlockIDsInArea = array_map(
-                    static function (array $arr) { return (int) $arr['bID']; },
-                    $this->getPage()->getBlockIDs($area->getAreaHandle())
-                );
-                $newBlockIDs = array_diff($newBlockIDsInArea, $blockIDsInArea);
-                if (count($newBlockIDs) !== 1) {
-                    throw new UserMessageException(t('Failed to retrieve the ID of the new block'));
+            $cn = $this->app->make(Connection::class);
+            $rollBack = true;
+            $cn->beginTransaction();
+            try {
+                $newBlock = $blockController->import($this->getPage(), $area, $sx);
+                $this->app->make('cache/request')->flush();
+                $newBlockIDsInArea = $this->getBlockIDsInArea($area);
+                if (!$newBlock) {
+                    $deltaBlockIDs = array_diff($newBlockIDsInArea, $initialBlockIDsInArea);
+                    if (count($deltaBlockIDs) !== 1) {
+                        throw new UserMessageException(t('Failed to retrieve the ID of the new block'));
+                    }
+                    $newBlock = Block::getByID(array_shift($deltaBlockIDs));
+                    if (!$newBlock || $newBlock->isError()) {
+                        throw new UserMessageException(t('Failed to retrieve the new block'));
+                    }
                 }
-                $newBlock = Block::getByID(array_shift($newBlockIDs));
-                if (!$newBlock || $newBlock->isError()) {
-                    throw new UserMessageException(t('Failed to retrieve the new block'));
+                if ($beforeBlockID !== null) {
+                    $newBlockIDsInArea = $this->sortBlockIDs((int) $newBlock->getBlockID(), $beforeBlockID, $newBlockIDsInArea);
+                    $this->getPage()->processArrangement($area->getAreaID(), $newBlock->getBlockID(), $newBlockIDsInArea);
+                }
+                // @todo move block to correct before specified blocks
+                // @todo return code so that the block is rendered in the page
+                $response = $this->app->make(ResponseFactoryInterface::class)->json([]);
+                throw new UserMessageException('@wip');
+                $cn->commit();
+                $rollBack = false;
+            } finally {
+                if ($rollBack) {
+                    $cn->rollBack();
                 }
             }
-            // @todo move block to correct before specified blocks
-            // @todo return code so that the block is rendered in the page
-
-            return $this->app->make(ResponseFactoryInterface::class)->json([]);
         } catch (Exception $x) {
             return $this->buildErrorResponse($x);
         } catch (Exception $x) {
             return $this->buildErrorResponse($x);
         }
+
+        return $response;
     }
 
     /**
@@ -377,5 +389,38 @@ class Import extends AbstractController
         }
 
         return $this->installedPackages;
+    }
+
+    /**
+     * @return int[]
+     */
+    private function getBlockIDsInArea(Area $area)
+    {
+        return array_map(
+            static function (array $arr) { return (int) $arr['bID']; },
+            $this->getPage()->getBlockIDs($area->getAreaHandle())
+        );
+    }
+
+    /**
+     * @param int $blockID
+     * @param int $beforeBlockID
+     * @param int[] $allBlockIDs
+     *
+     * @return int[]
+     */
+    private function sortBlockIDs($blockID, $beforeBlockID, array $allBlockIDs)
+    {
+        $result = array_values(array_diff($allBlockIDs, [$blockID]));
+        if (count($result) === count($allBlockIDs)) {
+            throw new Exception(('Failed to retrieve the ID of the new block'));
+        }
+        $beforeBlockIDIndex = array_search($beforeBlockID, $result, true);
+        if ($beforeBlockIDIndex === false) {
+            throw new Exception(('Unable to find the requested block'));
+        }
+        array_splice($result, $beforeBlockIDIndex, 0, [$blockID]);
+        
+        return $result;
     }
 }
