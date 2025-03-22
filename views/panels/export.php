@@ -27,7 +27,7 @@ $view->markHeaderAssetPosition();
 }
 </style>
 <section id="blocks_cloner-export" v-cloak>
-    <header><?= t('Export Block') ?></header>
+    <header><?= t('Export Block as XML') ?></header>
     <div v-if="items.length === 0" class="alert alert-info">
         <?= t('No blocks found in the page') ?>
     </div>
@@ -58,7 +58,7 @@ $view->markHeaderAssetPosition();
             <a
                 v-if="item.type === 'block'"
                 style="text-decoration: none; display: inline"
-                v-bind:dialog-title="`<?= t('Export %s', '${item.displayName}') ?>`"
+                v-bind:dialog-title="`<?= t('Export %s block as XML', '${item.displayName}') ?>`"
                 class="dialog-launch"
                 dialog-width="90%"
                 dialog-height="80%"

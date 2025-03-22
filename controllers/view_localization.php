@@ -17,10 +17,10 @@ class ViewLocalization extends Controller
     public function view()
     {
         $content = 'window.ccmBlocksClonerI18N = window.ccmBlocksClonerI18N || ' . json_encode([
-            'export' => t('Export'),
-            'exportBlockTypeName' => t('Export %s'),
-            'import' => t('Import'),
-            'importIntoAreaName' => t('Import into %s'),
+            'exportAsXml' => t('Export as XML'),
+            'exportBlockTypeNameAsXml' => t('Export %s block as XML'),
+            'importBlockFromXml' => t('Import Block from XML'),
+            'importBlockFromXmlIntoAreaName' => t('Import Block from XML into %s'),
             'blockTypeNames' => $this->getBlockTypeNames(),
         ]) . ';';
         $responseFactory = $this->app->make(ResponseFactoryInterface::class);

@@ -31,12 +31,12 @@ function setupAreaMenu(menu: Menu, menuElement: JQuery, area: Area): void {
   }
   $after.after(
     $('<a data-ccm-blocks-cloner />')
-      .attr('dialog-title', (localize('importIntoAreaName') || 'Import into %s').replace('%s', area.displayName))
+      .attr('dialog-title', (localize('importBlockFromXmlIntoAreaName') || 'Import Block from XML into %s').replace('%s', area.displayName))
       .attr('class', 'dialog-launch dropdown-item')
       .attr('dialog-width', '90%')
       .attr('dialog-height', '80%')
       .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import?cID=${window.CCM_CID}&aID=${area.id}&aHandle=${encodeURIComponent(area.handle)}`)
-      .text(localize('import') || 'Import')
+      .text(localize('importBlockFromXml') || 'Import Block from XML')
       .dialog(),
   );
 }
@@ -50,12 +50,12 @@ function setupBlockMenu(menu: Menu, menuElement: JQuery, block: Block): void {
   }
   $after.after(
     $('<a data-ccm-blocks-cloner />')
-      .attr('dialog-title', (localize('exportBlockTypeName') || 'Export %s').replace('%s', block.displayName))
+      .attr('dialog-title', (localize('exportBlockTypeNameAsXml') || 'Export %s block as XML').replace('%s', block.displayName))
       .attr('class', 'dialog-launch dropdown-item')
       .attr('dialog-width', '90%')
       .attr('dialog-height', '80%')
       .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export?cID=${window.CCM_CID}&bID=${block.id}`)
-      .text(localize('export') || 'Export')
+      .text(localize('exportAsXml') || 'Export as XML')
       .dialog(),
   );
 }

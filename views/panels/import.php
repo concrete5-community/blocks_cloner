@@ -28,7 +28,7 @@ $view->markHeaderAssetPosition();
 }
 </style>
 <section id="blocks_cloner-import" v-cloak>
-    <header><?= t('Import Block Into') ?></header>
+    <header><?= t('Import Block from XML into') ?></header>
     <div v-if="items.length === 0" class="alert alert-info">
         <?= t('No areas found in the page') ?>
     </div>
@@ -58,7 +58,7 @@ $view->markHeaderAssetPosition();
             <a
                 v-if="item.type === 'area'"
                 style="text-decoration: none; display: inline"
-                v-bind:dialog-title="`<?= t('Import into %s', '${item.displayName}') ?>`"
+                v-bind:dialog-title="`<?= t('Import Block from XML into %s', '${item.displayName}') ?>`"
                 class="dialog-launch"
                 dialog-width="90%"
                 dialog-height="80%"
