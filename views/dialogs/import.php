@@ -192,17 +192,6 @@ new Vue({
             }
             return '';
         },
-        addAfter() {
-            if (this.existingBlocksInArea.length === 0) {
-                return null;
-            }
-            const last = this.existingBlocksInArea[this.existingBlocksInArea.length - 1];
-            const addBeforeIndex = this.addBefore === null ? -1 : this.existingBlocksInArea.indexOf(this.addBefore);
-            if (addBeforeIndex < 0) {
-                return last;
-            }
-            return this.existingBlocksInArea[addBeforeIndex + 1] || last;
-        },
     },
     methods: {
         async analyzeXml() {
@@ -266,8 +255,8 @@ new Vue({
                 if (!ccmArea) {
                     throw new Error(<?= json_encode(t('Unable to find the requested area')) ?>);
                 }
-                const ccmBlockAfter = this.addAfter ? ccmEditMode.getBlockByID(this.addAfter.id) : null;
-                if (this.addAfter !== null && !ccmBlockAfter) {
+                const ccmBlockBefore = this.addBefore ? ccmEditMode.getBlockByID(this.addBefore.id) : null;
+                if (this.addBefore !== null && !ccmBlockBefore) {
                     throw new Error(<?= json_encode(t('Unable to find the requested block')) ?>);
                 }
                 const request = {
@@ -300,13 +289,12 @@ new Vue({
                         arEnableGridContainer: ccmArea.getEnableGridContainer() ? 1 : 0,
                     },
                     (html) => {
-                        if (ccmBlockAfter) {
-                            ccmBlockAfter.getContainer().after(html);
+                        if (ccmBlockBefore) {
+                            ccmBlockBefore.getContainer().before(html);
                         } else {
-                            ccmArea.getBlockContainer().prepend(html);
+                            ccmArea.getBlockContainer().append(html);
                         }
                         _.defer(function () {
-                            debugger;
                             ccmEditMode.scanBlocks();
                         });
                     }
