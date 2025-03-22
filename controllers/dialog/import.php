@@ -3,6 +3,7 @@
 namespace Concrete\Package\BlocksCloner\Controller\Dialog;
 
 use Concrete\Core\Area\Area;
+use Concrete\Core\Block\Block;
 use Concrete\Core\Entity\Block\BlockType\BlockType;
 use Concrete\Core\Entity\File\Version;
 use Concrete\Core\Entity\Package;
@@ -12,6 +13,7 @@ use Concrete\Core\Page\Page;
 use Concrete\Core\Permission\Checker;
 use Concrete\Core\Validation\CSRF\Token;
 use Concrete\Package\BlocksCloner\Controller\AbstractController;
+use Concrete\Package\BlocksCloner\ImportChecker;
 use Concrete\Package\BlocksCloner\XmlParser;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
@@ -59,26 +61,8 @@ class Import extends AbstractController
         if (!$area || $area->isError() || $area->getAreaID() != $aID) {
             throw new UserMessageException(t('Access Denied'));
         }
-        $checker = new Checker($area);
-        if (!$checker->canAddBlocks()) {
-            throw new UserMessageException(t("You don't have permission to add blocks to this area"));
-        }
-        $maxBlocks = (int) $area->getMaximumBlocks();
-        if ($maxBlocks === 0) {
-            throw new UserMessageException(t("No block can be added to this area"));
-        }
-        if ($maxBlocks > 0) {
-            $currentBlocks = $area->getTotalBlocksInAreaEditMode();
-            if ($currentBlocks >= $maxBlocks) {
-                throw new UserMessageException(
-                    t2(
-                        $maxBlocks,
-                        "This area accepts up to %s block (and this limit is already reached)",
-                        "This area accepts up to %s blocks (and this limit is already reached)"
-                    )
-                );
-            }
-        }
+        $checker = $this->app->make(ImportChecker::class);
+        $checker->checkArea($area);
         $this->set('area', $area);
         $this->set('token', $this->app->make(Token::class));
     }
@@ -89,14 +73,32 @@ class Import extends AbstractController
     public function analyze()
     {
         try {
+            $aID = $this->request->request->getInt('aID');
+            if (!$aID) {
+                throw new UserMessageException(t('Access Denied'));
+            }
+            $aHandle = (string) $this->request->request->get('aHandle');
+            if ($aHandle === '') {
+                throw new UserMessageException(t('Access Denied'));
+            }
+            $area = Area::get($this->getPage(), $aHandle);
+            if (!$area || $area->isError() || $area->getAreaID() != $aID) {
+                throw new UserMessageException(t('Access Denied'));
+            }
+            $checker = $this->app->make(ImportChecker::class);
+            $checker->checkArea($area);
             $xml = $this->request->request->get('xml');
             $sx = $this->loadXml($xml);
             $result = [
-                'importToken' => $this->app->make(Token::class)->generate('blocks_cloner:import:' . md5($xml)),
+                'importToken' => $this->app->make(Token::class)->generate('blocks_cloner:import:' . $this->cID . ':'. sha1($xml)),
             ];
             $result['blockTypes'] = [];
             $installedPackages = $this->getInstalledPackages();
+            $checker = new Checker($this->getPage());
             foreach ($this->extractBlockTypes($sx) as $blockType) {
+                if (!$checker->canAddBlockType($blockType)) {
+                    throw new UserMessageException(t("You can't add blocks of type %s to this page.", t($blockType->getBlockTypeName())));
+                }
                 $packageID = $blockType->getPackageHandle();
                 $package = $packageID ? $installedPackages[$packageID] : null;
                 $result['blockTypes'][] = [
@@ -162,7 +164,7 @@ class Import extends AbstractController
                 throw new UserMessageException(t('Access Denied'));
             }
             $token = $this->app->make(Token::class);
-            if (!$token->validate('blocks_cloner:import:' . md5($xml))) {
+            if (!$token->validate('blocks_cloner:import:' . $this->cID . ':'. sha1($xml))) {
                 throw new UserMessageException($token->getErrorMessage());
             }
             $areaHandle = (string) $this->request->request->get('areaHandle');
@@ -193,9 +195,24 @@ class Import extends AbstractController
                 $blockType->loadController();
                 $blockController = $blockType->getController();
             }
-            $blockController->import($this->getPage(), $area, $sx);
-            // @todo check permissions
-            // @todo check # objects in area
+            /** @var \Concrete\Core\Block\BlockController $blockController */
+            $newBlock = $blockController->import($this->getPage(), $area, $sx);
+            $this->app->make('cache/request')->flush();
+            if (!$newBlock) {
+                $newBlockIDsInArea = array_map(
+                    static function (array $arr) { return (int) $arr['bID']; },
+                    $this->getPage()->getBlockIDs($area->getAreaHandle())
+                );
+                $newBlockIDs = array_diff($newBlockIDsInArea, $blockIDsInArea);
+                if (count($newBlockIDs) !== 1) {
+                    throw new UserMessageException(t('Failed to retrieve the ID of the new block'));
+                }
+                $newBlock = Block::getByID(array_shift($newBlockIDs));
+                if (!$newBlock || $newBlock->isError()) {
+                    throw new UserMessageException(t('Failed to retrieve the new block'));
+                }
+            }
+            // @todo move block to correct before specified blocks
             // @todo return code so that the block is rendered in the page
 
             return $this->app->make(ResponseFactoryInterface::class)->json([]);

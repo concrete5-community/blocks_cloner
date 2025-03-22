@@ -210,6 +210,8 @@ new Vue({
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
                     body: new URLSearchParams([
+                        ['aID', <?= $area->getAreaID() ?>],
+                        ['aHandle', <?= json_encode($area->getAreaHandle()) ?>],
                         ['xml', this.xml],
                     ]),
                 };
