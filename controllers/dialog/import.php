@@ -211,14 +211,11 @@ class Import extends AbstractController
                         throw new UserMessageException(t('Failed to retrieve the new block'));
                     }
                 }
-                if ($beforeBlockID !== null) {
+                if ($beforeBlockID) {
                     $newBlockIDsInArea = $this->sortBlockIDs((int) $newBlock->getBlockID(), $beforeBlockID, $newBlockIDsInArea);
                     $this->getPage()->processArrangement($area->getAreaID(), $newBlock->getBlockID(), $newBlockIDsInArea);
                 }
-                // @todo move block to correct before specified blocks
-                // @todo return code so that the block is rendered in the page
-                $response = $this->app->make(ResponseFactoryInterface::class)->json([]);
-                throw new UserMessageException('@wip');
+                $response = $this->app->make(ResponseFactoryInterface::class)->json(['bID' => (int) $newBlock->getBlockID()]);
                 $cn->commit();
                 $rollBack = false;
             } finally {

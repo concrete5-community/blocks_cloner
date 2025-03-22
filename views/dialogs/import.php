@@ -192,6 +192,17 @@ new Vue({
             }
             return '';
         },
+        addAfter() {
+            if (this.existingBlocksInArea.length === 0) {
+                return null;
+            }
+            const last = this.existingBlocksInArea[this.existingBlocksInArea.length - 1];
+            const addBeforeIndex = this.addBefore === null ? -1 : this.existingBlocksInArea.indexOf(this.addBefore);
+            if (addBeforeIndex < 0) {
+                return last;
+            }
+            return this.existingBlocksInArea[addBeforeIndex + 1] || last;
+        },
     },
     methods: {
         async analyzeXml() {
@@ -250,6 +261,15 @@ new Vue({
             }
             this.busy = true;
             try {
+                const ccmEditMode = window.Concrete.getEditMode();
+                const ccmArea = ccmEditMode.getAreaByID(<?= $area->getAreaID() ?>);
+                if (!ccmArea) {
+                    throw new Error(<?= json_encode(t('Unable to find the requested area')) ?>);
+                }
+                const ccmBlockAfter = this.addAfter ? ccmEditMode.getBlockByID(this.addAfter.id) : null;
+                if (this.addAfter !== null && !ccmBlockAfter) {
+                    throw new Error(<?= json_encode(t('Unable to find the requested block')) ?>);
+                }
                 const request = {
                     method: 'POST',
                     headers: {
@@ -270,6 +290,27 @@ new Vue({
                 if (responseData.error) {
                     throw new Error(responseData.error);
                 }
+                const bID = responseData.bID;
+                $.get(
+                    CCM_DISPATCHER_FILENAME + '/ccm/system/block/render',
+                    {
+                        arHandle: ccmArea.getHandle(),
+                        cID: <?= $cID ?>,
+                        bID,
+                        arEnableGridContainer: ccmArea.getEnableGridContainer() ? 1 : 0,
+                    },
+                    (html) => {
+                        if (ccmBlockAfter) {
+                            ccmBlockAfter.getContainer().after(html);
+                        } else {
+                            ccmArea.getBlockContainer().prepend(html);
+                        }
+                        _.defer(function () {
+                            debugger;
+                            ccmEditMode.scanBlocks();
+                        });
+                    }
+                );
             } catch (e) {
                 window.ConcreteAlert.error({
                     message: e?.messsage || e?.toString() || <?= json_encode(t('Unknown error')) ?>,
@@ -279,7 +320,10 @@ new Vue({
             } finally {
                 this.busy = false;
             }
-            this.step = this.STEPS.IMPORTED;
+            window.ConcreteAlert.info({
+                message: <?= json_encode(t('The block has been imported')) ?>,
+            });
+            $.fn.dialog.closeTop();
         },
     },
 });
