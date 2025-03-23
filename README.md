@@ -1,3 +1,5 @@
+[![Build](https://github.com/concrete5-community/blocks_cloner/actions/workflows/build.yml/badge.svg)](https://github.com/concrete5-community/blocks_cloner/actions/workflows/build.yml)
+
 # Blocks Cloner
 
 This repository contains a package for [ConcreteCMS](https://www.concretecms.org/) that lets you copy blocks between two instances of Concrete.
