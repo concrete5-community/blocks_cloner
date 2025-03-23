@@ -6,11 +6,13 @@ use Concrete\Core\Backup\ContentImporter\ValueInspector\InspectionRoutine\FileRo
 use Concrete\Core\Backup\ContentImporter\ValueInspector\InspectionRoutine\ImageRoutine;
 use Concrete\Core\Backup\ContentImporter\ValueInspector\InspectionRoutine\PageRoutine;
 use Concrete\Core\Backup\ContentImporter\ValueInspector\InspectionRoutine\PictureRoutine;
+use Concrete\Core\Entity\Block\BlockType\BlockType;
 use Concrete\Core\Entity\File\File;
 use Concrete\Core\Entity\File\Version;
 use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Permission\Checker;
+use Doctrine\ORM\EntityManagerInterface;
 use DOMDocument;
 use DOMElement;
 use SimpleXMLElement;
@@ -19,6 +21,11 @@ defined('C5_EXECUTE') or die('Access Denied.');
 
 final class XmlParser
 {
+    /**
+     * @var \Doctrine\ORM\EntityManagerInterface
+     */
+    private $entityManager;
+
     /**
      * @var \Concrete\Core\Backup\ContentImporter\ValueInspector\InspectionRoutine\PageRoutine
      */
@@ -39,12 +46,50 @@ final class XmlParser
      */
     private $pictureInspector;
 
-    public function __construct(PageRoutine $pageInspector, FileRoutine $fileInspector, ImageRoutine $imageInspector, PictureRoutine $pictureInspector)
+    /**
+     * @var \Concrete\Core\Entity\Block\BlockType\BlockType[]|null
+     */
+    private $installedBlockTypes;
+
+    public function __construct(
+        EntityManagerInterface $entityManager,
+        PageRoutine $pageInspector,
+        FileRoutine $fileInspector,
+        ImageRoutine $imageInspector,
+        PictureRoutine $pictureInspector
+    )
     {
+        $this->entityManager = $entityManager;
         $this->pageInspector = $pageInspector;
         $this->fileInspector = $fileInspector;
         $this->imageInspector = $imageInspector;
         $this->pictureInspector = $pictureInspector;
+    }
+
+    /**
+     * @param \SimpleXMLElement|\DOMDocument|\DOMElement|string $xml
+     *
+     * @throws \Concrete\Core\Error\UserMessageException
+     *
+     * @return \Concrete\Core\Entity\Block\BlockType\BlockType[]
+     */
+    public function findBlockTypes($xml)
+    {
+        return $this->listBlockTypes($xml, false);
+    }
+
+    /**
+     * @param \SimpleXMLElement|\DOMDocument|\DOMElement|string $xml
+     *
+     * @throws \Concrete\Core\Error\UserMessageException
+     *
+     * @return \Concrete\Core\Entity\Block\BlockType\BlockType
+     */
+    public function getRootBlockType($xml)
+    {
+        $blockTypes = $this->listBlockTypes($xml, true);
+
+        return $blockTypes[0];
     }
 
     /**
@@ -111,9 +156,34 @@ final class XmlParser
             if (!$simpleXml) {
                 throw new UserMessageException(t('Failed to parse XML'));
             }
+            return $simpleXml;
         }
 
         throw new UserMessageException(t('Failed to parse XML'));
+    }
+
+    /**
+     * @return \SimpleXMLElement[]|\Generator
+     */
+    private function listBlockNodes(SimpleXMLElement $sx)
+    {
+        $isDataTable = false;
+        switch ($sx->getName()) {
+            case 'block':
+                yield $sx;
+                break;
+            case 'data':
+                $isDataTable = isset($sx['table']);
+                break;
+        }
+        foreach ($sx->children() as $child) {
+            if ($isDataTable && $child->getName() === 'record') {
+                continue;
+            }
+            foreach ($this->listBlockNodes($child) as $blockNode) {
+                yield $blockNode;
+            }
+        }
     }
 
     private function extractStrings(SimpleXMLElement $el)
@@ -216,5 +286,64 @@ final class XmlParser
                 $list[$key] = t('Access Denied');
             }
         }
+    }
+
+    /**
+     * @return \Concrete\Core\Entity\Block\BlockType\BlockType[]
+     */
+    private function getInstalledBlockTypes()
+    {
+        if ($this->installedBlockTypes === null) {
+            $installedBlockTypes = [];
+            $repo = $this->entityManager->getRepository(BlockType::class);
+            foreach ($repo->findAll() as $blockType) {
+                $installedBlockTypes[$blockType->getBlockTypeHandle()] = $blockType;
+            }
+            $this->installedBlockTypes = $installedBlockTypes;
+        }
+
+        return $this->installedBlockTypes;
+    }
+
+    /**
+     * @param \SimpleXMLElement|\DOMDocument|\DOMElement|string $xml
+     * @param bool $onlyFirst
+     *
+     * @throws \Concrete\Core\Error\UserMessageException
+     *
+     * @return \Concrete\Core\Entity\Block\BlockType\BlockType[]
+     */
+    private function listBlockTypes($xml, $onlyFirst)
+    {
+        $xml = $this->ensureSimpleXMLElement($xml);
+        if ($xml->getName() !== 'block') {
+            throw new UserMessageException(t('The XML does not represent a block in ConcreteCMS CIF Format'));
+        }
+        $result = [];
+        $errors = [];
+        $blockTypes = $this->getInstalledBlockTypes();
+        foreach ($this->listBlockNodes($xml) as $xBlock) {
+            $type = isset($xBlock['type']) ? (string) $xBlock['type'] : '';
+            if ($type === '') {
+                $errors[] = t('A %1$s element is missing the %2$s attribute.', '<block>', 'type');
+                continue;
+            }
+            if (!isset($blockTypes[$type])) {
+                $errors[] = t('The XML references to a block type with handle %s which is not currently installed.', $type);
+                continue;
+            }
+            $blockType = $blockTypes[$type];
+            if (!in_array($blockType, $result, true)) {
+                $result[] = $blockType;
+            }
+            if ($onlyFirst) {
+                break;
+            }
+        }
+        if ($errors !== []) {
+            throw new UserMessageException(implode("\n", $errors));
+        }
+
+        return $result;
     }
 }

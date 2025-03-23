@@ -5,7 +5,6 @@ namespace Concrete\Package\BlocksCloner\Controller\Dialog;
 use Concrete\Core\Area\Area;
 use Concrete\Core\Block\Block;
 use Concrete\Core\Database\Connection\Connection;
-use Concrete\Core\Entity\Block\BlockType\BlockType;
 use Concrete\Core\Entity\File\Version;
 use Concrete\Core\Entity\Package;
 use Concrete\Core\Error\UserMessageException;
@@ -33,11 +32,6 @@ class Import extends AbstractController
     protected $viewPath = '/dialogs/import';
 
     /**
-     * @var \Concrete\Core\Entity\Block\BlockType\BlockType[]|null
-     */
-    private $installedBlockTypes;
-
-    /**
      * @var \Concrete\Core\Entity\Package[]|null
      */
     private $installedPackages;
@@ -62,8 +56,8 @@ class Import extends AbstractController
         if (!$area || $area->isError() || $area->getAreaID() != $aID) {
             throw new UserMessageException(t('Access Denied'));
         }
-        $checker = $this->app->make(ImportChecker::class);
-        $checker->checkArea($area);
+        $importChecker = $this->app->make(ImportChecker::class);
+        $importChecker->checkArea($area);
         $this->set('area', $area);
         $this->set('token', $this->app->make(Token::class));
     }
@@ -86,17 +80,18 @@ class Import extends AbstractController
             if (!$area || $area->isError() || $area->getAreaID() != $aID) {
                 throw new UserMessageException(t('Access Denied'));
             }
-            $checker = $this->app->make(ImportChecker::class);
-            $checker->checkArea($area);
+            $importChecker = $this->app->make(ImportChecker::class);
+            $importChecker->checkArea($area);
             $xml = $this->request->request->get('xml');
             $sx = $this->loadXml($xml);
             $result = [
                 'importToken' => $this->app->make(Token::class)->generate('blocks_cloner:import:' . $this->cID . ':'. sha1($xml)),
             ];
-            $result['blockTypes'] = [];
+            $parser = $this->app->make(XmlParser::class);
             $installedPackages = $this->getInstalledPackages();
+            $result['blockTypes'] = [];
             $checker = new Checker($this->getPage());
-            foreach ($this->extractBlockTypes($sx) as $blockType) {
+            foreach ($parser->findBlockTypes($xml) as $blockType) {
                 if (!$checker->canAddBlockType($blockType)) {
                     throw new UserMessageException(t("You can't add blocks of type %s to this page.", t($blockType->getBlockTypeName())));
                 }
@@ -112,7 +107,6 @@ class Import extends AbstractController
                     ] : null,
                 ];
             }
-            $parser = $this->app->make(XmlParser::class);
             $result['files'] = [];
             foreach ($parser->findFileVersions($sx) as $key => $item) {
                 $serialized = [
@@ -149,7 +143,7 @@ class Import extends AbstractController
             return $this->app->make(ResponseFactoryInterface::class)->json($result);
         } catch (Exception $x) {
             return $this->buildErrorResponse($x);
-        } catch (Exception $x) {
+        } catch (Throwable $x) {
             return $this->buildErrorResponse($x);
         }
     }
@@ -177,12 +171,8 @@ class Import extends AbstractController
             if (!$area || $area->isError()) {
                 throw new UserMessageException(t('Unable to find the requested area'));
             }
-            $blockTypeHandle = (string) $sx['type'];
-            $blockTypes = $this->getInstalledBlockTypes();
-            if (!isset($blockTypes[$blockTypeHandle])) {
-                throw new UserMessageException(t('The XML references to a block type with handle %s which is not currently installed.', $blockTypeHandle));
-            }
-            $blockType = $blockTypes[$blockTypeHandle];
+            $parser = $this->app->make(XmlParser::class);
+            $blockType = $parser->getRootBlockType($xml);
             $initialBlockIDsInArea = $this->getBlockIDsInArea($area);
             $beforeBlockID = $this->request->request->getInt('beforeBlockID');
             if ($beforeBlockID && !in_array($beforeBlockID, $initialBlockIDsInArea, true)) {
@@ -225,7 +215,7 @@ class Import extends AbstractController
             }
         } catch (Exception $x) {
             return $this->buildErrorResponse($x);
-        } catch (Exception $x) {
+        } catch (Throwable $x) {
             return $this->buildErrorResponse($x);
         }
 
@@ -294,41 +284,6 @@ class Import extends AbstractController
     }
 
     /**
-     * @throws \Concrete\Core\Error\UserMessageException
-     *
-     * @return \Concrete\Core\Entity\Block\BlockType\BlockType[]
-     */
-    private function extractBlockTypes(SimpleXMLElement $sx)
-    {
-        if ($sx->getName() !== 'block') {
-            throw new UserMessageException(t('The XML does not represent a block in ConcreteCMS CIF Format'));
-        }
-        $result = [];
-        $errors = [];
-        $blockTypes = $this->getInstalledBlockTypes();
-        foreach ($this->listBlockNodes($sx) as $xBlock) {
-            $type = isset($xBlock['type']) ? (string) $xBlock['type'] : '';
-            if ($type === '') {
-                $errors[] = t('A %1$s element is missing the %2$s attribute.', '<block>', 'type');
-                continue;
-            }
-            if (!isset($blockTypes[$type])) {
-                $errors[] = t('The XML references to a block type with handle %s which is not currently installed.', $type);
-                continue;
-            }
-            $blockType = $blockTypes[$type];
-            if (!in_array($blockType, $result, true)) {
-                $result[] = $blockType;
-            }
-        }
-        if ($errors !== []) {
-            throw new UserMessageException(implode("\n", $errors));
-        }
-
-        return $result;
-    }
-
-    /**
      * @return \SimpleXMLElement[]|\Generator
      */
     private function listBlockNodes(SimpleXMLElement $sx)
@@ -350,24 +305,6 @@ class Import extends AbstractController
                 yield $blockNode;
             }
         }
-    }
-
-    /**
-     * @return \Concrete\Core\Entity\Block\BlockType\BlockType[]
-     */
-    private function getInstalledBlockTypes()
-    {
-        if ($this->installedBlockTypes === null) {
-            $installedBlockTypes = [];
-            $em = $this->app->make(EntityManagerInterface::class);
-            $repo = $em->getRepository(BlockType::class);
-            foreach ($repo->findAll() as $blockType) {
-                $installedBlockTypes[$blockType->getBlockTypeHandle()] = $blockType;
-            }
-            $this->installedBlockTypes = $installedBlockTypes;
-        }
-
-        return $this->installedBlockTypes;
     }
 
     /**
