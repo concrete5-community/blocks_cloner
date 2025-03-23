@@ -142,8 +142,9 @@ defined('C5_EXECUTE') or die('Access Denied.');
                 <strong style="color: #777777"><?= t('XML Data')?></strong>
             </div>
             <textarea  id="blocks_cloner-export-xml" readonly nowrap class="form-control" style="flex-grow: 1; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 0.9em; resize: none"><?= htmlspecialchars($xml, ENT_QUOTES, APP_CHARSET) ?></textarea>
-            <div class="text-end text-right">
+            <div class="text-end text-right" style="padding-top: 1rem">
                 <button type="button" class="btn btn-sm btn-primary" id="blocks_cloner-export-copy"><?= t('Copy') ?></button>
+                <button type="button" class="btn btn-sm btn-primary" id="blocks_cloner-export-copy-close"><?= h(t('Copy & Close')) ?></button>
             </div>
         </div>
     </div>
@@ -152,23 +153,24 @@ defined('C5_EXECUTE') or die('Access Denied.');
 <script>
 (function() {
 
-const btn = document.querySelector('#blocks_cloner-export-copy');
-const ta = document.querySelector('#blocks_cloner-export-xml');
-const btnText = btn.textContent;
+const btnCopy = document.querySelector('#blocks_cloner-export-copy');
+const btnCopyText = btnCopy.textContent;
+const xmlTextarea = document.querySelector('#blocks_cloner-export-xml');
 
-setTimeout(() => ta.focus(), 50);
+setTimeout(() => xmlTextarea.focus(), 50);
 
-function copied()
+function reportSuccess()
 {
-    btn.classList.remove('btn-primary');
-    btn.classList.add('btn-success');
-    btn.textContent = <?= json_encode(t('Copied!')) ?>;
+    btnCopy.classList.remove('btn-primary');
+    btnCopy.classList.add('btn-success');
+    btnCopy.textContent = <?= json_encode(t('Copied!')) ?>;
     setTimeout(() => {
-        btn.classList.remove('btn-success');
-        btn.classList.add('btn-primary');
-        btn.textContent = btnText;
+        btnCopy.classList.remove('btn-success');
+        btnCopy.classList.add('btn-primary');
+        btnCopy.textContent = btnCopyText;
     }, 500);
 }
+
 function failed(e)
 {
     window.ConcreteAlert.error({
@@ -176,22 +178,38 @@ function failed(e)
     });
 }
 
-btn.addEventListener('click', (e) => {
-    e.preventDefault();
+function copy(done)
+{
     try {
         if (window.navigator && window.navigator.clipboard && window.navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(ta.value)
-                .then(() => copied())
+            navigator.clipboard.writeText(xmlTextarea.value)
+                .then(() => done())
                 .catch((e) => failed(e))
             ;
         } else {
-            ta.select();
+            xmlTextarea.select();
             document.execCommand('copy');
-            copied();
+            done();
         }
     } catch (e) {
         failed(e);
     }
+}
+
+btnCopy.addEventListener('click', (e) => {
+    e.preventDefault();
+    copy(reportSuccess);
+});
+
+document.querySelector('#blocks_cloner-export-copy-close').addEventListener('click', (e) => {
+    e.preventDefault();
+    copy(() => {
+        window.ConcreteAlert.info({
+            message: <?= json_encode(t('Copied')) ?>,
+            delay: 500,
+        });
+        $.fn.dialog.closeTop();
+    });
 });
 
 })();
