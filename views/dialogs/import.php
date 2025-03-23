@@ -23,6 +23,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
                     v-model.trim="xml"
                     ref="xml"
                     nowrap
+                    spellcheck="false"
                     v-bind:readonly="busy"
                     style="flex-grow: 1; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 0.9em; resize: none"
                 ></textarea>
