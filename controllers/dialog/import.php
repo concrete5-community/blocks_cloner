@@ -308,7 +308,7 @@ class Import extends AbstractController
     }
 
     /**
-     * @return \Concrete\Core\Entity\Block\BlockType\BlockType[]
+     * @return \Concrete\Core\Entity\Package[]
      */
     private function getInstalledPackages()
     {
