@@ -1,5 +1,13 @@
 let currentItemHighlighed: HTMLElement | null = null;
 
+type StyleKey = keyof CSSStyleDeclaration;
+
+const HIGHLIGHTED_STYLE: Partial<Record<StyleKey, string | number>> = {
+  outline: '1px solid red',
+  boxShadow: '0 0 3px 3px #ff0000',
+  transition: 'box-shadow 0.5s, outline 0.5s',
+};
+
 function checkElementInViewport(el: HTMLElement, callback: (isInViewport: boolean) => void): void {
   const onIntersection = (entries: IntersectionObserverEntry[], observer: IntersectionObserver): void => {
     callback(entries.some((entry) => entry.isIntersecting));
@@ -41,15 +49,22 @@ export function setElementHighlighted(element: HTMLElement, highlight: boolean, 
   }
   const wasHighlighted = element.dataset.blocksClonerHighlighted === '1';
   if (highlight !== wasHighlighted) {
+    const elementStyle: any = element.style;
     if (highlight) {
-      element.dataset.blocksClonerRestoreOutline = element.style.outline || '';
-      element.style.outline = '2px solid red';
+      for (const [key, value] of Object.entries(HIGHLIGHTED_STYLE)) {
+        element.dataset[`blocksClonerRestore${key}`] = (elementStyle[key] || '').toString();
+        elementStyle[key] = value;
+      }
       element.dataset.blocksClonerHighlighted = '1';
       currentItemHighlighed = element;
     } else {
-      element.style.outline = element.dataset.blocksClonerRestoreOutline || '';
+      Object.keys(HIGHLIGHTED_STYLE).forEach((key) => {
+        if (element.dataset[`blocksClonerRestore${key}`] !== undefined) {
+          elementStyle[key] = element.dataset[`blocksClonerRestore${key}`];
+        }
+        delete element.dataset[`blocksClonerRestore${key}`];
+      });
       delete element.dataset.blocksClonerHighlighted;
-      delete element.dataset.blocksClonerRestoreOutline;
       currentItemHighlighed = null;
     }
   }
