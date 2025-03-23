@@ -312,6 +312,8 @@ new Vue({
                 message: <?= json_encode(t('The block has been imported')) ?>,
             });
             $.fn.dialog.closeTop();
+            window.ConcretePanelManager.getByIdentifier('blocks_cloner-import')?.hide()
+            window.ConcretePanelManager.getByIdentifier('blocks_cloner-export')?.hide()
         },
     },
 });
