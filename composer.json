@@ -1,0 +1,51 @@
+{
+    "name": "concrete5-community/blocks_cloner",
+    "description": "A ConcreteCMS package to copy blocks between websites",
+    "type": "concrete5-package",
+    "keywords": [
+        "concretecms",
+        "concrete",
+        "cms",
+        "concrete5",
+        "package",
+        "addon",
+        "block",
+        "clone",
+        "copy",
+        "export",
+        "import",
+        "xml",
+        "cif"
+    ],
+    "homepage": "https://github.com/concrete5-community/blocks_cloner",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Michele Locati",
+            "email": "michele@locati.it",
+            "role": "maintainer",
+            "homepage": "https://mlocati.github.io"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/concrete5-community/blocks_cloner/issues",
+        "source": "https://github.com/concrete5-community/blocks_cloner"
+    },
+    "require": {
+        "concrete5/core": "^8.5.2 || ^9"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "funding": [
+        {
+            "type": "github",
+            "url": "https://github.com/sponsors/mlocati"
+        },
+        {
+            "type": "other",
+            "url": "https://paypal.me/mlocati"
+        }
+    ]
+}
