@@ -4,6 +4,7 @@ namespace Concrete\Package\BlocksCloner\Controller\Dialog;
 
 use Concrete\Core\Block\Block;
 use Concrete\Core\Entity\File\File;
+use Concrete\Core\Entity\Package;
 use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\File\Service\VolatileDirectory;
 use Concrete\Core\Permission\Checker;
@@ -23,6 +24,11 @@ class Export extends AbstractController
      * @see \Concrete\Core\Controller\Controller::$viewPath
      */
     protected $viewPath = '/dialogs/export';
+
+    /**
+     * @var \Concrete\Core\Entity\Package[]|null
+     */
+    private $installedPackages;
 
     /**
      * {@inheritdoc}
@@ -52,6 +58,16 @@ class Export extends AbstractController
         $xml = preg_replace('{^<\?xml[^>]*>\s}i', '', $xml);
         $this->set('xml', $xml);
         $parser = $this->app->make(XmlParser::class);
+        $packages = $this->getInstalledPackages();
+        $blockTypesAndPackages = [];
+        foreach ($parser->findBlockTypes($xml) as $blockType) {
+            $packageID = $blockType->getPackageID();
+            $blockTypesAndPackages[] = [
+                'blockType' => $blockType,
+                'package' => $packageID ? $packages[$packageID] : null,
+            ];
+        }
+        $this->set('blockTypesAndPackages', $blockTypesAndPackages);
         $this->set('pages', $parser->findPages($sx));
         $this->set('fileVersions', $parser->findFileVersions($sx));
         $this->set('resolverManager', $this->app->make(ResolverManagerInterface::class));
@@ -114,5 +130,23 @@ class Export extends AbstractController
         $zipArchive->close();
         unset($fileVersions);
         $this->app->make('helper/file')->forceDownload($zipFile);
+    }
+
+    /**
+     * @return \Concrete\Core\Entity\Package[]
+     */
+    private function getInstalledPackages()
+    {
+        if ($this->installedPackages === null) {
+            $installedPackages = [];
+            $em = $this->app->make(EntityManagerInterface::class);
+            $repo = $em->getRepository(Package::class);
+            foreach ($repo->findAll() as $package) {
+                $installedPackages[$package->getPackageID()] = $package;
+            }
+            $this->installedPackages = $installedPackages;
+        }
+
+        return $this->installedPackages;
     }
 }

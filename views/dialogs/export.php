@@ -10,6 +10,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
  * @var Concrete\Core\View\View $view
  * @var int $cID
  * @var string $xml
+ * @var array $blockTypesAndPackages
  * @var Concrete\Core\Page\Page[]|string[] $pages
  * @var Concrete\Core\Entity\File\Version[]|string[] $fileVersions
  * @var Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface $resolverManager
@@ -17,6 +18,53 @@ defined('C5_EXECUTE') or die('Access Denied.');
 
 ?>
 <div style="display: flex; flex-direction: column; height: 100%;">
+    <div style="max-height: 200px; overflow-y: scroll">
+        <table class="table table-striped table-sm table-condensed caption-top">
+            <caption><strong><?= t('Block Types')?></strong></caption>
+            <colgroup>
+                <col width="1" />
+            </colgroup>
+            <thead>
+                <tr>
+                    <th class="text-nowrap"><?= t('Block Type') ?></th>
+                    <th><?= t('Package') ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                foreach ($blockTypesAndPackages as $blockTypeAndPackage) {
+                    extract($blockTypeAndPackage);
+                    /**
+                     * @var \Concrete\Core\Entity\Block\BlockType\BlockType $blockType
+                     * @var \Concrete\Core\Entity\Package|null $package
+                     */
+                    ?>
+                    <tr>
+                        <td class="text-nowrap">
+                            <?= h(t($blockType->getBlockTypeName())) ?><br />
+                            <div class="small text-muted"><?= t('Handle: %s', '<code>' . h($blockType->getBlockTypeHandle()) . '</code>') ?></div>
+                        </td>
+                        <td>
+                            <?php
+                            if ($package === null) {
+                                ?>
+                                <i><?= tc('Package', 'none') ?></i>
+                                <?php
+                            } else {
+                                ?>
+                                <?= h(t($package->getPackageName())) ?><br />
+                                <div class="small text-muted"><?= t('Handle: %s', '<code>' . h($package->getPackageHandle()) . '</code>') ?></div>
+                                <?php
+                            }
+                            ?>
+                        </td>
+                    </tr>
+                    <?php
+                }
+                ?>
+            </tbody>
+        </table>
+    </div>
     <?php
     if ($pages !== []) {
         ?>
