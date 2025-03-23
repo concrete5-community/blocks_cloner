@@ -55,7 +55,6 @@ jobs:
         run: |
           git config --local user.name 'GitHub Actions'
           git config --local user.email noreply@github.com
-          git add --all app
           git commit -m 'Update js/view.js'
           git push
 
