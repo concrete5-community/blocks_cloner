@@ -33,15 +33,15 @@ export function parseArea(element: HTMLElement): Area | null {
   if (element.tagName !== 'DIV') {
     return null;
   }
-  const id = Number(element.getAttribute('data-area-id')) || 0;
+  const id = Number(element.dataset.areaId) || 0;
   if (id <= 0) {
     return null;
   }
-  const handle = element.getAttribute('data-area-handle');
+  const handle = element.dataset.areaHandle;
   if (!handle) {
     return null;
   }
-  const displayName = element.getAttribute('data-area-display-name');
+  const displayName = element.dataset.areaDisplayName;
   if (!displayName) {
     return null;
   }
@@ -61,11 +61,11 @@ export function parseBlock(element: HTMLElement): Block | null {
   if (element.tagName !== 'DIV') {
     return null;
   }
-  const id = Number(element.getAttribute('data-block-id')) || 0;
+  const id = Number(element.dataset.blockId) || 0;
   if (id <= 0) {
     return null;
   }
-  const handle = element.getAttribute('data-block-type-handle');
+  const handle = element.dataset.blockTypeHandle;
   if (!handle) {
     return null;
   }

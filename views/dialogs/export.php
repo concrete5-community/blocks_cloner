@@ -191,8 +191,8 @@ defined('C5_EXECUTE') or die('Access Denied.');
             </div>
             <textarea id="blocks_cloner-export-xml" readonly nowrap spellcheck="false" class="form-control" style="flex-grow: 1; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 0.9em; resize: none"><?= htmlspecialchars($xml, ENT_QUOTES, APP_CHARSET) ?></textarea>
             <div class="text-end text-right" style="padding-top: 1rem">
-                <button type="button" class="btn btn-sm btn-primary" id="blocks_cloner-export-copy"><?= t('Copy') ?></button>
-                <button type="button" class="btn btn-sm btn-primary" id="blocks_cloner-export-copy-close"><?= h(t('Copy & Close')) ?></button>
+                <button type="button" class="btn btn-primary" id="blocks_cloner-export-copy"><?= t('Copy') ?></button>
+                <button type="button" class="btn btn-primary" id="blocks_cloner-export-copy-close"><?= h(t('Copy & Close')) ?></button>
             </div>
         </div>
     </div>

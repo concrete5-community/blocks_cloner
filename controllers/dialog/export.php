@@ -4,6 +4,7 @@ namespace Concrete\Package\BlocksCloner\Controller\Dialog;
 
 use Concrete\Core\Block\Block;
 use Concrete\Core\Entity\File\File;
+use Concrete\Core\Entity\File\Version as FileVersion;
 use Concrete\Core\Entity\Package;
 use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\File\Service\VolatileDirectory;
@@ -76,7 +77,11 @@ class Export extends AbstractController
     public function downloadFiles()
     {
         $fileVersions = $this->getFileVersionsToBeDownloaded(preg_split('/\D+/', (string) $this->request->query->get('fIDs'), -1, PREG_SPLIT_NO_EMPTY));
-        $this->sendZip($fileVersions);
+        if (count($fileVersions) === 1) {
+            $this->sendFile($fileVersions[0]);
+        } else {
+            $this->sendZip($fileVersions);
+        }
     }
 
     /**
@@ -107,6 +112,19 @@ class Export extends AbstractController
             $result[] = $fileVersion;
         }
         return $result;
+    }
+
+    /**
+     * @return never
+     */
+    private function sendFile(FileVersion $fileVersion)
+    {
+        $volatile = $this->app->make(VolatileDirectory::class);
+        $localFile = $volatile->getPath() . '/' . "{$fileVersion->getPrefix()}_{$fileVersion->getFilename()}";
+        if (file_put_contents($localFile, $fileVersion->getFileContents()) === false) {
+            throw new UserMessageException(t('Failed to the contents of the file'));
+        }
+        $this->app->make('helper/file')->forceDownload($localFile);
     }
 
     /**
