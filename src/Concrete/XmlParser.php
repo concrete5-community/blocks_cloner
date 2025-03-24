@@ -2,15 +2,11 @@
 
 namespace Concrete\Package\BlocksCloner;
 
-use Concrete\Core\Backup\ContentImporter\ValueInspector\InspectionRoutine\FileRoutine;
-use Concrete\Core\Backup\ContentImporter\ValueInspector\InspectionRoutine\ImageRoutine;
-use Concrete\Core\Backup\ContentImporter\ValueInspector\InspectionRoutine\PageRoutine;
-use Concrete\Core\Backup\ContentImporter\ValueInspector\InspectionRoutine\PictureRoutine;
+use Concrete\Core\Application\Application;
+use Concrete\Core\Backup\ContentImporter\ValueInspector\Item;
 use Concrete\Core\Entity\Block\BlockType\BlockType;
-use Concrete\Core\Entity\File\File;
 use Concrete\Core\Entity\File\Version;
 use Concrete\Core\Error\UserMessageException;
-use Concrete\Core\Page\Page;
 use Concrete\Core\Permission\Checker;
 use Doctrine\ORM\EntityManagerInterface;
 use DOMDocument;
@@ -21,49 +17,34 @@ defined('C5_EXECUTE') or die('Access Denied.');
 
 final class XmlParser
 {
+    const KEY_FILES = 'files';
+
+    const KEY_PAGES = 'pages';
+
+    const KEY_PAGETYPES = 'pageTypes';
+
     /**
      * @var \Doctrine\ORM\EntityManagerInterface
      */
     private $entityManager;
 
     /**
-     * @var \Concrete\Core\Backup\ContentImporter\ValueInspector\InspectionRoutine\PageRoutine
-     */
-    private $pageInspector;
-
-    /**
-     * @var \Concrete\Core\Backup\ContentImporter\ValueInspector\InspectionRoutine\FileRoutine
-     */
-    private $fileInspector;
-
-    /**
-     * @var \Concrete\Core\Backup\ContentImporter\ValueInspector\InspectionRoutine\ImageRoutine
-     */
-    private $imageInspector;
-
-    /**
-     * @var \Concrete\Core\Backup\ContentImporter\ValueInspector\InspectionRoutine\PictureRoutine
-     */
-    private $pictureInspector;
-
-    /**
      * @var \Concrete\Core\Entity\Block\BlockType\BlockType[]|null
      */
     private $installedBlockTypes;
 
+    /**
+     * @var \Concrete\Core\Backup\ContentImporter\ValueInspector\ValueInspectorInterface
+     */
+    private $valueInspector;
+
     public function __construct(
         EntityManagerInterface $entityManager,
-        PageRoutine $pageInspector,
-        FileRoutine $fileInspector,
-        ImageRoutine $imageInspector,
-        PictureRoutine $pictureInspector
+        Application $valueInspectorProvider
     )
     {
         $this->entityManager = $entityManager;
-        $this->pageInspector = $pageInspector;
-        $this->fileInspector = $fileInspector;
-        $this->imageInspector = $imageInspector;
-        $this->pictureInspector = $pictureInspector;
+        $this->valueInspector = $valueInspectorProvider->make('import/value_inspector');
     }
 
     /**
@@ -93,39 +74,26 @@ final class XmlParser
     }
 
     /**
-     * @param \SimpleXMLElement|\DOMDocument|\DOMElement|string $xml
-     *
-     * @throws \Concrete\Core\Error\UserMessageException
-     *
-     * @return array Array keys are the page paths, array values are Page instances (or a string in case of errors)
-     */
-    public function findPages($xml)
-    {
-        $xml = $this->ensureSimpleXMLElement($xml);
-        $result = [];
-        foreach ($this->extractStrings($xml) as $str) {
-            $this->extractPages($str, $result);
-        }
-
-        return $result;
-    }
-
     /**
      * @param \SimpleXMLElement|\DOMDocument|\DOMElement|string $xml
      *
      * @throws \Concrete\Core\Error\UserMessageException
      *
-     * @return array Array keys are the file identifiers, array values are File Version instances (or a string in case of errors)
+     * @return array
      */
-    public function findFileVersions($xml)
+    public function findItems($xml)
     {
         $xml = $this->ensureSimpleXMLElement($xml);
         $result = [];
-        foreach ($this->extractStrings($xml) as $str) {
-            $this->extractFileVersions($str, $result);
+        foreach ($this->extractStrings($xml) as $content) {
+            $inspectionResult = $this->valueInspector->inspect($content);
+            foreach ($inspectionResult->getMatchedItems() as $item) {
+                $this->parseFoundItem($item, $result);
+            }
         }
-        $this->removeDuplicatedFileVersions($result);
-        $this->filterAccessibleFileVersions($result);
+        if (isset($result[self::KEY_FILES])) {
+            $this->filterAccessibleFileVersions($result[self::KEY_FILES]);
+        }
 
         return $result;
     }
@@ -207,69 +175,43 @@ final class XmlParser
         }
     }
 
-    /**
-     * @param string $str
-     *
-     * @return void
-     */
-    private function extractPages($str, array &$result)
+    private function parseFoundItem(Item\ItemInterface $item, array &$result)
     {
-        // Process {ccm:export:page:/path/to/page}
-        $items = $this->pageInspector->match($str);
-        /**
-         * @var \Concrete\Core\Backup\ContentImporter\ValueInspector\Item\PageItem[] $items
-         */
-        foreach ($items as $item) {
-            $key = '/' . trim($item->getReference(), '/');
-            if (!array_key_exists($key, $result)) {
-                $page = $item->getContentObject();
-                $result[$key] = $page instanceof Page && !$page->isError() ? $page : t('Page not found');
-            }
+        if ($item instanceof Item\FileItem) {
+            $this->parseFoundFile($item, $result);
+        } elseif ($item instanceof Item\PageItem) {
+            $this->parseFoundPage($item, $result);
+        } elseif ($item instanceof Item\PageTypeItem) {
+            $this->parseFoundPageType($item, $result);
+        } else {
+            throw new UserMessageException(t('Unable to handle items of type %s', $item->getDisplayName()));
         }
     }
 
-    /**
-     * @param string $str
-     *
-     * @return void
-     */
-    private function extractFileVersions($str, array &$result)
+    private function parseFoundFile(Item\FileItem $item, array &$result)
     {
-        $items = array_merge(
-            // Process {ccm:export:file:123456789012:filename.png}
-            $this->fileInspector->match($str),
-            // Process {ccm:export:image:123456789012:filename.png}
-            $this->imageInspector->match($str),
-            // Process <concrete-picture file="filename.png" />
-            $this->pictureInspector->match($str)
-        );
-        /**
-         * @var \Concrete\Core\Backup\ContentImporter\ValueInspector\Item\FileItem[]|\Concrete\Core\Backup\ContentImporter\ValueInspector\Item\ImageItem[]|\Concrete\Core\Backup\ContentImporter\ValueInspector\Item\PictureItem[] $items
-         */
-        foreach ($items as $item) {
-            $key = $item->getReference();
-            if (!array_key_exists($key, $result)) {
-                $file = $item->getContentObject();
-                $fileVersion = $file instanceof File ? $file->getApprovedVersion() : null;
-                $result[$key] = $fileVersion instanceof Version ? $fileVersion : t('File not found');
-            }
+        if (!isset($result[self::KEY_FILES])) {
+            $result[self::KEY_FILES] = [];
         }
-    }
-
-    private function removeDuplicatedFileVersions(array &$list)
-    {
-        $keys = array_keys($list);
-        $remainingItems = $list;
-        usort($keys, static function ($a, $b) { return mb_strlen((string) $a) - mb_strlen((string) $b); });
-        while (true) {
-            $key = array_shift($keys);
-            if ($keys === []) {
-                break;
-            }
-            $item = $remainingItems[$key];
-            unset($remainingItems[$key]);
-            if ($item instanceof Version && in_array($item, $remainingItems, true)) {
-                unset($list[$key]);
+        $key = $item->getReference();
+        if (array_key_exists($key, $result[self::KEY_FILES])) {
+            return;
+        }
+        $file = $item->getContentObject();
+        if ($file === null) {
+            $result[self::KEY_FILES][$key] = t('File not found');
+        } else {
+            $fileVersion = $file->getApprovedVersion();
+            if ($fileVersion === null) {
+                $result[self::KEY_FILES][$key] = t('File without an approved version');
+            } else {
+                $existingKey = array_search($fileVersion, $result[self::KEY_FILES], true);
+                if ($existingKey === false || strlen((string) $existingKey) < strlen($key)) {
+                    $result[self::KEY_FILES][$key] = $fileVersion;
+                    if ($existingKey !== false) {
+                        unset($result[self::KEY_FILES][$existingKey]);
+                    }
+                }
             }
         }
     }
@@ -288,6 +230,32 @@ final class XmlParser
         }
     }
 
+    private function parseFoundPage(Item\PageItem $item, array &$result)
+    {
+        if (!isset($result[self::KEY_PAGES])) {
+            $result[self::KEY_PAGES] = [];
+        }
+        $key = '/' . trim($item->getReference(), '/');
+        if (array_key_exists($key, $result[self::KEY_PAGES])) {
+            return;
+        }
+        $page = $item->getContentObject();
+        $result[self::KEY_PAGES][$key] = $page ?: t('Page not found');
+    }
+
+    private function parseFoundPageType(Item\PageTypeItem $item, array &$result)
+    {
+        if (!isset($result[self::KEY_PAGETYPES])) {
+            $result[self::KEY_PAGETYPES] = [];
+        }
+        $key = $item->getReference();
+        if (array_key_exists($key, $result[self::KEY_PAGETYPES])) {
+            return;
+        }
+        $pageType = $item->getContentObject();
+        $result[self::KEY_PAGETYPES][$key] = $pageType ?: t('Page Type not found');
+    }
+    
     /**
      * @return \Concrete\Core\Entity\Block\BlockType\BlockType[]
      */

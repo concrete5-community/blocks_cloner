@@ -16,7 +16,9 @@ use Concrete\Core\File\Service\VolatileDirectory;
 use Concrete\Core\File\Service\Zip;
 use Concrete\Core\Http\ResponseFactoryInterface;
 use Concrete\Core\Page\Page;
+use Concrete\Core\Page\Type\Type as PageType;
 use Concrete\Core\Permission\Checker;
+use Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface;
 use Concrete\Core\Validation\CSRF\Token;
 use Concrete\Package\BlocksCloner\Controller\AbstractController;
 use Concrete\Package\BlocksCloner\ImportChecker;
@@ -67,6 +69,13 @@ class Import extends AbstractController
         $importChecker->checkArea($area);
         $this->set('area', $area);
         $this->set('token', $this->app->make(Token::class));
+        $resolverManager = $this->app->make(ResolverManagerInterface::class);
+        $page = Page::getByPath('/dashboard/sitemap/full');
+        if ($page && !$page->isError() && (new Checker($page))->canViewPage()) {
+            $this->set('sitemapPageUrl', (string) $resolverManager->resolve([$page]));
+        } else {
+            $this->set('sitemapPageUrl', '');
+        }
     }
 
     /**
@@ -98,7 +107,7 @@ class Import extends AbstractController
             $installedPackages = $this->getInstalledPackages();
             $result['blockTypes'] = [];
             $checker = new Checker($this->getPage());
-            foreach ($parser->findBlockTypes($xml) as $blockType) {
+            foreach ($parser->findBlockTypes($sx) as $blockType) {
                 if (!$checker->canAddBlockType($blockType)) {
                     throw new UserMessageException(t("You can't add blocks of type %s to this page.", t($blockType->getBlockTypeName())));
                 }
@@ -114,37 +123,49 @@ class Import extends AbstractController
                     ] : null,
                 ];
             }
-            $result['files'] = [];
-            foreach ($parser->findFileVersions($sx) as $key => $item) {
-                $serialized = [
-                    'key' => $key,
-                ];
-                if ($item instanceof Version) {
-                    $serialized += [
-                        'fID' => $item->getFileID(),
-                        'prefix' => $item->getPrefix(),
-                        'name' => $item->getFileName(),
-                    ];
-                } else {
-                    $serialized['error'] = $item;
+            foreach ($parser->findItems($sx) as $categoryKey => $items) {
+                $result[$categoryKey] = [];
+                foreach ($items as $itemKey => $item) {
+                    $serialized = ['key' => $itemKey];
+                    switch ($categoryKey) {
+                        case XmlParser::KEY_FILES:
+                            if ($item instanceof Version) {
+                                $serialized += [
+                                    'fID' => $item->getFileID(),
+                                    'prefix' => $item->getPrefix(),
+                                    'name' => $item->getFileName(),
+                                ];
+                            } else {
+                                $serialized['error'] = $item;
+                            }
+                            break;
+                        case XmlParser::KEY_PAGES:
+                            if ($item instanceof Page) {
+                                $serialized += [
+                                    'cID' => (int) $item->getCollectionID(),
+                                    'name' => (string) $item->getCollectionName(),
+                                    'link' => (string) $item->getCollectionLink(),
+                                ];
+                            } else {
+                                $serialized['error'] = $item;
+                            }
+                            break;
+                        case XmlParser::KEY_PAGETYPES:
+                            if ($item instanceof PageType) {
+                                $serialized += [
+                                    'name' => (string) t($item->getPageTypeName()),
+                                    'id' => $item->getPageTypeID(),
+                                ];
+                            } else {
+                                $serialized['error'] = $item;
+                            }
+                            break;
+                        default:
+                            $serialized['error'] = t('Unsuppored category: %s', $categoryKey);
+                            break;
+                    }
+                    $result[$categoryKey][] = $serialized;
                 }
-                $result['files'][] = $serialized;
-            }
-            $result['pages'] = [];
-            foreach ($parser->findPages($sx) as $key => $item) {
-                $serialized = [
-                    'path' => $key,
-                ];
-                if ($item instanceof Page) {
-                    $serialized += [
-                        'cID' => (int) $item->getCollectionID(),
-                        'name' => (string) $item->getCollectionName(),
-                        'link' => (string) $item->getCollectionLink(),
-                    ];
-                } else {
-                    $serialized['error'] = $item;
-                }
-                $result['pages'][] = $serialized;
             }
 
             return $this->app->make(ResponseFactoryInterface::class)->json($result);

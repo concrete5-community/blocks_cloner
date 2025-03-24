@@ -2,6 +2,8 @@
 
 use Concrete\Core\Entity\File\Version;
 use Concrete\Core\Page\Page;
+use Concrete\Core\Page\Type\Type as PageType;
+use Concrete\Package\BlocksCloner\XmlParser;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -11,8 +13,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
  * @var int $cID
  * @var string $xml
  * @var array $blockTypesAndPackages
- * @var Concrete\Core\Page\Page[]|string[] $pages
- * @var Concrete\Core\Entity\File\Version[]|string[] $fileVersions
+ * @var array $references
  * @var Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface $resolverManager
  */
 
@@ -24,12 +25,6 @@ defined('C5_EXECUTE') or die('Access Denied.');
             <colgroup>
                 <col width="1" />
             </colgroup>
-            <thead>
-                <tr>
-                    <th class="text-nowrap"><?= t('Block Type') ?></th>
-                    <th><?= t('Package') ?></th>
-                </tr>
-            </thead>
             <tbody>
                 <?php
                 foreach ($blockTypesAndPackages as $blockTypeAndPackage) {
@@ -48,11 +43,11 @@ defined('C5_EXECUTE') or die('Access Denied.');
                             <?php
                             if ($package === null) {
                                 ?>
-                                <i><?= tc('Package', 'none') ?></i>
+                                <i><?= t('Provided by %s', 'Concrete') ?></i>
                                 <?php
                             } else {
                                 ?>
-                                <?= h(t($package->getPackageName())) ?><br />
+                                <?= h(t('Provided by package %s', $package->getPackageName())) ?><br />
                                 <div class="small text-muted"><?= t('Handle: %s', '<code>' . h($package->getPackageHandle()) . '</code>') ?></div>
                                 <?php
                             }
@@ -66,17 +61,21 @@ defined('C5_EXECUTE') or die('Access Denied.');
         </table>
     </div>
     <?php
-    if ($pages !== []) {
+    if (!empty($references[XmlParser::KEY_PAGES])) {
         ?>
         <div style="max-height: 200px; overflow-y: scroll">
-            <table class="table table-striped table-sm table-condensed caption-top" style="width: auto">
+            <table class="table table-striped table-sm table-condensed caption-top">
                 <caption><strong><?= t('Referenced Pages')?></strong></caption>
+                <colgroup>
+                    <col width="1" />
+                    <col width="1" />
+                </colgroup>
                 <tbody>
                     <?php
-                    foreach ($pages as $path => $page) {
+                    foreach ($references[XmlParser::KEY_PAGES] as $key => $page) {
                         ?>
                         <tr>
-                            <td>
+                            <td style="white-space: nowrap">
                                 <?php
                                 if ($page instanceof Page) {
                                     ?>
@@ -89,8 +88,8 @@ defined('C5_EXECUTE') or die('Access Denied.');
                                 }
                                 ?>
                             </td>
-                            <td>
-                                <code><?= h($path) ?></code>
+                            <td style="white-space: nowrap">
+                                <code><?= h($key) ?></code>
                             </td>
                             <td>
                                 <?php
@@ -114,21 +113,36 @@ defined('C5_EXECUTE') or die('Access Denied.');
         </div>
         <?php
     }
-    if ($fileVersions !== []) {
+    if (!empty($references[XmlParser::KEY_FILES])) {
+        $fileIDs = [];
+        foreach ($references[XmlParser::KEY_FILES] as $key => $fileVersion) {
+            if ($fileVersion instanceof Version) {
+                $fileIDs[] = $fileVersion->getFileID();
+            }
+        }
         ?>
         <div style="max-height: 200px; overflow-y: scroll">
-            <table class="table table-striped table-sm table-condensed caption-top" style="width: auto">
-                <caption><strong><?= t('Used Files and Images')?></strong></caption>
+            <table class="table table-striped table-sm table-condensed caption-top">
+                <caption>
+                    <strong><?= t('Used Files and Images') ?></strong>
+                    <?php
+                    if (count($fileIDs) > 1) {
+                        ?>
+                        - <a href="<?= h($resolverManager->resolve(['/ccm/blocks_cloner/dialogs/export/files']) . "?cID={$cID}&fIDs=" . implode(',', $fileIDs)) ?>"><?= t('Download All') ?></a>
+                        <?php
+                    }
+                    ?>
+                </caption>
+                <colgroup>
+                    <col width="1" />
+                    <col width="1" />
+                </colgroup>
                 <tbody>
                     <?php
-                    $fileIDs = [];
-                    foreach ($fileVersions as $key => $fileVersion) {
-                        if ($fileVersion instanceof Version) {
-                            $fileIDs[] = $fileVersion->getFileID();
-                        }
+                    foreach ($references[XmlParser::KEY_FILES] as $key => $fileVersion) {
                         ?>
                         <tr>
-                            <td>
+                            <td style="white-space: nowrap">
                                 <?php
                                 if ($fileVersion instanceof Version) {
                                     ?>
@@ -143,7 +157,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
                                 }
                                 ?>
                             </td>
-                            <td>
+                            <td style="white-space: nowrap">
                                 <code><?= h($key) ?></code>
                             </td>
                             <td>
@@ -164,21 +178,44 @@ defined('C5_EXECUTE') or die('Access Denied.');
                     }
                     ?>
                 </tbody>
-                <?php
-                if (count($fileIDs) > 1) {
-                    ?>
-                    <tfoot>
+            </table>
+        </div>
+        <?php
+    }
+    if (isset($references[XmlParser::KEY_PAGETYPES])) {
+        ?>
+        <div style="max-height: 200px; overflow-y: scroll">
+            <table class="table table-striped table-sm table-condensed caption-top">
+                <caption><strong><?= t('Referenced Page Types')?></strong></caption>
+                <colgroup>
+                    <col width="1" />
+                </colgroup>
+                <tbody>
+                    <?php
+                    foreach ($references[XmlParser::KEY_PAGETYPES] as $key => $pageType) {
+                        ?>
                         <tr>
+                            <td style="white-space: nowrap">
+                                <code><?= h($key) ?></code>
+                            </td>
                             <td>
-                                <a class="btn btn-sm btn-xs btn-primary" href="<?= h($resolverManager->resolve(['/ccm/blocks_cloner/dialogs/export/files']) . "?cID={$cID}&fIDs=" . implode(',', $fileIDs)) ?>">
-                                    <?= t('Download All') ?>
-                                </a>
+                                <?php
+                                if ($pageType instanceof PageType) {
+                                    ?>
+                                    <?= h($pageType->getPageTypeName()) ?>
+                                    <?php
+                                } else {
+                                    ?>
+                                    <i><?= h($page) ?></i>
+                                    <?php
+                                }
+                                ?>
                             </td>
                         </tr>
-                    </tfoot>
-                    <?php
-                }
-                ?>
+                        <?php
+                    }
+                    ?>
+                </tbody>
             </table>
         </div>
         <?php
