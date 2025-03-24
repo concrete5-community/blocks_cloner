@@ -8,6 +8,12 @@ use Concrete\Core\Database\Connection\Connection;
 use Concrete\Core\Entity\File\Version;
 use Concrete\Core\Entity\Package;
 use Concrete\Core\Error\UserMessageException;
+use Concrete\Core\File\Filesystem;
+use Concrete\Core\File\Import\FileImporter;
+use Concrete\Core\File\Import\ImportException;
+use Concrete\Core\File\Import\ImportOptions;
+use Concrete\Core\File\Service\VolatileDirectory;
+use Concrete\Core\File\Service\Zip;
 use Concrete\Core\Http\ResponseFactoryInterface;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Permission\Checker;
@@ -18,6 +24,7 @@ use Concrete\Package\BlocksCloner\XmlParser;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use SimpleXMLElement;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Throwable;
 
 defined('C5_EXECUTE') or die('Access Denied.');
@@ -48,11 +55,11 @@ class Import extends AbstractController
         if (!$aID) {
             throw new UserMessageException(t('Access Denied'));
         }
-        $aHandle = (string) $this->request->query->get('aHandle');
-        if ($aHandle === '') {
+        $areaHandle = (string) $this->request->query->get('aHandle');
+        if ($areaHandle === '') {
             throw new UserMessageException(t('Access Denied'));
         }
-        $area = Area::get($this->getPage(), $aHandle);
+        $area = Area::get($this->getPage(), $areaHandle);
         if (!$area || $area->isError() || $area->getAreaID() != $aID) {
             throw new UserMessageException(t('Access Denied'));
         }
@@ -72,11 +79,11 @@ class Import extends AbstractController
             if (!$aID) {
                 throw new UserMessageException(t('Access Denied'));
             }
-            $aHandle = (string) $this->request->request->get('aHandle');
-            if ($aHandle === '') {
+            $areaHandle = (string) $this->request->request->get('aHandle');
+            if ($areaHandle === '') {
                 throw new UserMessageException(t('Access Denied'));
             }
-            $area = Area::get($this->getPage(), $aHandle);
+            $area = Area::get($this->getPage(), $areaHandle);
             if (!$area || $area->isError() || $area->getAreaID() != $aID) {
                 throw new UserMessageException(t('Access Denied'));
             }
@@ -85,7 +92,7 @@ class Import extends AbstractController
             $xml = $this->request->request->get('xml');
             $sx = $this->loadXml($xml);
             $result = [
-                'importToken' => $this->app->make(Token::class)->generate('blocks_cloner:import:' . $this->cID . ':'. sha1($xml)),
+                'importToken' => $this->app->make(Token::class)->generate("blocks_cloner:import:{$this->cID}:{$areaHandle}:" . sha1($xml)),
             ];
             $parser = $this->app->make(XmlParser::class);
             $installedPackages = $this->getInstalledPackages();
@@ -147,6 +154,54 @@ class Import extends AbstractController
             return $this->buildErrorResponse($x);
         }
     }
+    /**
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function uploadFile()
+    {
+        try {
+            $token = $this->app->make(Token::class);
+            if (!$token->validate('blocks_cloner:import:uploadFile')) {
+                throw new UserMessageException($token->getErrorMessage());
+            }
+            $file = $this->request->files->get('file');
+            if (!$file) {
+                throw new UserMessageException(t('No files uploaded'));
+            }
+            /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $file */
+            if (!$file->isValid()) {
+                throw ImportException::fromErrorCode($file->getError());
+            }
+            $volatile = $this->app->make(VolatileDirectory::class);
+            $fileInfos = $this->parseUploadedFile(
+                $file,
+                filter_var($this->request->request->get('decompressZip'), FILTER_VALIDATE_BOOLEAN),
+                $volatile
+            );
+            $this->checkUploadedFiles($fileInfos);
+            $importer = $this->app->make(FileImporter::class);
+            $importOptions = $this->app->make(ImportOptions::class)
+                ->setCanChangeLocalFile(true)
+            ;
+            $matches = null;
+            foreach ($fileInfos as $fileInfo) {
+                $name = $fileInfo['name'];
+                $prefix = '';
+                if (preg_match('/^([0-9]{12}]*)\_(.*)$/', $name, $matches)) {
+                    $prefix = $matches[1];
+                    $name = $matches[2];
+                }
+                $importOptions->setCustomPrefix($prefix);
+                $importer->importLocalFile($fileInfo['file']->getPathname(), $name, $importOptions);
+            }
+
+            return $this->app->make(ResponseFactoryInterface::class)->json(true);
+        } catch (Exception $x) {
+            return $this->buildErrorResponse($x);
+        } catch (Throwable $x) {
+            return $this->buildErrorResponse($x);
+        }
+    }
 
     /**
      * @return \Symfony\Component\HttpFoundation\JsonResponse
@@ -158,13 +213,13 @@ class Import extends AbstractController
             if (!$xml || !is_string($xml)) {
                 throw new UserMessageException(t('Access Denied'));
             }
-            $token = $this->app->make(Token::class);
-            if (!$token->validate('blocks_cloner:import:' . $this->cID . ':'. sha1($xml))) {
-                throw new UserMessageException($token->getErrorMessage());
-            }
             $areaHandle = (string) $this->request->request->get('areaHandle');
             if ($areaHandle === '') {
                 throw new UserMessageException(t('Access Denied'));
+            }
+            $token = $this->app->make(Token::class);
+            if (!$token->validate("blocks_cloner:import:{$this->cID}:{$areaHandle}:" . sha1($xml))) {
+                throw new UserMessageException($token->getErrorMessage());
             }
             $sx = $this->loadXml($xml);
             $area = Area::get($this->getPage(), $areaHandle);
@@ -354,7 +409,54 @@ class Import extends AbstractController
             throw new Exception(('Unable to find the requested block'));
         }
         array_splice($result, $beforeBlockIDIndex, 0, [$blockID]);
-        
+
         return $result;
+    }
+
+    /**
+     * @param bool $decompressZip
+     *
+     * @return array[] A list of ['name' => filename, 'file' => an instance of \SplFileInfo]
+     */
+    private function parseUploadedFile(UploadedFile $uploadedFile, $decompressZip, VolatileDirectory $volatile)
+    {
+        if (!preg_match('/\.zip$/i', $uploadedFile->getClientOriginalName()) || !$decompressZip) {
+            return [
+                ['name' => $uploadedFile->getClientOriginalName(), 'file' => $uploadedFile],
+            ];
+        }
+        $zip = $this->app->make(Zip::class);
+        $zip->unzip($uploadedFile->getPathname(), $volatile->getPath());
+
+        $result = [];
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($volatile->getPath(), \RecursiveDirectoryIterator::SKIP_DOTS | \RecursiveDirectoryIterator::CURRENT_AS_FILEINFO),
+            \RecursiveIteratorIterator::LEAVES_ONLY
+        );
+        foreach ($iterator as $file) {
+            /** @var \SplFileInfo $file */
+            $result[] = ['name' => $file->getFilename(), 'file' => $file];
+        }
+        if ($result === []) {
+            throw new UserMessageException(t('The ZIP archive does not contain any file'));
+        }
+
+        return $result;
+    }
+
+    private function checkUploadedFiles(array $fileInfos)
+    {
+        $rootFolder = $this->app->make(Filesystem::class)->getRootFolder();
+        if (!$rootFolder) {
+            throw new UserMessageException(t('Failed to retrieve the Concrete root folder'));
+        }
+        $checker = new Checker($rootFolder);
+        $fileService = $this->app->make('helper/file');
+        foreach ($fileInfos as $fileInfo) {
+            $fileExtension = $fileService->getExtension($fileInfo['name']);
+            if (!$checker->canAddFileType($fileExtension)) {
+                throw new ImportException(ImportException::E_FILE_INVALID_EXTENSION);
+            }
+        }
     }
 }
