@@ -27,7 +27,7 @@ class Controller extends Package implements ProviderAggregateInterface
      *
      * @see \Concrete\Core\Package\Package::$appVersionRequired
      */
-    protected $appVersionRequired = '8.5.2';
+    protected $appVersionRequired = '8.5.4';
 
     /**
      * {@inheritdoc}

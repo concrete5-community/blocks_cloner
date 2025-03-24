@@ -11,7 +11,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
  */
 
 ?>
-<div id="ccm-blockscloker-import" v-cloak style="display: flex; height: 100%; width: 100%">
+<div id="ccm-blockscloker-import" v-cloak style="display: flex; height: 100%; width: 100%" v-cloak>
     <div v-if="step === STEPS.INPUT" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
         <div style="flex-grow: 1; display: flex; flex-direction: row">
             <div style="display: flex; flex-direction: column; height: 100%; flex: 1">
@@ -94,6 +94,9 @@ defined('C5_EXECUTE') or die('Access Denied.');
                     </tr>
                 </tbody>
             </table>
+            <div v-if="showUploadFiles">
+                <button class="btn btn-sm btn-secondary btn-default" v-on:click.prevent="pickFile()"><?= t('Upload File') ?></button>
+            </div>
             <table v-if="referenced.pages.length" class="table table-sm table-contensed caption-top">
                 <caption><?= t('Referenced Pages') ?></caption>
                 <thead>
@@ -120,6 +123,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
             <button v-on:click.prevent="importXml()" v-bind:disabled="busy" class="btn btn-primary"><?= t('Import') ?></button>
         </div>
     </div>
+    <input type="file" ref="pickFile" style="display: none" />
 </div>
 <script>$(document).ready(function() {
 
@@ -172,6 +176,9 @@ new Vue({
     },
     mounted() {
         this.$nextTick(() => this.$refs.xml.focus());
+        this.$refs.pickFile.addEventListener('change', (e) => {
+            this.pickFileChanged();
+        });
     },
     computed: {
         xmlInputError() {
@@ -193,6 +200,9 @@ new Vue({
             }
             return '';
         },
+        showUploadFiles() {
+            return this.referenced.files.some((file) => file.error);
+        },
     },
     methods: {
         async analyzeXml() {
@@ -209,8 +219,10 @@ new Vue({
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
+                        Accept: 'application/json',
                     },
                     body: new URLSearchParams([
+                        ['__ccm_consider_request_as_xhr', '1'],
                         ['aID', <?= $area->getAreaID() ?>],
                         ['aHandle', <?= json_encode($area->getAreaHandle()) ?>],
                         ['xml', this.xml],
@@ -245,6 +257,57 @@ new Vue({
             }
             this.step = this.STEPS.CHECK;
         },
+        pickFile() {
+            this.$refs.pickFile.click();
+        },
+        async pickFileChanged() {
+            let reanalyze = false;
+            try {
+                if (this.busy || this.step !== this.STEPS.CHECK) {
+                    return;
+                }
+                const file = this.$refs.pickFile.files?.length === 1 ? this.$refs.pickFile.files[0] : null;
+                if (!file) {
+                    return;
+                }
+                const decompressZip = /\.zip$/i.test(file.name) && window.confirm(<?= json_encode(t('Should the ZIP archive be extracted?')) ?>);
+                this.busy = true;
+                try {
+                    const request = {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                        },
+                        body: new FormData(),
+                    };
+                    request.body.append('file', file);
+                    request.body.append('decompressZip', decompressZip ? 'true' : 'false');
+                    request.body.append('__ccm_consider_request_as_xhr', '1');
+                    request.body.append(<?= json_encode($token::DEFAULT_TOKEN_NAME) ?>, <?= json_encode($token->generate('blocks_cloner:import:uploadFile')) ?>);
+                    const response = await window.fetch(
+                        `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/upload-file?cID=<?= $cID ?>`,
+                        request
+                    );
+                    const responseData = await response.json();
+                    if (responseData.error) {
+                        throw new Error(responseData.error);
+                    }
+                    reanalyze = true;
+                } finally {
+                    this.busy = false;
+                }
+            } catch (e) {
+                window.ConcreteAlert.error({
+                    message: e?.messsage || e?.toString() || <?= json_encode(t('Unknown error')) ?>,
+                    delay: 5000,
+                });
+            } finally {
+                this.$refs.pickFile.value = '';
+            }
+            if (reanalyze) {
+                this.analyzeXml();
+            }
+        },
         async importXml() {
             if (this.busy) {
                 return false;
@@ -264,12 +327,14 @@ new Vue({
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
+                        Accept: 'application/json',
                     },
                     body: new URLSearchParams([
                         [<?= json_encode($token::DEFAULT_TOKEN_NAME) ?>, this.importToken],
                         ['xml', this.xml],
                         ['areaHandle', <?= json_encode($area->arHandle) ?>],
                         ['beforeBlockID', this.addBefore?.id || ''],
+                        ['__ccm_consider_request_as_xhr', '1'],
                     ]),
                 };
                 const response = await window.fetch(

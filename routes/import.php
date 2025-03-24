@@ -14,4 +14,5 @@ defined('C5_EXECUTE') or die('Access Denied.');
 $router->all('panels/import', 'Panel\Import::view');
 $router->get('dialogs/import', 'Dialog\Import::view');
 $router->post('dialogs/import/analyze', 'Dialog\Import::analyze');
+$router->post('dialogs/import/upload-file', 'Dialog\Import::uploadFile');
 $router->post('dialogs/import/import', 'Dialog\Import::import');
