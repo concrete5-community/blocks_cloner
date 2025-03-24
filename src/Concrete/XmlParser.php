@@ -23,6 +23,8 @@ final class XmlParser
 
     const KEY_PAGETYPES = 'pageTypes';
 
+    const KEY_PAGEFEEDS = 'pageFeeds';
+
     /**
      * @var \Doctrine\ORM\EntityManagerInterface
      */
@@ -183,6 +185,8 @@ final class XmlParser
             $this->parseFoundPage($item, $result);
         } elseif ($item instanceof Item\PageTypeItem) {
             $this->parseFoundPageType($item, $result);
+        } elseif ($item instanceof Item\PageFeedItem) {
+            $this->parseFoundPageFeed($item, $result);
         } else {
             throw new UserMessageException(t('Unable to handle items of type %s', $item->getDisplayName()));
         }
@@ -254,6 +258,19 @@ final class XmlParser
         }
         $pageType = $item->getContentObject();
         $result[self::KEY_PAGETYPES][$key] = $pageType ?: t('Page Type not found');
+    }
+
+    private function parseFoundPageFeed(Item\PageFeedItem $item, array &$result)
+    {
+        if (!isset($result[self::KEY_PAGEFEEDS])) {
+            $result[self::KEY_PAGEFEEDS] = [];
+        }
+        $key = $item->getReference();
+        if (array_key_exists($key, $result[self::KEY_PAGEFEEDS])) {
+            return;
+        }
+        $pageType = $item->getContentObject();
+        $result[self::KEY_PAGEFEEDS][$key] = $pageType ?: t('Page Feed not found');
     }
     
     /**

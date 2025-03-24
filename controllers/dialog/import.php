@@ -5,6 +5,7 @@ namespace Concrete\Package\BlocksCloner\Controller\Dialog;
 use Concrete\Core\Area\Area;
 use Concrete\Core\Block\Block;
 use Concrete\Core\Database\Connection\Connection;
+use Concrete\Core\Entity\Page\Feed as PageFeed;
 use Concrete\Core\Entity\File\Version;
 use Concrete\Core\Entity\Package;
 use Concrete\Core\Error\UserMessageException;
@@ -155,6 +156,15 @@ class Import extends AbstractController
                                 $serialized += [
                                     'name' => (string) t($item->getPageTypeName()),
                                     'id' => $item->getPageTypeID(),
+                                ];
+                            } else {
+                                $serialized['error'] = $item;
+                            }
+                            break;
+                        case XmlParser::KEY_PAGEFEEDS:
+                            if ($item instanceof PageFeed) {
+                                $serialized += [
+                                    'title' => $item->getFeedDisplayTitle('text'),
                                 ];
                             } else {
                                 $serialized['error'] = $item;

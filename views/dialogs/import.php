@@ -168,6 +168,29 @@ defined('C5_EXECUTE') or die('Access Denied.');
                     </tr>
                 </tbody>
             </table>
+            <table v-if="referenced.pageFeeds.length" class="table table-sm table-contensed caption-top">
+                <caption>
+                    <strong><?= t('Referenced RSS Page Feeds') ?></strong>
+                </caption>
+                <colgroup>
+                    <col width="1" />
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th style="white-space: nowrap"><?= t('Handle') ?></th>
+                        <th><?= t('Title') ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="i in referenced.pageFeeds">
+                        <td style="white-space: nowrap"><code>{{ i.key }}</code></td>
+                        <td>
+                            <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
+                            <a v-else target="_blank" v-bind:href="i.link" v-bind:title="`<?= t('ID: %s', '${i.cID}') ?>`">{{ i.title }}</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
         <div class="text-right text-end">
             <button v-on:click.prevent="step = STEPS.INPUT" v-bind:disabled="busy" class="btn btn-secondary btn-default"><?= t('Back') ?></button>
@@ -225,6 +248,7 @@ new Vue({
                 files: [],
                 pages: [],
                 pageTypes: [],
+                pageFeeds: [],
             },
         };
     },
