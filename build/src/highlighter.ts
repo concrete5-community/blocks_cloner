@@ -1,12 +1,10 @@
 let currentItemHighlighed: HTMLElement | null = null;
 
-type StyleKey = keyof CSSStyleDeclaration;
-
-const HIGHLIGHTED_STYLE: Partial<Record<StyleKey, string | number>> = {
-  outline: '1px solid red',
-  boxShadow: '0 0 3px 3px #ff0000',
-  transition: 'box-shadow 0.5s, outline 0.5s',
-};
+const HIGHLIGHTED_STYLE: Map<keyof CSSStyleDeclaration, string> = new Map([
+  ['outline', '1px solid red'],
+  ['boxShadow', '0 0 3px 3px #ff0000'],
+  ['transition', 'box-shadow 0.5s, outline 0.5s'],
+]);
 
 function checkElementInViewport(el: HTMLElement, callback: (isInViewport: boolean) => void): void {
   const onIntersection = (entries: IntersectionObserverEntry[], observer: IntersectionObserver): void => {
@@ -49,20 +47,20 @@ export function setElementHighlighted(element: HTMLElement, highlight: boolean, 
   }
   const wasHighlighted = element.dataset.blocksClonerHighlighted === '1';
   if (highlight !== wasHighlighted) {
-    const elementStyle: any = element.style;
     if (highlight) {
-      for (const [key, value] of Object.entries(HIGHLIGHTED_STYLE)) {
-        element.dataset[`blocksClonerRestore${key}`] = (elementStyle[key] || '').toString();
-        elementStyle[key] = value;
-      }
+      HIGHLIGHTED_STYLE.forEach((newStyleValue, styleProperty) => {
+        element.dataset[`blocksClonerRestore${styleProperty}`] = element.style[styleProperty] as string;
+        (element.style as any)[styleProperty] = newStyleValue;
+      });
       element.dataset.blocksClonerHighlighted = '1';
       currentItemHighlighed = element;
     } else {
-      Object.keys(HIGHLIGHTED_STYLE).forEach((key) => {
-        if (element.dataset[`blocksClonerRestore${key}`] !== undefined) {
-          elementStyle[key] = element.dataset[`blocksClonerRestore${key}`];
+      Array.from(HIGHLIGHTED_STYLE.keys()).forEach((styleProperty) => {
+        const restoreStyleValue = element.dataset[`blocksClonerRestore${styleProperty}`];
+        if (restoreStyleValue !== undefined) {
+          delete element.dataset[`blocksClonerRestore${styleProperty}`];
+          (element.style as any)[styleProperty] = restoreStyleValue;
         }
-        delete element.dataset[`blocksClonerRestore${key}`];
       });
       delete element.dataset.blocksClonerHighlighted;
       currentItemHighlighed = null;
