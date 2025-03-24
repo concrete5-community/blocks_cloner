@@ -1,6 +1,7 @@
 <?php
 
 use Concrete\Core\Entity\File\Version;
+use Concrete\Core\Entity\Page\Feed as PageFeed;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Page\Type\Type as PageType;
 use Concrete\Package\BlocksCloner\XmlParser;
@@ -206,7 +207,45 @@ defined('C5_EXECUTE') or die('Access Denied.');
                                     <?php
                                 } else {
                                     ?>
-                                    <i><?= h($page) ?></i>
+                                    <i><?= h($pageType) ?></i>
+                                    <?php
+                                }
+                                ?>
+                            </td>
+                        </tr>
+                        <?php
+                    }
+                    ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+    if (isset($references[XmlParser::KEY_PAGEFEEDS])) {
+        ?>
+        <div style="max-height: 200px; overflow-y: scroll">
+            <table class="table table-striped table-sm table-condensed caption-top">
+                <caption><strong><?= t('Referenced RSS Page Feeds')?></strong></caption>
+                <colgroup>
+                    <col width="1" />
+                </colgroup>
+                <tbody>
+                    <?php
+                    foreach ($references[XmlParser::KEY_PAGEFEEDS] as $key => $pageFeed) {
+                        ?>
+                        <tr>
+                            <td style="white-space: nowrap">
+                                <code><?= h($key) ?></code>
+                            </td>
+                            <td>
+                                <?php
+                                if ($pageFeed instanceof PageFeed) {
+                                    ?>
+                                    <?= h($pageFeed->getFeedDisplayTitle('text')) ?>
+                                    <?php
+                                } else {
+                                    ?>
+                                    <i><?= h($pageFeed) ?></i>
                                     <?php
                                 }
                                 ?>
