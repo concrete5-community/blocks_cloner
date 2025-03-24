@@ -8,6 +8,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
  * @var int $cID
  * @var Concrete\Core\Area\Area $area
  * @var Concrete\Core\Validation\CSRF\Token $token
+ * @var string $sitemapPageUrl
  */
 
 ?>
@@ -29,6 +30,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
                 ></textarea>
                 <div style="min-height: 7em">
                     <div v-if="xml && xmlInputError" class="alert alert-danger" v-html="xmlInputError" style="white-space: pre-wrap"></div>
+                    <div v-else-if="analyzeError" class="alert alert-danger" style="white-space: pre-wrap">{{ analyzeError }}</div>
                 </div>
             </div>
             <div style="display: flex; flex-direction: column">
@@ -55,38 +57,54 @@ defined('C5_EXECUTE') or die('Access Denied.');
     <div v-else-if="step === STEPS.CHECK" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
         <div style="flex-grow: 1">
             <table class="table table-sm table-contensed caption-top">
-                <caption><?= t('Block Types') ?></caption>
+                <caption>
+                    <strong><?= t('Block Types') ?></strong>
+                </caption>
+                <colgroup>
+                    <col width="1" />
+                    <col width="1" />
+                </colgroup>
                 <thead>
                     <tr>
-                        <th><?= t('Name') ?></th>
-                        <th><?= t('Handle') ?></th>
-                        <th><?= t('Package') ?></th>
+                        <th style="white-space: nowrap"><?= t('Handle') ?></th>
+                        <th style="white-space: nowrap"><?= t('Name') ?></th>
+                        <th style="white-space: nowrap"><?= t('Package') ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="i in referenced.blockTypes">
-                        <td>{{ i.displayName }}</td>
-                        <td><code>{{ i.handle }}</code></td>
+                        <td style="white-space: nowrap"><code>{{ i.handle }}</code></td>
+                        <td style="white-space: nowrap">{{ i.displayName }}</td>
                         <td>
                             <span v-if="i.package" v-bind:title="`<?= t('Handle: %s', '${i.package.handle}') ?>`">
-                                {{ i.package.displayName }}
+                                <?= t('Provided by package %s', '{{ i.package.displayName }}') ?>
                             </span>
-                            <i v-else><?= tc('Package', 'none') ?></i>
+                            <i v-else><?= t('Provided by %s', 'Concrete') ?></i>
                         </td>
                     </tr>
                 </tbody>
             </table>
             <table v-if="referenced.files.length" class="table table-sm table-contensed caption-top">
-                <caption><?= t('Referenced Files') ?></caption>
+                <caption>
+                    <strong><?= t('Referenced Files') ?></strong>
+                    <span v-if="someFilesWithErrors">
+                        -
+                        <a href="#" v-on:click.prevent="pickFile()"><?= t('Upload File') ?></a>
+                    </span>
+                </caption>
+                <colgroup>
+                    <col width="1" />
+                    <col width="1" />
+                </colgroup>
                 <thead>
                     <tr>
-                        <th><?= t('Key') ?></th>
+                        <th style="white-space: nowrap"><?= t('Key') ?></th>
                         <th><?= t('File Name') ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="i in referenced.files">
-                        <td><code>{{ i.key }}</code></td>
+                        <td style="white-space: nowrap"><code>{{ i.key }}</code></td>
                         <td>
                             <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
                             <code v-else v-bind:title="`<?= t('Prefix: %s', '${i.prefix}') ?>`">{{ i.name }}</code>
@@ -94,21 +112,55 @@ defined('C5_EXECUTE') or die('Access Denied.');
                     </tr>
                 </tbody>
             </table>
-            <div v-if="showUploadFiles">
-                <button class="btn btn-sm btn-secondary btn-default" v-on:click.prevent="pickFile()"><?= t('Upload File') ?></button>
-            </div>
             <table v-if="referenced.pages.length" class="table table-sm table-contensed caption-top">
-                <caption><?= t('Referenced Pages') ?></caption>
+                <caption>
+                    <strong><?= t('Referenced Pages') ?></strong>
+                    <?php
+                    if ($sitemapPageUrl !== '') {
+                        ?>
+                        <span v-if="somePagesWithErrors">
+                            - <a target="_blank" href="<?= h($sitemapPageUrl) ?>"><?= t('open sitemap') ?></a>
+                        </span>
+                        <?php
+                    }
+                    ?>
+                </caption>
+                <colgroup>
+                    <col width="1" />
+                </colgroup>
                 <thead>
                     <tr>
-                        <th><?= t('Path') ?></th>
+                        <th style="white-space: nowrap"><?= t('Path') ?></th>
                         <th><?= t('Name') ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="i in referenced.pages">
-                        <td><code>{{ i.path }}</code></td>
+                        <td style="white-space: nowrap"><code>{{ i.key }}</code></td>
                         <td>
+                        <td>
+                            <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
+                            <a v-else target="_blank" v-bind:href="i.link" v-bind:title="`<?= t('ID: %s', '${i.cID}') ?>`">{{ i.name }}</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <table v-if="referenced.pageTypes.length" class="table table-sm table-contensed caption-top">
+                <caption>
+                    <strong><?= t('Referenced Page Types') ?></strong>
+                </caption>
+                <colgroup>
+                    <col width="1" />
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th style="white-space: nowrap"><?= t('Handle') ?></th>
+                        <th><?= t('Name') ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="i in referenced.pageTypes">
+                        <td style="white-space: nowrap"><code>{{ i.key }}</code></td>
                         <td>
                             <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
                             <a v-else target="_blank" v-bind:href="i.link" v-bind:title="`<?= t('ID: %s', '${i.cID}') ?>`">{{ i.name }}</a>
@@ -162,15 +214,17 @@ new Vue({
         return {
             STEPS,
             step: STEPS.INPUT,
+            existingBlocksInArea: getExistingBlocksInArea(),
             busy: false,
             xml: '',
             addBefore: null,
-            existingBlocksInArea: getExistingBlocksInArea(),
+            analyzeError: '',
             importToken: '',
             referenced: {
                 blockTypes: [],
                 files: [],
                 pages: [],
+                pageTypes: [],
             },
         };
     },
@@ -179,6 +233,11 @@ new Vue({
         this.$refs.pickFile.addEventListener('change', (e) => {
             this.pickFileChanged();
         });
+    },
+    watch: {
+        xml() {
+            this.analyzeError = '';
+        },
     },
     computed: {
         xmlInputError() {
@@ -200,8 +259,11 @@ new Vue({
             }
             return '';
         },
-        showUploadFiles() {
+        someFilesWithErrors() {
             return this.referenced.files.some((file) => file.error);
+        },
+        somePagesWithErrors() {
+            return this.referenced.pages.some((page) => page.error);
         },
     },
     methods: {
@@ -209,6 +271,7 @@ new Vue({
             if (this.busy) {
                 return false;
             }
+            this.analyzeError = '';
             if (!this.xml || this.xmlInputError) {
                 this.$refs.xml?.focus();
                 return;
@@ -247,10 +310,7 @@ new Vue({
                     responseData[key].forEach((value) => this.referenced[key].push(value));
                 });
             } catch (e) {
-                window.ConcreteAlert.error({
-                    message: e?.messsage || e?.toString() || <?= json_encode(t('Unknown error')) ?>,
-                    delay: 5000,
-                });
+                this.analyzeError = e?.messsage || e?.toString() || <?= json_encode(t('Unknown error')) ?>;
                 return;
             } finally {
                 this.busy = false;

@@ -69,8 +69,7 @@ class Export extends AbstractController
             ];
         }
         $this->set('blockTypesAndPackages', $blockTypesAndPackages);
-        $this->set('pages', $parser->findPages($sx));
-        $this->set('fileVersions', $parser->findFileVersions($sx));
+        $this->set('references', $parser->findItems($sx));
         $this->set('resolverManager', $this->app->make(ResolverManagerInterface::class));
     }
 
