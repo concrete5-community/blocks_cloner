@@ -8,9 +8,23 @@ This works by copying and pasting text in the so-called [CIF format](https://doc
 
 This is also useful for package developers: they can test if new blocks correctly support exporting and importing.
 
+## Installation
+
+For composer-based Concrete instances, simply run
+
+```sh
+composer require concrete5-community/blocks_cloner
+```
+
+Otherwise, you can:
+1. download a `blocks_cloner-v….zip` file from the [releases page](https://github.com/concrete5-community/blocks_cloner/releases/latest)
+2. extract the zip file in your `packages` directory
+
+Then, you have to login in your Concrete website, go to the Dashboard > Extend Concrete > Add Functionality, and install the package.
+
 ## Usage
 
-Simply install this package, and enter the Edit Mode of a website page.
+Simply enter the Edit Mode of a website page.
 
 ### Exporting Blocks
 
