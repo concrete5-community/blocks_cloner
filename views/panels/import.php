@@ -73,6 +73,11 @@ $view->markHeaderAssetPosition();
             </a>
         </li>
     </menu>
+    <div style="margin-top: 10px" class="text-center">
+        <a class="small" href="#" v-on:click="setAllExpanded(true)"><?= t('Expand All') ?></a>
+        |
+        <a class="small" href="#" v-on:click="setAllExpanded(false)"><?= t('Collapse All') ?></a>
+    </div>
 </section>
 <?php
 $view->markFooterAssetPosition();
@@ -114,6 +119,16 @@ new Vue({
     methods: {
         highlight(item, highlight) {
             window.ccmBlocksCloner.setElementHighlighted(item.element, highlight, highlight);
+        },
+        setAllExpanded(expanded) {
+            const walk = (item) => {
+                if (!item.children.length) {
+                    return;
+                }
+                item.expanded = expanded;
+                item.children.forEach((child) => walk(child));
+            };
+            this.items.forEach((item) => walk(item));
         },
     },
 });
