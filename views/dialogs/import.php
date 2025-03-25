@@ -31,6 +31,10 @@ defined('C5_EXECUTE') or die('Access Denied.');
                 <div style="min-height: 7em">
                     <div v-if="xml && xmlInputError" class="alert alert-danger" v-html="xmlInputError" style="white-space: pre-wrap"></div>
                     <div v-else-if="analyzeError" class="alert alert-danger" style="white-space: pre-wrap">{{ analyzeError }}</div>
+                    <pre>
+autoConverters: {{ autoConverters }}
+suggestedConverterHandles: {{ suggestedConverterHandles }}
+allConverterHandles: {{ allConverterHandles }}
                 </div>
             </div>
             <div style="display: flex; flex-direction: column">
@@ -295,6 +299,18 @@ new Vue({
                 console.log(e);
                 return null;
             }
+        },
+        autoConverters() {
+            return this.xmlEnvironment !== null && currentEnvironment !== null;
+        },
+        suggestedConverterHandles() {
+            if (this.xmlEnvironment === null && currentEnvironment === null) {
+                return null;
+            }
+            return window.ccmBlocksCloner.conversion.getConvertersForEvironments(this.xmlEnvironment, currentEnvironment).map((converter) => converter.handle);
+        },
+        allConverterHandles() {
+            return window.ccmBlocksCloner.conversion.getConverters().map((converter) => converter.handle);
         },
         someFilesWithErrors() {
             return this.referenced.files.some((file) => file.error);

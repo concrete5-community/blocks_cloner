@@ -15,6 +15,7 @@ export interface ApplicableToPackages extends ApplicableTo {
 }
 
 interface ConverterBase {
+  readonly handle: string;
   readonly name: string;
 }
 
