@@ -1,13 +1,18 @@
+import type {Environment} from './environment';
+
 declare global {
   interface Window {
-    ccmBlocksClonerI18N?: {
-      blockTypeNames: Record<string, string>;
-    } & Record<string, string>;
-    ConcreteEvent?: {
+    readonly CCM_CID: number;
+    readonly CCM_DISPATCHER_FILENAME: string;
+
+    readonly ConcreteEvent?: {
       subscribe(event: string, callback: (e: any, args: any) => void): void;
     };
-    CCM_DISPATCHER_FILENAME: string;
-    CCM_CID: number;
+
+    ccmBlocksClonerI18N?: Readonly<Record<string, string>> & {
+      readonly _blockTypeNames: Readonly<Record<string, string>>;
+      readonly _environment: Environment;
+    };
   }
 }
 
