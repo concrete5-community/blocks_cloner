@@ -134,7 +134,7 @@ class Controller extends Package implements ProviderAggregateInterface
         ]);
         $responseAssets = ResponseAssetGroup::get();
         if (version_compare(APP_VERSION, '9') < 0) {
-            $responseAssets->addHeaderAsset('<style>.ccm-ui [v-cloak] { display: none; }');
+            $responseAssets->addHeaderAsset('<style>.ccm-ui [v-cloak] { display: none!important; }');
             $responseAssets->requireAsset('javascript', 'vue');
         }
         $responseAssets->requireAsset('blocks_cloner-view');

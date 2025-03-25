@@ -19,7 +19,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
  */
 
 ?>
-<div style="display: flex; flex-direction: column; height: 100%;">
+<div id="ccm-blockscloker-export" style="display: flex; flex-direction: column; height: 100%;" v-cloak>
     <div style="max-height: 200px; overflow-y: scroll">
         <table class="table table-striped table-sm table-condensed caption-top">
             <caption><strong><?= t('Block Types')?></strong></caption>
@@ -265,76 +265,85 @@ defined('C5_EXECUTE') or die('Access Denied.');
             <div>
                 <strong style="color: #777777"><?= t('XML Data')?></strong>
             </div>
-            <textarea id="blocks_cloner-export-xml" readonly nowrap spellcheck="false" class="form-control" style="flex-grow: 1; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 0.9em; resize: none"><?= htmlspecialchars($xml, ENT_QUOTES, APP_CHARSET) ?></textarea>
+            <textarea
+                ref="textarea"
+                readonly
+                nowrap
+                spellcheck="false"
+                class="form-control"
+                style="flex-grow: 1; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 0.9em; resize: none" v-bind:value="finalXml"
+            ></textarea>
             <div class="text-end text-right" style="padding-top: 1rem">
-                <button type="button" class="btn btn-primary" id="blocks_cloner-export-copy"><?= t('Copy') ?></button>
-                <button type="button" class="btn btn-primary" id="blocks_cloner-export-copy-close"><?= h(t('Copy & Close')) ?></button>
+                <button
+                    class="btn"
+                    ref="copy"
+                    v-on:click.prevent="copy(false)"
+                    v-bind:class='{
+                        "btn-primary": !copyHighlighed,
+                        "btn-success": copyHighlighed,
+                    }'
+                >
+                    <span v-if="copyHighlighed"><?= t('Copied!') ?></span>
+                    <span v-else><?= t('Copy') ?></span>
+                </button>
+                <button class="btn btn-primary" v-on:click.prevent="copy(true)"><?= h(t('Copy & Close')) ?></button>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-(function() {
+<script>$(document).ready(function() {
 
-const btnCopy = document.querySelector('#blocks_cloner-export-copy');
-const btnCopyText = btnCopy.textContent;
-const xmlTextarea = document.querySelector('#blocks_cloner-export-xml');
-
-setTimeout(() => xmlTextarea.focus(), 50);
-
-function reportSuccess()
-{
-    btnCopy.classList.remove('btn-primary');
-    btnCopy.classList.add('btn-success');
-    btnCopy.textContent = <?= json_encode(t('Copied!')) ?>;
-    setTimeout(() => {
-        btnCopy.classList.remove('btn-success');
-        btnCopy.classList.add('btn-primary');
-        btnCopy.textContent = btnCopyText;
-    }, 500);
-}
-
-function failed(e)
-{
-    window.ConcreteAlert.error({
-        message: e.message || e || <?= json_encode(t('Unknown error')) ?>,
-    });
-}
-
-function copy(done)
-{
-    try {
-        if (window.navigator && window.navigator.clipboard && window.navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(xmlTextarea.value)
-                .then(() => done())
-                .catch((e) => failed(e))
-            ;
-        } else {
-            xmlTextarea.select();
-            document.execCommand('copy');
-            done();
+new Vue({
+    el: '#ccm-blockscloker-export',
+    data() {
+        return {
+            xml: <?= json_encode($xml) ?>,
+            copyHighlighed: false,
+        };
+    },
+    mounted() {
+        setTimeout(() => this.$refs.textarea.focus(), 50);
+    },
+    computed: {
+        finalXml() {
+            return window.ccmBlocksCloner.envirorment.addCurrentToXml(this.xml);
+        },
+    },
+    methods: {
+        copy(andClose) {
+            try {
+                if (window.navigator && window.navigator.clipboard && window.navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(this.finalXml)
+                        .then(() => this.reportCopyResult(null, andClose))
+                        .catch((e) => this.reportCopyResult(e || <?= json_encode(t('Unknown error')) ?>))
+                    ;
+                } else {
+                    this.$refs.textarea.select();
+                    document.execCommand('copy');
+                    this.reportCopyResult(null, andClose);
+                }
+            } catch (e) {
+                this.reportCopyResult(e || <?= json_encode(t('Unknown error')) ?>);
+            }
+        },
+        reportCopyResult(error, closeOnSuccess) {
+            if (error) {
+                window.ConcreteAlert.error({
+                    message: e.message || e,
+                });
+            } else if(closeOnSuccess) {
+                window.ConcreteAlert.info({
+                    message: <?= json_encode(t('Copied')) ?>,
+                    delay: 500,
+                });
+                $.fn.dialog.closeTop();
+            } else {
+                this.copyHighlighed = true;
+                setTimeout(() => this.copyHighlighed = false, 500);
+            } 
         }
-    } catch (e) {
-        failed(e);
-    }
-}
-
-btnCopy.addEventListener('click', (e) => {
-    e.preventDefault();
-    copy(reportSuccess);
+    },
 });
 
-document.querySelector('#blocks_cloner-export-copy-close').addEventListener('click', (e) => {
-    e.preventDefault();
-    copy(() => {
-        window.ConcreteAlert.info({
-            message: <?= json_encode(t('Copied')) ?>,
-            delay: 500,
-        });
-        $.fn.dialog.closeTop();
-    });
-});
-
-})();
-</script>
+});</script>

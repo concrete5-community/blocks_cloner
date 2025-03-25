@@ -202,6 +202,8 @@ defined('C5_EXECUTE') or die('Access Denied.');
 </div>
 <script>$(document).ready(function() {
 
+const currentEnvironment = window.ccmBlocksCloner.envirorment.getCurrent();
+
 function getExistingBlocksInArea()
 {
     let area = null;
@@ -282,6 +284,17 @@ new Vue({
                 return (e ? (e.message || e.toString()) : <?= json_encode(t('Unknown error')) ?>).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
             }
             return '';
+        },
+        xmlEnvironment() {
+            if (this.xml === '' || this.xmlInputError !== '') {
+                return null;
+            }
+            try {
+                return window.ccmBlocksCloner.envirorment.extractFromXml(this.xml);
+            } catch (e) {
+                console.log(e);
+                return null;
+            }
         },
         someFilesWithErrors() {
             return this.referenced.files.some((file) => file.error);
