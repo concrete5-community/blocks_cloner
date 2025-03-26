@@ -16,12 +16,18 @@ export interface ApplicableToPackages extends ApplicableTo {
   readonly destinationPackageHandle: string;
 }
 
+interface ExtendedTemplateRemapping {
+  readonly newTemplate?: string;
+  readonly newCustomClasses?: string;
+}
+
 interface BlockTypeConversion {
   readonly newBlockTypeHandle?: string;
-  readonly templateRemapping?: Readonly<Record<string, string>>;
-  readonly dataTableNameRemapping?: Readonly<Record<string, string>>;
-  readonly addMissingFields?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  readonly templateRemapping?: Readonly<Record<string, string | ExtendedTemplateRemapping>>;
+  readonly addRecordFields?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  readonly removeRecordFields?: Readonly<Record<string, ReadonlyArray<string>>>;
   readonly fontAwesome4to5Fields?: Readonly<Record<string, ReadonlyArray<string>>>;
+  readonly renameDataTables?: Readonly<Record<string, string>>;
   readonly customConversion?: (blockElement: Element) => void;
 }
 
@@ -47,95 +53,142 @@ export function applyConverter(doc: XMLDocument, converter: Converter): void {
 }
 
 function applyBlockTypeConversions(doc: XMLDocument, blockTypes: Readonly<Record<string, Readonly<BlockTypeConversion>>>): void {
-  listBlockNodes(doc).forEach((blockNode) => {
-    const blockTypeHandle = blockNode.getAttribute('type');
+  listBlockNodes(doc).forEach((xBlock) => {
+    const blockTypeHandle = xBlock.getAttribute('type');
     const blockTypeConversion = blockTypeHandle ? blockTypes[blockTypeHandle] : undefined;
     if (!blockTypeConversion) {
       return;
     }
     if (blockTypeConversion.newBlockTypeHandle !== undefined) {
-      blockNode.setAttribute('type', blockTypeConversion.newBlockTypeHandle);
+      xBlock.setAttribute('type', blockTypeConversion.newBlockTypeHandle);
     }
     if (blockTypeConversion.templateRemapping !== undefined) {
-      convertTemplate(blockNode, blockTypeConversion.templateRemapping);
+      convertTemplate(xBlock, blockTypeConversion.templateRemapping);
     }
-    if (blockTypeConversion.dataTableNameRemapping !== undefined) {
-      convertDataTables(blockNode, blockTypeConversion.dataTableNameRemapping);
+    if (blockTypeConversion.addRecordFields !== undefined) {
+      addRecordFields(xBlock, blockTypeConversion.addRecordFields);
     }
-    if (blockTypeConversion.addMissingFields !== undefined) {
-      addMissingFields(blockNode, blockTypeConversion.addMissingFields);
+    if (blockTypeConversion.removeRecordFields !== undefined) {
+      removeRecordFields(xBlock, blockTypeConversion.removeRecordFields);
     }
     if (blockTypeConversion.fontAwesome4to5Fields !== undefined) {
-      convertFontAwesome4to5(blockNode, blockTypeConversion.fontAwesome4to5Fields);
+      convertFontAwesome4to5(xBlock, blockTypeConversion.fontAwesome4to5Fields);
+    }
+    if (blockTypeConversion.renameDataTables !== undefined) {
+      convertDataTables(xBlock, blockTypeConversion.renameDataTables);
     }
     if (blockTypeConversion.customConversion !== undefined) {
-      blockTypeConversion.customConversion(blockNode);
+      blockTypeConversion.customConversion(xBlock);
     }
   });
 }
 
-function convertTemplate(blockNode: Element, templateRemapping: Readonly<Record<string, string>>): void {
-  const currentTemplateHandle = blockNode.getAttribute('template') || '';
-  const newTemplateHandle = templateRemapping[currentTemplateHandle];
-  if (newTemplateHandle !== undefined) {
-    if (newTemplateHandle === '') {
-      blockNode.removeAttribute('template');
-    } else {
-      blockNode.setAttribute('template', newTemplateHandle);
+function convertTemplate(xBlock: Element, templateRemapping: Readonly<Record<string, string | ExtendedTemplateRemapping>>): void {
+  let currentTemplateHandle = xBlock.getAttribute('template') || '';
+  if (currentTemplateHandle && !/.\.php$/.test(currentTemplateHandle)) {
+    currentTemplateHandle += '.php';
+  }
+  const remapTo = templateRemapping[currentTemplateHandle];
+  let newTemplateHandle: string | null = null;
+  let newCustomClasses: string[] = [];
+  if (typeof remapTo === 'string') {
+    newTemplateHandle = remapTo;
+  } else if (remapTo) {
+    newTemplateHandle = remapTo.newTemplate || null;
+    newCustomClasses = remapTo.newCustomClasses?.split(/\s+/).filter((c) => c.length > 0) || [];
+  }
+  if (newTemplateHandle === '') {
+    xBlock.removeAttribute('template');
+  } else if (newTemplateHandle !== null) {
+    xBlock.setAttribute('template', newTemplateHandle.replace(/\.php$/, '') + '.php');
+  }
+  if (newCustomClasses.length > 0) {
+    let xStyle = listChildElements(xBlock, 'style').shift();
+    if (!xStyle) {
+      xStyle = xBlock.ownerDocument.createElement('style');
+      xBlock.insertBefore(xStyle, xBlock.firstChild);
+    }
+    let xCustomClass = listChildElements(xStyle, 'customClass').shift();
+    if (!xCustomClass) {
+      xCustomClass = xStyle.ownerDocument.createElement('customClass');
+      xStyle.insertBefore(xCustomClass, xStyle.firstChild);
+    }
+    const oldCustomClasses = (xCustomClass.textContent || '').split(/\s+/).filter((c) => c.length > 0);
+    const customClassesToBeAdded = newCustomClasses.filter((c) => !oldCustomClasses.includes(c));
+    if (customClassesToBeAdded.length > 0) {
+      xCustomClass.textContent = [...oldCustomClasses, ...customClassesToBeAdded].join(' ');
     }
   }
 }
 
-function convertDataTables(blockNode: Element, dataTableNameRemapping: Readonly<Record<string, string>>): void {
-  listDataNodes(blockNode).forEach((dataNode) => {
-    const currentDataTableName = blockNode.getAttribute('table') || '';
-    const newDataTableName = dataTableNameRemapping[currentDataTableName];
+function convertDataTables(xBlock: Element, map: Readonly<Record<string, string>>): void {
+  listChildElements(xBlock, 'data').forEach((xData) => {
+    const currentDataTableName = xBlock.getAttribute('table') || '';
+    const newDataTableName = map[currentDataTableName];
     if (newDataTableName !== undefined) {
-      blockNode.setAttribute('table', newDataTableName);
+      xBlock.setAttribute('table', newDataTableName);
     }
   });
 }
-function addMissingFields(blockNode: Element, missingFields: Readonly<Record<string, Readonly<Record<string, string>>>>): void {
-  listDataNodes(blockNode).forEach((dataNode) => {
-    const tableName = dataNode.getAttribute('table') || '';
-    const fields = missingFields[tableName];
+
+function addRecordFields(xBlock: Element, fieldList: Readonly<Record<string, Readonly<Record<string, string>>>>): void {
+  listChildElements(xBlock, 'data').forEach((xData) => {
+    const tableName = xData.getAttribute('table') || '';
+    const fields = fieldList[tableName];
     if (!fields) {
       return;
     }
-    listRecordNodes(dataNode).forEach((recordNode) => {
-      const existingFields = (Array.from(recordNode.children) as Element[]).map((fieldNode) => fieldNode.tagName);
+    listChildElements(xData, 'record').forEach((xRecord) => {
+      const existingFields = (Array.from(xRecord.children) as Element[]).map((xField) => xField.tagName);
       Object.keys(fields).forEach((fieldName) => {
         if (existingFields.includes(fieldName)) {
           return;
         }
         const value = fields[fieldName];
-        const fieldNode = recordNode.ownerDocument.createElement(fieldName);
-        fieldNode.textContent = value;
-        recordNode.appendChild(fieldNode);
+        const xField = xRecord.ownerDocument.createElement(fieldName);
+        xField.textContent = value;
+        xRecord.appendChild(xField);
       });
     });
   });
 }
 
-function convertFontAwesome4to5(blockNode: Element, fontAwesome4to5Fields: Readonly<Record<string, ReadonlyArray<string>>>): void {
-  listDataNodes(blockNode).forEach((dataNode) => {
-    const tableName = dataNode.getAttribute('table') || '';
+function removeRecordFields(xBlock: Element, fieldList: Readonly<Record<string, ReadonlyArray<string>>>): void {
+  listChildElements(xBlock, 'data').forEach((xData) => {
+    const tableName = xData.getAttribute('table') || '';
+    const fields = fieldList[tableName];
+    if (!fields) {
+      return;
+    }
+    listChildElements(xData, 'record').forEach((xRecord) => {
+      (Array.from(xRecord.children) as Element[]).forEach((xField) => {
+        if (fields.includes(xField.tagName)) {
+          xRecord.removeChild(xField);
+        }
+      });
+    });
+  });
+}
+
+function convertFontAwesome4to5(xBlock: Element, fontAwesome4to5Fields: Readonly<Record<string, ReadonlyArray<string>>>): void {
+  listChildElements(xBlock, 'data').forEach((xData) => {
+    const tableName = xData.getAttribute('table') || '';
     const fields = fontAwesome4to5Fields[tableName];
     if (!fields) {
       return;
     }
-    listRecordNodes(dataNode).forEach((recordNode) => {
-      (Array.from(recordNode.children) as Element[]).forEach((fieldNode) => {
-        if (!fields.includes(fieldNode.tagName)) {
+    listChildElements(xData, 'record').forEach((xRecord) => {
+      (Array.from(xRecord.children) as Element[]).forEach((xField) => {
+        if (!fields.includes(xField.tagName)) {
           return;
         }
-        const currentIconClass = fieldNode.textContent;
+        const currentIconClass = xField.textContent;
         if (!currentIconClass) {
           return;
         }
         const newIconClass = convertFontAwesomeIcon4To5(currentIconClass);
         if (newIconClass !== '') {
-          fieldNode.textContent = newIconClass;
+          xField.textContent = newIconClass;
         }
       });
     });
@@ -162,10 +215,6 @@ function listBlockNodes(doc: XMLDocument): Element[] {
   return result;
 }
 
-function listDataNodes(blockNode: Element): Element[] {
-  return (Array.from(blockNode.children) as Element[]).filter((el) => el.tagName === 'data');
-}
-
-function listRecordNodes(dataNode: Element): Element[] {
-  return (Array.from(dataNode.children) as Element[]).filter((el) => el.tagName === 'record');
+function listChildElements(el: Element, name: string): Element[] {
+  return (Array.from(el.children) as Element[]).filter((el) => el.tagName === name);
 }
