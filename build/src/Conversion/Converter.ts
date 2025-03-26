@@ -25,6 +25,7 @@ interface BlockTypeConversion {
   readonly newBlockTypeHandle?: string;
   readonly templateRemapping?: Readonly<Record<string, string | ExtendedTemplateRemapping>>;
   readonly addRecordFields?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  readonly ensureIntegerFields?: Readonly<Record<string, ReadonlyArray<string>>>;
   readonly removeRecordFields?: Readonly<Record<string, ReadonlyArray<string>>>;
   readonly fontAwesome4to5Fields?: Readonly<Record<string, ReadonlyArray<string>>>;
   readonly renameDataTables?: Readonly<Record<string, string>>;
@@ -67,6 +68,9 @@ function applyBlockTypeConversions(doc: XMLDocument, blockTypes: Readonly<Record
     }
     if (blockTypeConversion.addRecordFields !== undefined) {
       addRecordFields(xBlock, blockTypeConversion.addRecordFields);
+    }
+    if (blockTypeConversion.ensureIntegerFields !== undefined) {
+      ensureIntegerFields(xBlock, blockTypeConversion.ensureIntegerFields);
     }
     if (blockTypeConversion.removeRecordFields !== undefined) {
       removeRecordFields(xBlock, blockTypeConversion.removeRecordFields);
@@ -123,11 +127,31 @@ function convertTemplate(xBlock: Element, templateRemapping: Readonly<Record<str
 
 function convertDataTables(xBlock: Element, map: Readonly<Record<string, string>>): void {
   listChildElements(xBlock, 'data').forEach((xData) => {
-    const currentDataTableName = xBlock.getAttribute('table') || '';
+    const currentDataTableName = xData.getAttribute('table') || '';
     const newDataTableName = map[currentDataTableName];
     if (newDataTableName !== undefined) {
-      xBlock.setAttribute('table', newDataTableName);
+      xData.setAttribute('table', newDataTableName);
     }
+  });
+}
+
+function ensureIntegerFields(xBlock: Element, fieldList: Readonly<Record<string, ReadonlyArray<string>>>): void {
+  listChildElements(xBlock, 'data').forEach((xData) => {
+    const tableName = xData.getAttribute('table') || '';
+    const fields = fieldList[tableName];
+    if (!fields) {
+      return;
+    }
+    listChildElements(xData, 'record').forEach((xRecord) => {
+      return (Array.from(xRecord.children) as Element[]).forEach((xField) => {
+        if (!fields.includes(xField.tagName)) {
+          return;
+        }
+        if (!Number(xField.textContent)) {
+          xField.textContent = '0';
+        }
+      });
+    });
   });
 }
 
