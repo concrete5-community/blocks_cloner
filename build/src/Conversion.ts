@@ -5,7 +5,7 @@ import Xml from './Xml';
 
 const converters: Converter[] = [];
 
-function registerConverters(converter: Converter|Converter[]): void {
+function registerConverters(converter: Converter | Converter[]): void {
   if (converter instanceof Array) {
     converter.forEach((c) => registerConverters(c));
   } else {
@@ -102,7 +102,7 @@ function sortConverters(): void {
   });
 }
 
-function convertXml(xml: string, converters: Converter[]): string|null {
+function convertXml(xml: string, converters: Converter[]): string | null {
   const doc = Xml.parse(xml, true);
   const initialXml = Xml.normalizeDoc(doc, true);
   convertDoc(doc, converters);

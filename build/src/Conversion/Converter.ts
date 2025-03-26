@@ -1,4 +1,4 @@
-import { convertFontAwesomeIcon4To5 } from "./Service/FontAwesome";
+import {convertFontAwesomeIcon4To5} from './Service/FontAwesome';
 
 interface ApplicableTo {
   readonly sourceVersionConstraint: string;
@@ -40,15 +40,13 @@ export interface PackageConverter extends ConverterBase {
 
 export type Converter = CoreConverter | PackageConverter;
 
-export function applyConverter(doc: XMLDocument, converter: Converter): void
-{
+export function applyConverter(doc: XMLDocument, converter: Converter): void {
   if (converter.blockTypes) {
     applyBlockTypeConversions(doc, converter.blockTypes);
   }
 }
 
-function applyBlockTypeConversions(doc: XMLDocument, blockTypes: Readonly<Record<string, Readonly<BlockTypeConversion>>>): void
-{
+function applyBlockTypeConversions(doc: XMLDocument, blockTypes: Readonly<Record<string, Readonly<BlockTypeConversion>>>): void {
   listBlockNodes(doc).forEach((blockNode) => {
     const blockTypeHandle = blockNode.getAttribute('type');
     const blockTypeConversion = blockTypeHandle ? blockTypes[blockTypeHandle] : undefined;
@@ -73,11 +71,10 @@ function applyBlockTypeConversions(doc: XMLDocument, blockTypes: Readonly<Record
     if (blockTypeConversion.customConversion !== undefined) {
       blockTypeConversion.customConversion(blockNode);
     }
-  })
+  });
 }
 
-function convertTemplate(blockNode: Element, templateRemapping: Readonly<Record<string, string>>): void
-{
+function convertTemplate(blockNode: Element, templateRemapping: Readonly<Record<string, string>>): void {
   const currentTemplateHandle = blockNode.getAttribute('template') || '';
   const newTemplateHandle = templateRemapping[currentTemplateHandle];
   if (newTemplateHandle !== undefined) {
@@ -89,18 +86,16 @@ function convertTemplate(blockNode: Element, templateRemapping: Readonly<Record<
   }
 }
 
-function convertDataTables(blockNode: Element, dataTableNameRemapping: Readonly<Record<string, string>>): void
-{
+function convertDataTables(blockNode: Element, dataTableNameRemapping: Readonly<Record<string, string>>): void {
   listDataNodes(blockNode).forEach((dataNode) => {
     const currentDataTableName = blockNode.getAttribute('table') || '';
     const newDataTableName = dataTableNameRemapping[currentDataTableName];
     if (newDataTableName !== undefined) {
       blockNode.setAttribute('table', newDataTableName);
     }
-  })
+  });
 }
-function addMissingFields(blockNode: Element, missingFields: Readonly<Record<string, Readonly<Record<string, string>>>>): void
-{
+function addMissingFields(blockNode: Element, missingFields: Readonly<Record<string, Readonly<Record<string, string>>>>): void {
   listDataNodes(blockNode).forEach((dataNode) => {
     const tableName = dataNode.getAttribute('table') || '';
     const fields = missingFields[tableName];
@@ -122,9 +117,7 @@ function addMissingFields(blockNode: Element, missingFields: Readonly<Record<str
   });
 }
 
-
-function convertFontAwesome4to5(blockNode: Element, fontAwesome4to5Fields: Readonly<Record<string, ReadonlyArray<string>>>): void
-{
+function convertFontAwesome4to5(blockNode: Element, fontAwesome4to5Fields: Readonly<Record<string, ReadonlyArray<string>>>): void {
   listDataNodes(blockNode).forEach((dataNode) => {
     const tableName = dataNode.getAttribute('table') || '';
     const fields = fontAwesome4to5Fields[tableName];
@@ -149,33 +142,30 @@ function convertFontAwesome4to5(blockNode: Element, fontAwesome4to5Fields: Reado
   });
 }
 
-function listBlockNodes(doc: XMLDocument): Element[]
-{
+function listBlockNodes(doc: XMLDocument): Element[] {
   const result: Element[] = [];
-  const walk = function(el: Element, parentEl?: Element): void
-  {
+  const walk = function (el: Element, parentEl?: Element): void {
     switch (el.tagName) {
       case 'block':
         result.push(el);
       case 'data':
-        if (parentEl?.tagName === 'block')
-        {
-          return
+        if (parentEl?.tagName === 'block') {
+          return;
         }
         break;
     }
-    (Array.from(el.children) as Element[]).forEach((child) => { walk(child, el); });
-  }
+    (Array.from(el.children) as Element[]).forEach((child) => {
+      walk(child, el);
+    });
+  };
   walk(doc.documentElement);
   return result;
 }
 
-function listDataNodes(blockNode: Element): Element[]
-{
+function listDataNodes(blockNode: Element): Element[] {
   return (Array.from(blockNode.children) as Element[]).filter((el) => el.tagName === 'data');
 }
 
-function listRecordNodes(dataNode: Element): Element[]
-{
+function listRecordNodes(dataNode: Element): Element[] {
   return (Array.from(dataNode.children) as Element[]).filter((el) => el.tagName === 'record');
 }

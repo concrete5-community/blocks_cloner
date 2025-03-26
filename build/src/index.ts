@@ -7,9 +7,7 @@ import Conversion from './Conversion';
 import Xml from './Xml';
 
 if ((window as any).ccmBlocksCloner === undefined) {
-  Conversion.registerConverters([
-    Core8To9Converter,
-  ]);
+  Conversion.registerConverters([Core8To9Converter]);
 
   (window as any).ccmBlocksCloner = {
     getPageStructure,

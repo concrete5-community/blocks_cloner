@@ -1,4 +1,4 @@
-import Xml from "./Xml";
+import Xml from './Xml';
 
 export interface Environment {
   readonly core: string;
