@@ -1,18 +1,16 @@
 import {Range, SemVer} from 'semver';
 import {Environment} from './environment';
-import type {ApplicableToCore, ApplicableToPackage, ApplicableToPackages, Converter} from './Conversion/Converter';
+import {applyConverter, type ApplicableToCore, type ApplicableToPackage, type ApplicableToPackages, type Converter} from './Conversion/Converter';
+import Xml from './Xml';
 
 const converters: Converter[] = [];
 
-function getConverterByHandle(handle: string): Converter | null {
-  return converters.find((converter) => converter.handle === handle) || null;
-}
-
-function registerConverter(converter: Converter): void {
-  if (getConverterByHandle(converter.handle) !== null) {
-    throw new Error(`Converter with handle "${converter.handle}" is already registered`);
+function registerConverters(converter: Converter|Converter[]): void {
+  if (converter instanceof Array) {
+    converter.forEach((c) => registerConverters(c));
+  } else {
+    converters.push(converter);
   }
-  converters.push(converter);
   sortConverters();
 }
 
@@ -104,9 +102,24 @@ function sortConverters(): void {
   });
 }
 
+function convertXml(xml: string, converters: Converter[]): string|null {
+  const doc = Xml.parse(xml, true);
+  const initialXml = Xml.normalizeDoc(doc, true);
+  convertDoc(doc, converters);
+  const finalXml = Xml.normalizeDoc(doc, true);
+
+  return initialXml === finalXml ? null : finalXml;
+}
+
+function convertDoc(doc: XMLDocument, converters: Converter[]): void {
+  converters.forEach((converter) => {
+    applyConverter(doc, converter);
+  });
+}
+
 export default {
-  registerConverter,
+  registerConverters,
   getConverters,
   getConvertersForEvironments,
-  getConverterByHandle,
+  convertXml,
 };

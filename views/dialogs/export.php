@@ -307,7 +307,13 @@ new Vue({
     },
     computed: {
         finalXml() {
-            return window.ccmBlocksCloner.envirorment.addCurrentToXml(this.xml);
+            let xml = window.ccmBlocksCloner.envirorment.addCurrentToXml(this.xml);
+            try {
+                xml = window.ccmBlocksCloner.xml.normalizeXml(xml, true);
+            } catch (e) {
+                console.warn(e);
+            }
+            return xml;
         },
     },
     methods: {
