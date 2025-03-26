@@ -133,3 +133,15 @@ function itemHasChildrenOfType(item: Area | Block, type: Type): boolean {
   }
   return item.children.some((child) => itemHasChildrenOfType(child, type));
 }
+
+export function findParentArea(element: HTMLElement): Area | null {
+  let parent = element.parentElement;
+  while (parent !== null) {
+    const area = parseArea(parent);
+    if (area !== null) {
+      return area;
+    }
+    parent = parent.parentElement;
+  }
+  return null;
+}
