@@ -8,21 +8,21 @@ const converter: CoreConverter = {
   },
   blockTypes: {
     event_list: {
-      addMissingFields: {
+      addRecordFields: {
         btEventList: {
           titleFormat: 'h5',
         },
       },
     },
     express_entry_list: {
-      addMissingFields: {
+      addRecordFields: {
         btExpressEntryList: {
           titleFormat: 'h2',
         },
       },
     },
     feature: {
-      addMissingFields: {
+      addRecordFields: {
         btFeature: {
           titleFormat: 'h4',
         },
@@ -32,35 +32,35 @@ const converter: CoreConverter = {
       },
     },
     google_map: {
-      addMissingFields: {
+      addRecordFields: {
         btGoogleMap: {
           titleFormat: 'h3',
         },
       },
     },
     page_list: {
-      addMissingFields: {
+      addRecordFields: {
         btPageList: {
           titleFormat: 'h5',
         },
       },
     },
     rss_displayer: {
-      addMissingFields: {
+      addRecordFields: {
         btRssDisplay: {
           titleFormat: 'h5',
         },
       },
     },
     tags: {
-      addMissingFields: {
+      addRecordFields: {
         btTags: {
           titleFormat: 'h5',
         },
       },
     },
     topic_list: {
-      addMissingFields: {
+      addRecordFields: {
         btTopicList: {
           titleFormat: 'h5',
         },
