@@ -1,3 +1,5 @@
+import Xml from './Xml';
+
 export interface Environment {
   readonly core: string;
   readonly packages: Readonly<Record<string, string>>;
@@ -11,7 +13,7 @@ export function getCurrentEnvironment(): Environment | null {
 
 export function extractEnvironment(xml: string | XMLDocument): Environment | null {
   if (typeof xml === 'string') {
-    return extractEnvironment(new DOMParser().parseFromString(`<root>${xml.replace(/^<\?xml[^>]*>\s*/i, '')}</root>`, 'application/xml'));
+    return extractEnvironment(Xml.parse(xml, true));
   }
   let result: Environment | null = null;
   const walker = xml.createTreeWalker(xml.documentElement, NodeFilter.SHOW_COMMENT);
