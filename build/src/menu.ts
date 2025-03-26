@@ -1,5 +1,5 @@
 import {localize} from './i18n';
-import {type Area, type Block, parseArea, parseBlock} from './page-structure';
+import {type Area, type Block, findParentArea, parseArea, parseBlock} from './page-structure';
 
 interface Menu {
   $element?: JQuery;
@@ -48,13 +48,17 @@ function setupBlockMenu(menu: Menu, menuElement: JQuery, block: Block): void {
   if ($after.length === 0) {
     return;
   }
+  const area = findParentArea(block.element);
+  if (area === null) {
+    return;
+  }
   $after.after(
     $('<a data-ccm-blocks-cloner />')
       .attr('dialog-title', (localize('exportBlockTypeNameAsXml') || 'Export %s block as XML').replace('%s', block.displayName))
       .attr('class', 'dialog-launch dropdown-item')
       .attr('dialog-width', '90%')
       .attr('dialog-height', '80%')
-      .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export?cID=${window.CCM_CID}&bID=${block.id}`)
+      .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export?cID=${window.CCM_CID}&aHandle=${encodeURIComponent(area.handle)}&bID=${block.id}`)
       .text(localize('exportAsXml') || 'Export as XML')
       .dialog(),
   );

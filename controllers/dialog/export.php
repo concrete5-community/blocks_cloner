@@ -2,6 +2,7 @@
 
 namespace Concrete\Package\BlocksCloner\Controller\Dialog;
 
+use Concrete\Core\Area\Area;
 use Concrete\Core\Block\Block;
 use Concrete\Core\Entity\File\File;
 use Concrete\Core\Entity\File\Version as FileVersion;
@@ -43,10 +44,20 @@ class Export extends AbstractController
         if (!$bID) {
             throw new UserMessageException(t('Access Denied'));
         }
+        $areaHandle = (string) $this->request->query->get('aHandle');
+        if ($areaHandle === '') {
+            throw new UserMessageException(t('Access Denied'));
+        }
+        $area = Area::get($this->getPage(), $areaHandle);
+        if (!$area || $area->isError()) {
+            throw new UserMessageException(t('Access Denied'));
+        }
         $block = Block::getByID($bID);
         if (!$block || $block->isError()) {
             throw new UserMessageException(t('Access Denied'));
         }
+        $block->setBlockCollectionObject($this->getPage());
+        $block->setBlockAreaObject($area);
         $sx = simplexml_load_string('<root />');
         $block->export($sx);
         $children = $sx->children();

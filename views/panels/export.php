@@ -62,7 +62,7 @@ $view->markHeaderAssetPosition();
                 class="dialog-launch"
                 dialog-width="90%"
                 dialog-height="80%"
-                v-bind:href="`${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export?cID=<?= $cID ?>&&bID=${item.id}`"
+                v-bind:href="getBlockExportUrl(item)"
                 v-on:mouseenter="highlight(item, true)"
                 v-on:mouseleave="highlight(item, false)"
             >
@@ -126,6 +126,14 @@ new Vue({
                 item.children.forEach((child) => walk(child));
             };
             this.items.forEach((item) => walk(item));
+        },
+        getBlockExportUrl(block) {
+            const area = window.ccmBlocksCloner.findParentArea(block.element);
+            if (!area) {
+                console.error('Failed to find the parent area for the element', element);
+                return '';
+            }
+            return `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export?cID=<?= $cID ?>&aHandle=${encodeURIComponent(area.handle)}&bID=${block.id}`;
         },
     },
 });
