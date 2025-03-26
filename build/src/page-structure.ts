@@ -114,7 +114,7 @@ function parse(element: HTMLElement, parent: Container, options: GetPageStructur
     parent.children.push(itemForElement);
     appendTo = itemForElement;
   }
-  Array.from(element.children).forEach((child) => parse(child as HTMLElement, appendTo, options));
+  (Array.from(element.children) as HTMLElement[]).forEach((child) => parse(child, appendTo, options));
   if (block !== null && options.skipBlocksWithoutChildAreas) {
     if (!itemHasChildrenOfType(block, Type.Area)) {
       parent.children.splice(parent.children.indexOf(block), 1);
