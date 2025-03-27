@@ -114,7 +114,6 @@ EOT
 
 function setup()
 {
-    debugger;
     const fn = window.ccmBlocksCloner?.conversion?.registerConverters;
     if (!fn) {
         return false;
