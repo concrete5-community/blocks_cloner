@@ -88,11 +88,8 @@ function applyBlockTypeConversions(doc: XMLDocument, blockTypes: Readonly<Record
 }
 
 function convertTemplate(xBlock: Element, templateRemapping: Readonly<Record<string, string | ExtendedTemplateRemapping>>): void {
-  let currentTemplateHandle = xBlock.getAttribute('template') || '';
-  if (currentTemplateHandle && !/.\.php$/.test(currentTemplateHandle)) {
-    currentTemplateHandle += '.php';
-  }
-  const remapTo = templateRemapping[currentTemplateHandle];
+  let currentTemplateHandle = xBlock.getAttribute('custom-template')?.replace(/\.php$/, '') || '';
+  const remapTo = templateRemapping[currentTemplateHandle] || templateRemapping[`${currentTemplateHandle}.php`];
   let newTemplateHandle: string | null = null;
   let newCustomClasses: string[] = [];
   if (typeof remapTo === 'string') {
@@ -102,9 +99,9 @@ function convertTemplate(xBlock: Element, templateRemapping: Readonly<Record<str
     newCustomClasses = remapTo.newCustomClasses?.split(/\s+/).filter((c) => c.length > 0) || [];
   }
   if (newTemplateHandle === '') {
-    xBlock.removeAttribute('template');
+    xBlock.removeAttribute('custom-template');
   } else if (newTemplateHandle !== null) {
-    xBlock.setAttribute('template', newTemplateHandle.replace(/\.php$/, '') + '.php');
+    xBlock.setAttribute('custom-template', newTemplateHandle.replace(/\.php$/, '') + '.php');
   }
   if (newCustomClasses.length > 0) {
     let xStyle = listChildElements(xBlock, 'style').shift();
