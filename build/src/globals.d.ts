@@ -1,5 +1,11 @@
 import type {Environment} from './environment';
 
+interface DynamicData {
+  readonly i18n: Record<string, string>;
+  readonly blockTypeNames: Readonly<Record<string, string>>;
+  readonly environment: Environment;
+}
+
 declare global {
   interface Window {
     readonly CCM_CID: number;
@@ -9,10 +15,7 @@ declare global {
       subscribe(event: string, callback: (e: any, args: any) => void): void;
     };
 
-    ccmBlocksClonerI18N?: Readonly<Record<string, string>> & {
-      readonly _blockTypeNames: Readonly<Record<string, string>>;
-      readonly _environment: Environment;
-    };
+    ccmBlocksClonerDynamicData?: DynamicData;
   }
 }
 

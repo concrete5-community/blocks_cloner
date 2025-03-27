@@ -2,6 +2,7 @@
 
 namespace Concrete\Package\BlocksCloner;
 
+use Concrete\Core\Application\Application;
 use Concrete\Core\Asset\AssetList;
 use Concrete\Core\Database\EntityManager\Provider\ProviderAggregateInterface;
 use Concrete\Core\Database\EntityManager\Provider\StandardPackageProvider;
@@ -12,7 +13,7 @@ use Concrete\Core\Page\Event as PageEvent;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Permission\Checker;
 use Concrete\Core\User\User;
-use Concrete\Package\BlocksCloner\Controller\ViewLocalization;
+use Concrete\Package\BlocksCloner\Controller\DynamicData;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -61,11 +62,19 @@ class Controller extends Package implements ProviderAggregateInterface
 
     public function on_start()
     {
+        $this->app->extend(
+            PluginManager::class,
+            static function (PluginManager $pluginManager, Application $app) {
+                $pluginManager->registerDefaultPlugins();
+            
+                return $pluginManager;
+            }
+        );
         $user = $this->app->make(User::class);
         if (!$user->isRegistered()) {
             return;
         }
-        $this->app->make('router')->get('/ccm/blocks-cloner/view-localization', ViewLocalization::class . '::view');
+        $this->app->make('router')->get('/ccm/blocks-cloner/dynamic-data', DynamicData::class . '::view');
         $this->app->make('director')->addListener(
             'on_page_view',
             function ($event) {
@@ -126,7 +135,7 @@ class Controller extends Package implements ProviderAggregateInterface
             ]
         );
         $assetList = AssetList::getInstance();
-        $assetList->register('javascript-localized', 'blocks_cloner-view', "/ccm/blocks-cloner/view-localization", ['minify' => false, 'combine' => false, 'version' => $this->pkgVersion], 'blocks_cloner');
+        $assetList->register('javascript-localized', 'blocks_cloner-view', "/ccm/blocks-cloner/dynamic-data", ['minify' => false, 'combine' => false, 'version' => $this->pkgVersion], 'blocks_cloner');
         $assetList->register('javascript', 'blocks_cloner-view', 'js/view.js', ['minify' => false, 'combine' => false, 'version' => $this->pkgVersion], 'blocks_cloner');
         $assetList->registerGroup('blocks_cloner-view', [
             ['javascript-localized', 'blocks_cloner-view'],

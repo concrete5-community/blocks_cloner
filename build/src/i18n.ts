@@ -1,8 +1,7 @@
 export function localize(key: string): string | null {
-  const result: any = window.ccmBlocksClonerI18N?.[key];
-  return typeof result === 'string' ? result : null;
+  return window.ccmBlocksClonerDynamicData?.i18n[key] || null;
 }
 
 export function getBlockTypeName(handle: string): string | null {
-  return window.ccmBlocksClonerI18N?._blockTypeNames[handle] || null;
+  return window.ccmBlocksClonerDynamicData?.blockTypeNames[handle] || null;
 }
