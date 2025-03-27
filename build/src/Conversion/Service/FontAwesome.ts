@@ -789,7 +789,7 @@ const MAP_4_TO_5: ReadonlyMap<string, string> = new Map<string, string>([
 
 function extractV4Suffix(icon: string): string {
   return icon
-    .replace(/s+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim()
     .replace(/^fa | fa$/, '')
     .replace(/^fa-/, '');
