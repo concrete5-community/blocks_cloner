@@ -8,7 +8,7 @@ export interface Environment {
 const XML_ENVIRONMENT_PREFIX = 'Environment:';
 
 export function getCurrentEnvironment(): Environment | null {
-  return window.ccmBlocksClonerI18N?._environment || null;
+  return window.ccmBlocksClonerDynamicData?.environment || null;
 }
 
 export function extractEnvironment(xml: string | XMLDocument): Environment | null {
