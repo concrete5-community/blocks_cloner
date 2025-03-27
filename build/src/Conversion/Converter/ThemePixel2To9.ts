@@ -43,27 +43,27 @@ const converter: PackageConverter = {
     },
     express_entry_list: {
       templateRemapping: {
-        pixel_clients_carousel: {newTemplate: 'pixel_client_carousel'},
+        pixel_clients_carousel: 'pixel_client_carousel',
         pixel_clients_carousel_navigation: '',
         pixel_clients_carousel_pagination: '',
-        pixel_clients_grid_2: {newTemplate: 'pixel_client_grid'},
-        pixel_clients_grid_3: {newTemplate: 'pixel_client_grid'},
-        pixel_clients_grid_4: {newTemplate: 'pixel_client_grid'},
-        pixel_clients_grid_5: {newTemplate: 'pixel_client_grid'},
-        pixel_clients_grid_6: {newTemplate: 'pixel_client_grid'},
-        pixel_team_member_grid_3: {newTemplate: 'pixel_team_member_grid'},
-        pixel_team_member_grid_4: {newTemplate: 'pixel_team_member_grid'},
-        pixel_team_member_grid_carousel: {newTemplate: 'pixel_team_member_carousel'},
+        pixel_clients_grid_2: 'pixel_client_grid',
+        pixel_clients_grid_3: 'pixel_client_grid',
+        pixel_clients_grid_4: 'pixel_client_grid',
+        pixel_clients_grid_5: 'pixel_client_grid',
+        pixel_clients_grid_6: 'pixel_client_grid',
+        pixel_team_member_grid_3: 'pixel_team_member_grid',
+        pixel_team_member_grid_4: 'pixel_team_member_grid',
+        pixel_team_member_grid_carousel: 'pixel_team_member_carousel',
         pixel_team_member_list: '',
-        pixel_team_member_list_carousel: {newTemplate: 'pixel_team_member_carousel'},
+        pixel_team_member_list_carousel: 'pixel_team_member_carousel',
         pixel_testimonial_slider: '',
-        pixel_testimonials_grid_2: {newTemplate: 'pixel_testimonial_grid'},
-        pixel_testimonials_grid_3: {newTemplate: 'pixel_testimonial_grid'},
+        pixel_testimonials_grid_2: 'pixel_testimonial_grid',
+        pixel_testimonials_grid_3: 'pixel_testimonial_grid',
       },
     },
     faq: {
       templateRemapping: {
-        pixel_1: {newTemplate: 'pixel_toggle'},
+        pixel_1: 'pixel_toggle',
         pixel_2: '',
         pixel_3: '',
         pixel_4_tabs: '',
@@ -75,7 +75,7 @@ const converter: PackageConverter = {
         pixel_alert_bs: '',
         pixel_bordered: {newTemplate: 'pixel_feature_box', newCustomClasses: 'fbox:layout:bordered'},
         pixel_centered_icon: {newTemplate: 'pixel_feature_box', newCustomClasses: 'fbox:layout:center'},
-        pixel_side_icon: {newTemplate: 'pixel_feature_box'},
+        pixel_side_icon: 'pixel_feature_box',
       },
     },
     file: {
@@ -137,7 +137,7 @@ const converter: PackageConverter = {
     },
     page_attribute_display: {
       templateRemapping: {
-        pixel_image_responsive_full: {newTemplate: 'pixel_image_responsive'},
+        pixel_image_responsive_full: 'pixel_image_responsive',
       },
     },
     page_list: {
@@ -164,7 +164,7 @@ const converter: PackageConverter = {
     },
     page_title: {
       templateRemapping: {
-        pixel_blog_title: {newTemplate: 'pixel_blog_entry_title'},
+        pixel_blog_title: 'pixel_blog_entry_title',
         pixel_fancy_title_bottom_border: {newTemplate: 'pixel', newCustomClasses: 'title:bottom-border'},
         pixel_fancy_title_bottom_border_short: {newTemplate: 'pixel', newCustomClasses: 'title:bottom-border:short'},
         pixel_fancy_title_center_aligned: {newTemplate: 'pixel', newCustomClasses: 'title:fancy-border:double title:align:center'},
@@ -194,7 +194,7 @@ const converter: PackageConverter = {
     },
     testimonial: {
       templateRemapping: {
-        pixel_grid: {newTemplate: 'pixel'},
+        pixel_grid: 'pixel',
         pixel_list: {newTemplate: 'pixel', newCustomClasses: 'layout:center'},
       },
     },
@@ -211,6 +211,7 @@ const converter: PackageConverter = {
       },
     },
     whale_chart: {
+      // ok
       newBlockTypeHandle: 'pixel_pie_chart',
       removeRecordFields: {
         btWhaleChart: ['lineCap', 'scaleColor'],
@@ -223,9 +224,13 @@ const converter: PackageConverter = {
       },
     },
     whale_counter: {
+      // ok
       newBlockTypeHandle: 'pixel_counter',
       renameDataTables: {
         btWhaleCounter: 'btPixelCounter',
+      },
+      fontAwesome4to5Fields: {
+        btWhaleCounter: ['icon'],
       },
       templateRemapping: {
         pixel_large: '',
@@ -246,7 +251,7 @@ const converter: PackageConverter = {
         },
       },
       templateRemapping: {
-        pixel_btn: {newTemplate: 'pixel_button'},
+        pixel_btn: 'pixel_button',
         pixel_btn_3d: {newTemplate: 'pixel_button', newCustomClasses: 'button:style:3d'},
         pixel_btn_3d_right: {newTemplate: 'pixel_button', newCustomClasses: 'button:style:3d utl:text:align:end'},
         pixel_btn_border: {newTemplate: 'pixel_button', newCustomClasses: 'button:border'},
@@ -263,10 +268,10 @@ const converter: PackageConverter = {
         pixel_btn_rounded: {newTemplate: 'pixel_button', newCustomClasses: 'button:rounded'},
         pixel_btn_rounded_right: {newTemplate: 'pixel_button', newCustomClasses: 'button:rounded utl:text:align:end'},
         pixel_btn_simple_right: {newTemplate: 'pixel_button', newCustomClasses: 'utl:text:align:end'},
-        pixel_image_feature_box: {newTemplate: 'pixel_image_feature_box'},
+        pixel_image_feature_box: 'pixel_image_feature_box',
         pixel_image_feature_box_bordered: {newTemplate: 'pixel_image_feature_box', newCustomClasses: 'ifb:border'},
         pixel_image_feature_box_fancy_title: '',
-        pixel_promo: {newTemplate: 'pixel_promo'},
+        pixel_promo: 'pixel_promo',
         pixel_promo_border: {newTemplate: 'pixel_promo', newCustomClasses: 'promo:border'},
         pixel_promo_border_center: {newTemplate: 'pixel_promo', newCustomClasses: 'promo:border utl:text:align:center'},
         pixel_promo_border_right: {newTemplate: 'pixel_promo', newCustomClasses: 'promo:border utl:text:align:end'},
@@ -326,7 +331,7 @@ const converter: PackageConverter = {
         btWhaleManualNavPixel: 'btPixelManualNav',
       },
       templateRemapping: {
-        pixel_btn: {newTemplate: 'pixel_button'},
+        pixel_btn: 'pixel_button',
         pixel_btn_3d: {newTemplate: 'pixel_button', newCustomClasses: 'button:style:3d'},
         pixel_btn_3d_right: {newTemplate: 'pixel_button', newCustomClasses: 'button:style:3d utl:text:align:end'},
         pixel_btn_border: {newTemplate: 'pixel_button', newCustomClasses: 'button:border'},
@@ -343,10 +348,10 @@ const converter: PackageConverter = {
         pixel_btn_rounded: {newTemplate: 'pixel_button', newCustomClasses: 'button:rounded'},
         pixel_btn_rounded_right: {newTemplate: 'pixel_button', newCustomClasses: 'button:rounded utl:text:align:end'},
         pixel_btn_simple_right: {newTemplate: 'pixel_button', newCustomClasses: 'utl:text:align:end'},
-        pixel_image_feature_box: {newTemplate: 'pixel_image_feature_box'},
+        pixel_image_feature_box: 'pixel_image_feature_box',
         pixel_image_feature_box_bordered: {newTemplate: 'pixel_image_feature_box', newCustomClasses: 'ifb:border'},
         pixel_image_feature_box_fancy_title: '',
-        pixel_promo: {newTemplate: 'pixel_promo'},
+        pixel_promo: 'pixel_promo',
         pixel_promo_border: {newTemplate: 'pixel_promo', newCustomClasses: 'promo:border'},
         pixel_promo_border_center: {newTemplate: 'pixel_promo', newCustomClasses: 'promo:border utl:text:align:center'},
         pixel_promo_border_right: {newTemplate: 'pixel_promo', newCustomClasses: 'promo:border utl:text:align:end'},

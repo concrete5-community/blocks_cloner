@@ -12,6 +12,7 @@ use Concrete\Core\File\Service\VolatileDirectory;
 use Concrete\Core\Permission\Checker;
 use Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface;
 use Concrete\Package\BlocksCloner\Controller\AbstractController;
+use Concrete\Package\BlocksCloner\CIF;
 use Concrete\Package\BlocksCloner\XmlParser;
 use Doctrine\ORM\EntityManagerInterface;
 use ZipArchive;
@@ -60,6 +61,7 @@ class Export extends AbstractController
         $block->setBlockAreaObject($area);
         $sx = simplexml_load_string('<root />');
         $block->export($sx);
+        $this->app->make(CIF::class)->fixExportedBlocks($sx);
         $children = $sx->children();
         $blockElement = $children[0];
         $doc = new \DOMDocument('1.0');
