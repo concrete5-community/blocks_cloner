@@ -101,7 +101,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
     </div>
     <div v-else-if="step === STEPS.CHECK" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
         <div style="flex-grow: 1">
-            <table class="table table-sm table-contensed caption-top">
+            <table class="table table-hover table-sm table-contensed caption-top">
                 <caption>
                     <strong><?= t('Block Types') ?></strong>
                 </caption>
@@ -129,7 +129,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
                     </tr>
                 </tbody>
             </table>
-            <table v-if="referenced.files.length" class="table table-sm table-contensed caption-top">
+            <table v-if="referenced.files.length" class="table table-hover table-sm table-contensed caption-top">
                 <caption>
                     <strong><?= t('Referenced Files') ?></strong>
                     <span v-if="someFilesWithErrors">
@@ -138,7 +138,6 @@ defined('C5_EXECUTE') or die('Access Denied.');
                     </span>
                 </caption>
                 <colgroup>
-                    <col width="1" />
                     <col width="1" />
                 </colgroup>
                 <thead>
@@ -157,7 +156,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
                     </tr>
                 </tbody>
             </table>
-            <table v-if="referenced.pages.length" class="table table-sm table-contensed caption-top">
+            <table v-if="referenced.pages.length" class="table table-hover table-sm table-contensed caption-top">
                 <caption>
                     <strong><?= t('Referenced Pages') ?></strong>
                     <?php
@@ -183,14 +182,13 @@ defined('C5_EXECUTE') or die('Access Denied.');
                     <tr v-for="i in referenced.pages">
                         <td style="white-space: nowrap"><code>{{ i.key }}</code></td>
                         <td>
-                        <td>
                             <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
                             <a v-else target="_blank" v-bind:href="i.link" v-bind:title="`<?= t('ID: %s', '${i.cID}') ?>`">{{ i.name }}</a>
                         </td>
                     </tr>
                 </tbody>
             </table>
-            <table v-if="referenced.pageTypes.length" class="table table-sm table-contensed caption-top">
+            <table v-if="referenced.pageTypes.length" class="table table-hover table-sm table-contensed caption-top">
                 <caption>
                     <strong><?= t('Referenced Page Types') ?></strong>
                 </caption>
@@ -213,7 +211,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
                     </tr>
                 </tbody>
             </table>
-            <table v-if="referenced.pageFeeds.length" class="table table-sm table-contensed caption-top">
+            <table v-if="referenced.pageFeeds.length" class="table table-hover table-sm table-contensed caption-top">
                 <caption>
                     <strong><?= t('Referenced RSS Page Feeds') ?></strong>
                 </caption>
