@@ -112,7 +112,7 @@ class Import extends AbstractController
                 if (!$checker->canAddBlockType($blockType)) {
                     throw new UserMessageException(t("You can't add blocks of type %s to this page.", t($blockType->getBlockTypeName())));
                 }
-                $packageID = $blockType->getPackageHandle();
+                $packageID = $blockType->getPackageID();
                 $package = $packageID ? $installedPackages[$packageID] : null;
                 $result['blockTypes'][] = [
                     'id' => (int) $blockType->getBlockTypeID(),
