@@ -4,6 +4,7 @@ namespace Concrete\Package\BlocksCloner\Controller\Dialog;
 
 use Concrete\Core\Area\Area;
 use Concrete\Core\Block\Block;
+use Concrete\Core\Block\CustomStyle;
 use Concrete\Core\Database\Connection\Connection;
 use Concrete\Core\Entity\Page\Feed as PageFeed;
 use Concrete\Core\Entity\File\Version;
@@ -18,6 +19,7 @@ use Concrete\Core\File\Service\Zip;
 use Concrete\Core\Http\ResponseFactoryInterface;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Page\Type\Type as PageType;
+use Concrete\Core\Page\Stack\Stack;
 use Concrete\Core\Permission\Checker;
 use Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface;
 use Concrete\Core\Validation\CSRF\Token;
@@ -282,10 +284,7 @@ class Import extends AbstractController
                     if (count($deltaBlockIDs) !== 1) {
                         throw new UserMessageException(t('Failed to retrieve the ID of the new block'));
                     }
-                    $newBlock = Block::getByID(array_shift($deltaBlockIDs));
-                    if (!$newBlock || $newBlock->isError()) {
-                        throw new UserMessageException(t('Failed to retrieve the new block'));
-                    }
+                    $newBlock = $this->getImportedBlockByArea($area, array_shift($deltaBlockIDs));
                 }
                 if ($beforeBlockID) {
                     $newBlockIDsInArea = $this->sortBlockIDs((int) $newBlock->getBlockID(), $beforeBlockID, $newBlockIDsInArea);
@@ -299,6 +298,58 @@ class Import extends AbstractController
                     $cn->rollBack();
                 }
             }
+        } catch (Exception $x) {
+            return $this->buildErrorResponse($x);
+        } catch (Throwable $x) {
+            return $this->buildErrorResponse($x);
+        }
+
+        return $response;
+    }
+
+    /**
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function getBlocksDesign()
+    {
+        try {
+            $blockIDsByAreaHandles = json_decode(
+                (string) $this->request->request->get('blockIDsByAreaHandles'),
+                true,
+                0 | (defined('JSON_THROW_ON_ERROR') ? JSON_THROW_ON_ERROR : 0)
+            );
+            if (empty($blockIDsByAreaHandles || !is_array($blockIDsByAreaHandles))) {
+                throw new UserMessageException(t('Access Denied'));
+            }
+            $result = [];
+            foreach ($blockIDsByAreaHandles as $areaHandle => $blockIDs) {
+                $area = Area::get($this->getPage(), $areaHandle);
+                if (!$area || $area->isError()) {
+                    throw new UserMessageException(t('Unable to find the requested area'));
+                }
+                foreach ($blockIDs as $blockID) {
+                    if (!is_int($blockID) || $blockID < 1) {
+                        throw new UserMessageException(t('Access Denied'));
+                    }
+                    $block = $this->getImportedBlockByArea($area, $blockID);
+                    $customStyle = $block->getCustomStyle();
+                    $customStyleSet = $customStyle ? $customStyle->getStyleSet() : null;
+                    if (!$customStyleSet) {
+                        continue;
+                    }
+                    $style = new CustomStyle($customStyleSet, $block, $this->getPage()->getCollectionThemeObject());
+                    $css = (string) $style->getCSS();
+                    if ($css === '') {
+                        continue;
+                    }
+                    $result[] = [
+                        'blockID' => $blockID,
+                        'issID' => (int) $customStyleSet->getID(),
+                        'htmlStyleElement' => $style->getStyleWrapper($css),
+                    ];
+                }
+            }
+            $response = $this->app->make(ResponseFactoryInterface::class)->json($result);
         } catch (Exception $x) {
             return $this->buildErrorResponse($x);
         } catch (Throwable $x) {
@@ -489,5 +540,48 @@ class Import extends AbstractController
                 throw new ImportException(ImportException::E_FILE_INVALID_EXTENSION);
             }
         }
+    }
+
+    /**
+     * @param string $areaHandle
+     * @param int $blockID
+     *
+     * @return \Concrete\Core\Block\Block
+     */
+    private function getImportedBlockByAreaHandle($areaHandle, $blockID)
+    {
+        $area = Area::get($this->getPage(), $areaHandle);
+        if (!$area || $area->isError()) {
+            throw new UserMessageException(t('Unable to find the requested area'));
+        }
+
+        return $this->getImportedBlockByArea($area, $blockID);
+    }
+
+    /**
+     * @param int $blockID
+     *
+     * @return \Concrete\Core\Block\Block
+     */
+    private function getImportedBlockByArea(Area $area, $blockID)
+    {
+        if ($area->isGlobalArea()) {
+            $stack = Stack::getByName($area->getAreaHandle());
+            if (!$stack || $stack->isError()) {
+                throw new UserMessageException(t('Unable to find the requested area'));
+            }
+            $block = Block::getByID($blockID, $stack, STACKS_AREA_NAME);
+            if ($block && !$block->isError()) {
+                $block->setBlockAreaObject($area);
+            }
+        } else {
+            $block = Block::getByID($blockID, $this->getPage(), $area);
+        }
+
+        if (!$block || $block->isError()) {
+            throw new Exception(('Unable to find the requested block'));
+        }
+
+        return $block;
     }
 }

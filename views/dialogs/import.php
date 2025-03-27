@@ -80,7 +80,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
                         </select>
                         <div v-for="(c, i) in allConverters" class="form-check" v-if="conversionMode !== CONVERSION_MODE.NONE">
                             <input
-                                type="checkbox" 
+                                type="checkbox"
                                 class="form-check-input"
                                 v-bind:value="c"
                                 v-bind:id="`ccm-blockscloker-import-converter-${i}`"
@@ -513,48 +513,53 @@ new Vue({
                 if (this.addBefore !== null && !ccmBlockBefore) {
                     throw new Error(<?= json_encode(t('Unable to find the requested block')) ?>);
                 }
-                const request = {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        Accept: 'application/json',
-                    },
-                    body: new URLSearchParams([
-                        [<?= json_encode($token::DEFAULT_TOKEN_NAME) ?>, this.importToken],
-                        ['xml', this.finalXml],
-                        ['areaHandle', <?= json_encode($area->arHandle) ?>],
-                        ['beforeBlockID', this.addBefore?.id || ''],
-                        ['__ccm_consider_request_as_xhr', '1'],
-                    ]),
-                };
-                const response = await window.fetch(
+                const importResponse = await window.fetch(
                     `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/import?cID=<?= $cID ?>`,
-                    request
-                );
-                const responseData = await response.json();
-                if (responseData.error) {
-                    throw new Error(responseData.error);
-                }
-                const bID = responseData.bID;
-                $.get(
-                    CCM_DISPATCHER_FILENAME + '/ccm/system/block/render',
                     {
-                        arHandle: ccmArea.getHandle(),
-                        cID: <?= $cID ?>,
-                        bID,
-                        arEnableGridContainer: ccmArea.getEnableGridContainer() ? 1 : 0,
-                    },
-                    (html) => {
-                        if (ccmBlockBefore) {
-                            ccmBlockBefore.getContainer().before(html);
-                        } else {
-                            ccmArea.getBlockContainer().append(html);
-                        }
-                        _.defer(function () {
-                            ccmEditMode.scanBlocks();
-                        });
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            Accept: 'application/json',
+                        },
+                        body: new URLSearchParams([
+                            [<?= json_encode($token::DEFAULT_TOKEN_NAME) ?>, this.importToken],
+                            ['xml', this.finalXml],
+                            ['areaHandle', <?= json_encode($area->arHandle) ?>],
+                            ['beforeBlockID', this.addBefore?.id || ''],
+                            ['__ccm_consider_request_as_xhr', '1'],
+                        ]),
                     }
                 );
+                const importResult = await importResponse.json();
+                if (importResult.error) {
+                    throw new Error(importResult.error);
+                }
+                const bID = importResult.bID;
+                const renderResponse = await window.fetch(
+                    `${CCM_DISPATCHER_FILENAME}/ccm/system/block/render?cID=<?= $cID ?>&arHandle=${encodeURIComponent(ccmArea.getHandle())}&bID=${bID}&arEnableGridContainer=${ccmArea.getEnableGridContainer() ? 1 : 0}`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            Accept: 'application/json, text/html',
+                        },
+                    }
+                );
+                if (!renderResponse.ok) {
+                    renderResponse.text().then((text) => {
+                        console.error(text);
+                    });
+                    throw new Error(<?= json_encode(t('Unable to render the block')) ?>);
+                }
+                const renderHtml = await renderResponse.text();
+                if (ccmBlockBefore) {
+                    ccmBlockBefore.getContainer().before(renderHtml);
+                } else {
+                    ccmArea.getBlockContainer().append(renderHtml);
+                }
+                _.defer(() => {
+                    ccmEditMode.scanBlocks();
+                    this.refreshBlockDesign(ccmArea.getHandle(), bID);
+                });
             } catch (e) {
                 window.ConcreteAlert.error({
                     message: e?.messsage || e?.toString() || <?= json_encode(t('Unknown error')) ?>,
@@ -570,6 +575,55 @@ new Vue({
             $.fn.dialog.closeTop();
             window.ConcretePanelManager.getByIdentifier('blocks_cloner-import')?.hide()
             window.ConcretePanelManager.getByIdentifier('blocks_cloner-export')?.hide()
+        },
+        async refreshBlockDesign(areaHandle, bID) {
+            const ccmEditMode = window.Concrete.getEditMode();
+            const ccmBlock = ccmEditMode.getBlockByID(bID);
+            const blockElement = ccmBlock.getElem()[0];
+            const blockIDsByAreaHandles = {
+                [areaHandle]: [bID],
+            };
+            function walk(item, parentAreaHandle) {
+                switch (item.type) {
+                    case 'area':
+                        parentAreaHandle = item.handle;
+                        break;
+                    case 'block':
+                        if (parentAreaHandle !== undefined) {
+                            blockIDsByAreaHandles[parentAreaHandle] = blockIDsByAreaHandles[parentAreaHandle] || [];
+                            if (!blockIDsByAreaHandles[item.handle].includes(item.id)) {
+                                blockIDsByAreaHandles[item.handle].push(item.id);
+                            }
+                        }
+                        break;
+                }
+                item.children.forEach(walk, parentAreaHandle);
+            }
+            for (const item of window.ccmBlocksCloner.getPageStructureStartingAt(blockElement)) {
+                walk(item);
+            }
+            const response = await window.fetch(
+                `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/get-blocks-design?cID=<?= $cID ?>`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        Accept: 'application/json',
+                    },
+                    body: new URLSearchParams([
+                        ['blockIDsByAreaHandles', JSON.stringify(blockIDsByAreaHandles)],
+                        ['__ccm_consider_request_as_xhr', '1'],
+                    ]),
+                }
+            );
+            const responseData = await response.json();
+            if (responseData?.error || typeof responseData?.length !== 'number') {
+                throw new Error(responseData.error || <?= json_encode(t('Unknown error')) ?>);
+            }
+            const head = document.querySelector('head');
+            responseData.forEach((item) => {
+                document.head.insertAdjacentHTML('beforeend', item.htmlStyleElement);
+            });
         },
     },
 });
