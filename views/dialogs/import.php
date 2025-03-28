@@ -41,7 +41,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
                     v-bind:value="convertedXml"
                     nowrap
                     spellcheck="false"
-                    readonly="busy"
+                    readonly
                     style="flex-grow: 1; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 0.9em; resize: none"
                 ></textarea>
                 <div v-if="inputXml && xmlInputError" class="alert alert-danger" v-html="xmlInputError" style="white-space: pre-wrap"></div>
@@ -234,6 +234,30 @@ defined('C5_EXECUTE') or die('Access Denied.');
                     </tr>
                 </tbody>
             </table>
+            <table v-if="referenced.stacks.length" class="table table-hover table-sm table-contensed caption-top">
+                <caption>
+                    <strong>{{ someStacksWithErrors ? ICON.BAD : ICON.GOOD }}<?= t('Referenced Stacks') ?></strong>
+                </caption>
+                <colgroup>
+                    <col width="1" />
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th style="white-space: nowrap"><?= t('Key') ?></th>
+                        <th><?= t('Name') ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="i in referenced.stacks">
+                        <td style="white-space: nowrap"><code>{{ i.key }}</code></td>
+                        <td>
+                            <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
+                            <a v-else target="_blank" v-bind:href="i.link">{{ i.name }}</a>
+                            <span v-else>{{ i.name }}</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
         <div class="text-right text-end">
             <button v-on:click.prevent="step = STEPS.INPUT" v-bind:disabled="busy" class="btn btn-secondary btn-default"><?= t('Back') ?></button>
@@ -308,6 +332,7 @@ new Vue({
                 pages: [],
                 pageTypes: [],
                 pageFeeds: [],
+                stacks: [],
             },
         };
     },
@@ -385,7 +410,10 @@ new Vue({
         },
         somePageFeedsWithErrors() {
             return this.referenced.pageFeeds.some((pageFeed) => pageFeed.error);
-        }
+        },
+        someStacksWithErrors() {
+            return this.referenced.stacks.some((stack) => stack.error);
+        },
     },
     methods: {
         normalizeInputXml() {

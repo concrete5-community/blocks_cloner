@@ -18,6 +18,7 @@ use Concrete\Core\File\Service\VolatileDirectory;
 use Concrete\Core\File\Service\Zip;
 use Concrete\Core\Http\ResponseFactoryInterface;
 use Concrete\Core\Page\Page;
+use Concrete\Core\Page\Stack\Stack;
 use Concrete\Core\Page\Type\Type as PageType;
 use Concrete\Core\Permission\Checker;
 use Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface;
@@ -126,6 +127,8 @@ class Import extends AbstractController
                     ] : null,
                 ];
             }
+            $resolverManager = $this->app->make(ResolverManagerInterface::class);
+            $viewStackPage = null;
             foreach ($parser->findItems($sx) as $categoryKey => $items) {
                 $result[$categoryKey] = [];
                 foreach ($items as $itemKey => $item) {
@@ -168,6 +171,30 @@ class Import extends AbstractController
                                 $serialized += [
                                     'title' => $item->getFeedDisplayTitle('text'),
                                 ];
+                            } else {
+                                $serialized['error'] = $item;
+                            }
+                            break;
+                        case XmlParser::KEY_STACKS:
+                            if ($item instanceof Stack) {
+                                $serialized += [
+                                    'name' => $item->getCollectionName(),
+                                    'link' => '',
+                                ];
+                                if ($viewStackPage === null) {
+                                    $viewStackPage = Page::getByPath('/dashboard/blocks/stacks');
+                                    if (!$viewStackPage || $viewStackPage->isError()) {
+                                        $viewStackPage = false;
+                                    } else {
+                                        $checker = new Checker($viewStackPage);
+                                        if (!$checker->canViewPage()) {
+                                            $viewStackPage = false;
+                                        }
+                                    }
+                                }
+                                if ($viewStackPage) {
+                                    $serialized['link'] = (string) $resolverManager->resolve([$viewStackPage, 'view_details', $item->getCollectionID()]);
+                                }
                             } else {
                                 $serialized['error'] = $item;
                             }
