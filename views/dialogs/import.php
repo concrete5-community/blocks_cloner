@@ -103,7 +103,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
         <div style="flex-grow: 1">
             <table class="table table-hover table-sm table-contensed caption-top">
                 <caption>
-                    <strong><?= t('Block Types') ?></strong>
+                    <strong>{{ ICON.GOOD}} <?= t('Referenced Block Types') ?></strong>
                 </caption>
                 <colgroup>
                     <col width="1" />
@@ -131,7 +131,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
             </table>
             <table v-if="referenced.files.length" class="table table-hover table-sm table-contensed caption-top">
                 <caption>
-                    <strong><?= t('Referenced Files') ?></strong>
+                    <strong>{{ someFilesWithErrors ? ICON.BAD : ICON.GOOD }} <?= t('Referenced Files') ?></strong>
                     <span v-if="someFilesWithErrors">
                         -
                         <a href="#" v-on:click.prevent="pickFile()"><?= t('Upload File') ?></a>
@@ -151,14 +151,14 @@ defined('C5_EXECUTE') or die('Access Denied.');
                         <td style="white-space: nowrap"><code>{{ i.key }}</code></td>
                         <td>
                             <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
-                            <code v-else v-bind:title="`<?= t('Prefix: %s', '${i.prefix}') ?>`">{{ i.name }}</code>
+                            <span v-else v-bind:title="`<?= t('Prefix: %s', '${i.prefix}') ?>`">{{ i.name }}</span>
                         </td>
                     </tr>
                 </tbody>
             </table>
             <table v-if="referenced.pages.length" class="table table-hover table-sm table-contensed caption-top">
                 <caption>
-                    <strong><?= t('Referenced Pages') ?></strong>
+                    <strong>{{ somePagesWithErrors ? ICON.BAD : ICON.GOOD }} <?= t('Referenced Pages') ?></strong>
                     <?php
                     if ($sitemapPageUrl !== '') {
                         ?>
@@ -190,7 +190,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
             </table>
             <table v-if="referenced.pageTypes.length" class="table table-hover table-sm table-contensed caption-top">
                 <caption>
-                    <strong><?= t('Referenced Page Types') ?></strong>
+                    <strong>{{ somePageTypesWithErrors ? ICON.BAD : ICON.GOOD }} <?= t('Referenced Page Types') ?></strong>
                 </caption>
                 <colgroup>
                     <col width="1" />
@@ -213,7 +213,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
             </table>
             <table v-if="referenced.pageFeeds.length" class="table table-hover table-sm table-contensed caption-top">
                 <caption>
-                    <strong><?= t('Referenced RSS Page Feeds') ?></strong>
+                    <strong>{{ somePageFeedsWithErrors ? ICON.BAD : ICON.GOOD }}<?= t('Referenced RSS Page Feeds') ?></strong>
                 </caption>
                 <colgroup>
                     <col width="1" />
@@ -286,6 +286,12 @@ new Vue({
         }
         return {
             STEPS,
+            ICON: {
+                // HEAVY CHECK MARK
+                GOOD: '\u2705',
+                // CROSS MARK
+                BAD: '\u274c',
+            },
             step: STEPS.INPUT,
             existingBlocksInArea: getExistingBlocksInArea(),
             busy: false,
@@ -374,6 +380,12 @@ new Vue({
         somePagesWithErrors() {
             return this.referenced.pages.some((page) => page.error);
         },
+        somePageTypesWithErrors() {
+            return this.referenced.pageTypes.some((pageType) => pageType.error);
+        },
+        somePageFeedsWithErrors() {
+            return this.referenced.pageFeeds.some((pageFeed) => pageFeed.error);
+        }
     },
     methods: {
         normalizeInputXml() {
