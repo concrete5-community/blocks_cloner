@@ -66,7 +66,7 @@ class Controller extends Package implements ProviderAggregateInterface
             PluginManager::class,
             static function (PluginManager $pluginManager, Application $app) {
                 $pluginManager->registerDefaultPlugins();
-            
+
                 return $pluginManager;
             }
         );

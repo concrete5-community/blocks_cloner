@@ -39,5 +39,4 @@ class Export
 
         return isset($this->blockTypes[$blockTypeHandle]) ? $this->blockTypes[$blockTypeHandle] : [];
     }
-    
 }
