@@ -2,6 +2,7 @@
 
 use Concrete\Core\Entity\File\Version;
 use Concrete\Core\Entity\Page\Feed as PageFeed;
+use Concrete\Core\Page\Stack\Stack;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Page\Type\Type as PageType;
 use Concrete\Package\BlocksCloner\XmlParser;
@@ -246,6 +247,44 @@ defined('C5_EXECUTE') or die('Access Denied.');
                                 } else {
                                     ?>
                                     <i><?= h($pageFeed) ?></i>
+                                    <?php
+                                }
+                                ?>
+                            </td>
+                        </tr>
+                        <?php
+                    }
+                    ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+    if (isset($references[XmlParser::KEY_STACKS])) {
+        ?>
+        <div style="max-height: 200px; overflow-y: scroll">
+            <table class="table table-striped table-sm table-condensed caption-top">
+                <caption><strong><?= t('Referenced Stacks')?></strong></caption>
+                <colgroup>
+                    <col width="1" />
+                </colgroup>
+                <tbody>
+                    <?php
+                    foreach ($references[XmlParser::KEY_STACKS] as $key => $stack) {
+                        ?>
+                        <tr>
+                            <td style="white-space: nowrap">
+                                <code><?= h($key) ?></code>
+                            </td>
+                            <td>
+                                <?php
+                                if ($stack instanceof Stack) {
+                                    ?>
+                                    <?= h($stack->getCollectionName()) ?>
+                                    <?php
+                                } else {
+                                    ?>
+                                    <i><?= h($stack) ?></i>
                                     <?php
                                 }
                                 ?>

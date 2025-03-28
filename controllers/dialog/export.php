@@ -12,11 +12,11 @@ use Concrete\Core\File\Service\VolatileDirectory;
 use Concrete\Core\Permission\Checker;
 use Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface;
 use Concrete\Package\BlocksCloner\Controller\AbstractController;
+use Concrete\Package\BlocksCloner\Edit\Context;
 use Concrete\Package\BlocksCloner\ExportFixer;
 use Concrete\Package\BlocksCloner\XmlParser;
 use Doctrine\ORM\EntityManagerInterface;
 use ZipArchive;
-use Concrete\Package\BlocksCloner\Edit\Context;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 

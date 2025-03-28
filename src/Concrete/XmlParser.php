@@ -4,9 +4,11 @@ namespace Concrete\Package\BlocksCloner;
 
 use Concrete\Core\Application\Application;
 use Concrete\Core\Backup\ContentImporter\ValueInspector\Item;
+use Concrete\Core\Config\Repository\Repository;
 use Concrete\Core\Entity\Block\BlockType\BlockType;
 use Concrete\Core\Entity\File\Version;
 use Concrete\Core\Error\UserMessageException;
+use Concrete\Core\Page\Stack\Stack;
 use Concrete\Core\Permission\Checker;
 use Doctrine\ORM\EntityManagerInterface;
 use DOMDocument;
@@ -25,28 +27,42 @@ final class XmlParser
 
     const KEY_PAGEFEEDS = 'pageFeeds';
 
+    const KEY_STACKS = 'stacks';
+
     /**
      * @var \Doctrine\ORM\EntityManagerInterface
      */
     private $entityManager;
 
     /**
-     * @var \Concrete\Core\Entity\Block\BlockType\BlockType[]|null
-     */
-    private $installedBlockTypes;
-
-    /**
      * @var \Concrete\Core\Backup\ContentImporter\ValueInspector\ValueInspectorInterface
      */
     private $valueInspector;
 
+    /**
+     * @var \Concrete\Core\Config\Repository\Repository
+     */
+    private $config;
+
+    /**
+     * @var \Concrete\Core\Entity\Block\BlockType\BlockType[]|null
+     */
+    private $installedBlockTypes = null;
+
+    /**
+     * @var bool|null
+     */
+    private $canImportStacksByPath = null;
+
     public function __construct(
         EntityManagerInterface $entityManager,
-        Application $valueInspectorProvider
+        Application $valueInspectorProvider,
+        Repository $config
     )
     {
         $this->entityManager = $entityManager;
         $this->valueInspector = $valueInspectorProvider->make('import/value_inspector');
+        $this->config = $config;
     }
 
     /**
@@ -93,6 +109,9 @@ final class XmlParser
                 $this->parseFoundItem($item, $result);
             }
         }
+        foreach ($this->listBlockElements($xml) as $blockElement) {
+            $this->inspectBlockElement($blockElement, $result);
+        }
         if (isset($result[self::KEY_FILES])) {
             $this->filterAccessibleFileVersions($result[self::KEY_FILES]);
         }
@@ -135,7 +154,7 @@ final class XmlParser
     /**
      * @return \SimpleXMLElement[]|\Generator
      */
-    private function listBlockNodes(SimpleXMLElement $sx)
+    private function listBlockElements(SimpleXMLElement $sx)
     {
         $isDataTable = false;
         switch ($sx->getName()) {
@@ -150,8 +169,8 @@ final class XmlParser
             if ($isDataTable && $child->getName() === 'record') {
                 continue;
             }
-            foreach ($this->listBlockNodes($child) as $blockNode) {
-                yield $blockNode;
+            foreach ($this->listBlockElements($child) as $blockElement) {
+                yield $blockElement;
             }
         }
     }
@@ -307,7 +326,7 @@ final class XmlParser
         $result = [];
         $errors = [];
         $blockTypes = $this->getInstalledBlockTypes();
-        foreach ($this->listBlockNodes($xml) as $xBlock) {
+        foreach ($this->listBlockElements($xml) as $xBlock) {
             $type = isset($xBlock['type']) ? (string) $xBlock['type'] : '';
             if ($type === '') {
                 $errors[] = t('A %1$s element is missing the %2$s attribute.', '<block>', 'type');
@@ -330,5 +349,76 @@ final class XmlParser
         }
 
         return $result;
+    }
+
+    private function inspectBlockElement(SimpleXMLElement $blockElement, array &$result)
+    {
+        $type = isset($blockElement['type']) ? (string) $blockElement['type'] : '';
+        switch ($type) {
+            case BLOCK_HANDLE_STACK_PROXY:
+                $this->inspectCoreStackDisplayBlockElement($blockElement, $result);
+                break;
+        }
+    }
+
+    private function inspectCoreStackDisplayBlockElement(SimpleXMLElement $blockElement, array &$result)
+    {
+        if (!isset($blockElement->stack)) {
+            return;
+        }
+        $name = trim((string) $blockElement->stack);
+        $path = isset($blockElement->stack['path']) && $this->canImportStacksByPath() ? (string) $blockElement->stack['path'] : '';
+        if ($name === '' && $path === '') {
+            return;
+        }
+        if (!isset($result[self::KEY_STACKS])) {
+            $result[self::KEY_STACKS] = [];
+        }
+        $key = $path === '' ? $name : $path;
+        if (array_key_exists($key, $result[self::KEY_STACKS])) {
+            return;
+        }
+        if ($path !== '') {
+            $stack = Stack::getByPath($path);
+            if ($stack) {
+                $result[self::KEY_STACKS][$key] = $stack;
+
+                return;
+            }
+            if ($name === '') {
+                $result[self::KEY_STACKS][$key] = t('Unable to find a stack with the path %s', $path);
+
+                return;
+            }
+        }
+        $result[self::KEY_STACKS][$key] = Stack::getByName($name) ?: t('Unable to find a stack with name %s', $name);
+    }
+
+    /**
+     * @return bool
+     */
+    private function canImportStacksByPath()
+    {
+        if ($this->canImportStacksByPath === null) {
+            $version = $this->config->get('concrete.version');
+            list($majorVersion) = explode('.', $version, 2);
+            $majorVersion = (int) $majorVersion;
+            switch ($majorVersion) {
+                case 8:
+                    // @todo see https://github.com/concretecms/concretecms/pull/12508#issuecomment-2761950259
+                    $this->canImportStacksByPath = version_compare($version, '8.9999.9999') >= 0;
+                    break;
+                case 9:
+                    // @todo see https://github.com/concretecms/concretecms/pull/12508
+                    $this->canImportStacksByPath = version_compare($version, '9.9999.9999') >= 0;
+                    break;
+                default:
+                    // @todo
+                    $this->canImportStacksByPath = $majorVersion > 9999;
+                    break;
+            }
+        }
+
+        return $this->canImportStacksByPath;
     }
 }
