@@ -98,42 +98,48 @@ class Controller extends Package implements ProviderAggregateInterface
      */
     private function inject($page, $user)
     {
-        if (!$page instanceof Page || $page->isError() || !$page->isEditMode()) {
+        if (!$page instanceof Page || $page->isError()) {
             return;
         }
         $checker = new Checker($page);
-        if (!$checker->canEditPageContents()) {
-            return;
+        if ($page->getCollectionPath() === '/dashboard/blocks/stacks') {
+            if (!$checker->canViewPage()) {
+                return;
+            }
+        } else {
+            if (!$page->isEditMode() || !$checker->canEditPageContents()) {
+                return;
+            }
+            $menu = $this->app->make('helper/concrete/ui/menu');
+            $menu->addPageHeaderMenuItem(
+                'export',
+                $this->pkgHandle,
+                [
+                    'icon' => 'download',
+                    'label' => t('Export Block as XML'),
+                    'position' => 'left',
+                    'href' => false,
+                    'linkAttributes' => [
+                        'data-launch-panel' => 'blocks_cloner-export',
+                        'title' => t('Export Block as XML'),
+                    ],
+                ]
+            );
+            $menu->addPageHeaderMenuItem(
+                'import',
+                $this->pkgHandle,
+                [
+                    'icon' => 'upload',
+                    'label' => t('Import Block from XML'),
+                    'position' => 'left',
+                    'href' => false,
+                    'linkAttributes' => [
+                        'data-launch-panel' => 'blocks_cloner-import',
+                        'title' => t('Import Block from XML'),
+                    ],
+                ]
+            );
         }
-        $menu = $this->app->make('helper/concrete/ui/menu');
-        $menu->addPageHeaderMenuItem(
-            'export',
-            $this->pkgHandle,
-            [
-                'icon' => 'download',
-                'label' => t('Export Block as XML'),
-                'position' => 'left',
-                'href' => false,
-                'linkAttributes' => [
-                    'data-launch-panel' => 'blocks_cloner-export',
-                    'title' => t('Export Block as XML'),
-                ],
-            ]
-        );
-        $menu->addPageHeaderMenuItem(
-            'import',
-            $this->pkgHandle,
-            [
-                'icon' => 'upload',
-                'label' => t('Import Block from XML'),
-                'position' => 'left',
-                'href' => false,
-                'linkAttributes' => [
-                    'data-launch-panel' => 'blocks_cloner-import',
-                    'title' => t('Import Block from XML'),
-                ],
-            ]
-        );
         $assetList = AssetList::getInstance();
         $assetList->register('javascript-localized', 'blocks_cloner-view', "/ccm/blocks-cloner/dynamic-data", ['minify' => false, 'combine' => false, 'version' => $this->pkgVersion], 'blocks_cloner');
         $assetList->register('javascript', 'blocks_cloner-view', 'js/view.js', ['minify' => false, 'combine' => false, 'version' => $this->pkgVersion], 'blocks_cloner');
