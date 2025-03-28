@@ -16,6 +16,7 @@ use Concrete\Package\BlocksCloner\ExportFixer;
 use Concrete\Package\BlocksCloner\XmlParser;
 use Doctrine\ORM\EntityManagerInterface;
 use ZipArchive;
+use Concrete\Package\BlocksCloner\Edit\Context;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -53,12 +54,11 @@ class Export extends AbstractController
         if (!$area || $area->isError()) {
             throw new UserMessageException(t('Access Denied'));
         }
-        $block = Block::getByID($bID);
+        $context = Context::forReading($this->getPage(), $area);
+        $block = Block::getByID($bID, $context->page, $context->area);
         if (!$block || $block->isError()) {
             throw new UserMessageException(t('Access Denied'));
         }
-        $block->setBlockCollectionObject($this->getPage());
-        $block->setBlockAreaObject($area);
         $sx = simplexml_load_string('<root />');
         $block->export($sx);
         $this->app->make(ExportFixer::class)->fix($sx);

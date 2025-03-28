@@ -23,7 +23,7 @@ use Concrete\Core\Permission\Checker;
 use Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface;
 use Concrete\Core\Validation\CSRF\Token;
 use Concrete\Package\BlocksCloner\Controller\AbstractController;
-use Concrete\Package\BlocksCloner\Edit\EditState;
+use Concrete\Package\BlocksCloner\Edit\Context;
 use Concrete\Package\BlocksCloner\ImportChecker;
 use Concrete\Package\BlocksCloner\XmlParser;
 use Doctrine\ORM\EntityManagerInterface;
@@ -259,10 +259,10 @@ class Import extends AbstractController
                 throw new UserMessageException(t('Unable to find the requested area'));
             }
             $sx = $this->loadXml($xml);
-            $editState = new EditState($this->getPage(), $area);
+            $context = Context::forWriting($this->getPage(), $area);
             $parser = $this->app->make(XmlParser::class);
             $blockType = $parser->getRootBlockType($xml);
-            $initialBlockIDsInArea = $this->getBlockIDsInArea($editState);
+            $initialBlockIDsInArea = $this->getBlockIDsInArea($context);
             $beforeBlockID = $this->request->request->getInt('beforeBlockID');
             if ($beforeBlockID && !in_array($beforeBlockID, $initialBlockIDsInArea, true)) {
                 throw new UserMessageException(t('Unable to find the requested block'));
@@ -277,19 +277,19 @@ class Import extends AbstractController
             $rollBack = true;
             $cn->beginTransaction();
             try {
-                $newBlock = $blockController->import($editState->page, $editState->area, $sx);
+                $newBlock = $blockController->import($context->page, $context->area, $sx);
                 $this->app->make('cache/request')->flush();
-                $newBlockIDsInArea = $this->getBlockIDsInArea($editState);
+                $newBlockIDsInArea = $this->getBlockIDsInArea($context);
                 if (!$newBlock) {
                     $deltaBlockIDs = array_diff($newBlockIDsInArea, $initialBlockIDsInArea);
                     if (count($deltaBlockIDs) !== 1) {
                         throw new UserMessageException(t('Failed to retrieve the ID of the new block'));
                     }
-                    $newBlock = $this->getImportedBlock($editState, array_shift($deltaBlockIDs));
+                    $newBlock = $this->getImportedBlock($context, array_shift($deltaBlockIDs));
                 }
                 if ($beforeBlockID) {
                     $newBlockIDsInArea = $this->sortBlockIDs((int) $newBlock->getBlockID(), $beforeBlockID, $newBlockIDsInArea);
-                    $editState->processArrangement($editState->area->getAreaID(), $newBlock->getBlockID(), $newBlockIDsInArea);
+                    $context->processArrangement($context->area->getAreaID(), $newBlock->getBlockID(), $newBlockIDsInArea);
                 }
                 $response = $this->app->make(ResponseFactoryInterface::class)->json(['bID' => (int) $newBlock->getBlockID()]);
                 $cn->commit();
@@ -328,12 +328,12 @@ class Import extends AbstractController
                 if (!$area || $area->isError()) {
                     throw new UserMessageException(t('Unable to find the requested area'));
                 }
-                $editState = new EditState($this->getPage(), $area);
+                $context = Context::forReading($this->getPage(), $area);
                 foreach ($blockIDs as $blockID) {
                     if (!is_int($blockID) || $blockID < 1) {
                         throw new UserMessageException(t('Access Denied'));
                     }
-                    $block = $this->getImportedBlock($editState, $blockID);
+                    $block = $this->getImportedBlock($context, $blockID);
                     $customStyle = $block->getCustomStyle();
                     $customStyleSet = $customStyle ? $customStyle->getStyleSet() : null;
                     if (!$customStyleSet) {
@@ -467,7 +467,7 @@ class Import extends AbstractController
     /**
      * @return int[]
      */
-    private function getBlockIDsInArea(EditState $state)
+    private function getBlockIDsInArea(Context $state)
     {
         return array_map(
             static function (array $arr) { return (int) $arr['bID']; },
@@ -549,9 +549,9 @@ class Import extends AbstractController
      *
      * @return \Concrete\Core\Block\Block
      */
-    private function getImportedBlock(EditState $editState, $blockID)
+    private function getImportedBlock(Context $context, $blockID)
     {
-        $block = Block::getByID($blockID, $editState->page, $editState->area);
+        $block = Block::getByID($blockID, $context->page, $context->area);
         if (!$block || $block->isError()) {
             throw new Exception(('Unable to find the requested block'));
         }

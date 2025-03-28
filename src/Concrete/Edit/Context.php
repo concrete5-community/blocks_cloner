@@ -10,7 +10,7 @@ use Concrete\Core\Error\UserMessageException;
 /**
  * @readonly
  */
-class EditState
+final class Context
 {
     /**
      * @var \Concrete\Core\Page\Page
@@ -22,7 +22,10 @@ class EditState
      */
     public $area;
 
-    public function __construct(Page $page, Area $area)
+    /**
+     * @param bool $forWriting
+     */
+    private function __construct(Page $page, Area $area, $forWriting)
     {
         if ($area->isGlobalArea()) {
             $stack = Stack::getByName($area->getAreaHandle());
@@ -36,10 +39,29 @@ class EditState
             $actualPage = $page;
             $this->area = $area;
         }
-        $actualPageToEdit = $actualPage->getVersionToModify();
-        if ($actualPageToEdit !== $actualPage && $stack !== null) {
-            $page->getVersionToModify()->relateVersionEdits($actualPageToEdit);
+        if ($forWriting) {
+            $this->page = $actualPage->getVersionToModify();
+            if ($this->page !== $actualPage && $stack !== null) {
+                $page->getVersionToModify()->relateVersionEdits($this->page);
+            }
+        } else {
+            $this->page = $actualPage;
         }
-        $this->page = $actualPageToEdit;
+    }
+
+    /**
+     * @return self
+     */
+    public static function forReading(Page $page, Area $area)
+    {
+        return new self($page, $area, false);
+    }
+
+    /**
+     * @return self
+     */
+    public static function forWriting(Page $page, Area $area)
+    {
+        return new self($page, $area, true);
     }
 }
