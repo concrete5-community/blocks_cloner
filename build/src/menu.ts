@@ -1,5 +1,5 @@
 import {localize} from './i18n';
-import {type Area, type Block, findParentArea, getEditingStackID, parseArea, parseBlock} from './page-structure';
+import {type Area, type Block, findParentArea, getEditingStackID, getPageStructure, parseArea, parseBlock} from './page-structure';
 
 interface Menu {
   $element?: JQuery;
@@ -68,6 +68,35 @@ function setupBlockMenu(menu: Menu, menuElement: JQuery, block: Block): void {
   );
 }
 
+function injectStackMenuItems(): void {
+  let menuElement: HTMLElement | null = null;
+  let version: number;
+
+  if ((menuElement = document.querySelector('#ccm-dashboard-content-regular nav.navbar ul')) !== null) {
+    version = 9;
+  } else if ((menuElement = document.querySelector('#ccm-dashboard-content-inner nav.navbar ul')) !== null) {
+    version = 8;
+  } else {
+    return;
+  }
+  const area = getPageStructure()[0];
+  if (!area) {
+    return;
+  }
+  $(menuElement).append(
+    $(`<li${version >= 9 ? ' class="nav-item"' : ''} />`).append(
+      $('<a />')
+        .attr('dialog-title', localize('importBlockFromXml') || 'Import Block from XML')
+        .attr('class', `dialog-launch${version >= 9 ? ' nav-link' : ''}`)
+        .attr('dialog-width', '90%')
+        .attr('dialog-height', '80%')
+        .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import?cID=${getEditingCollectionID()}&aID=${area.id}&aHandle=${encodeURIComponent(area.handle)}`)
+        .text(localize('importBlockFromXml') || 'Import Block from XML')
+        .dialog(),
+    ),
+  );
+}
+
 export function hook(): void {
   document.addEventListener('DOMContentLoaded', () => {
     window.ConcreteEvent?.subscribe('ConcreteMenuShow', function (e: any, args: any): void {
@@ -77,5 +106,8 @@ export function hook(): void {
         injectMenuItems(menu, menuElement);
       }
     });
+    if (getEditingStackID() !== null) {
+      injectStackMenuItems();
+    }
   });
 }

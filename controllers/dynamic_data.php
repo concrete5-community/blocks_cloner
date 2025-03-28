@@ -64,6 +64,7 @@ EOT
                 'exportAsXml' => t('Export as XML'),
                 'exportBlockTypeNameAsXml' => t('Export %s block as XML'),
                 'importBlockFromXml' => t('Import Block from XML'),
+                'importBlockFromXml' => t('Import Block from XML'),
                 'importBlockFromXmlIntoAreaName' => t('Import Block from XML into %s'),
             ],
             'stackEditPageID' => $stackEditPageID,
