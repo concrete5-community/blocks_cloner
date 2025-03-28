@@ -79,12 +79,11 @@ export function parseBlock(element: HTMLElement): Block | null {
   };
 }
 
-/**
- * @param {BlocksClonerOptions|undefined} options
- *
- * @returns {BlocksClonerArea[]}
- */
 export function getPageStructure(options?: GetPageStructureOptions): Area[] {
+  return getPageStructureStartingAt(document.body, options).filter((item) => item.type === Type.Area) as Area[];
+}
+
+export function getPageStructureStartingAt(element: HTMLElement, options?: GetPageStructureOptions): Array<Area | Block> {
   options = Object.assign(
     {
       skipAreasWithoutBlocks: false,
@@ -93,18 +92,18 @@ export function getPageStructure(options?: GetPageStructureOptions): Area[] {
     options || {},
   );
   const container: Container = {children: []};
-  parse(document.body, container, options);
+  parse(element, container, options);
 
-  return container.children.filter((item) => item.type === Type.Area && (!options.skipAreasWithoutBlocks || item.children.length > 0)) as Area[];
+  return container.children.filter((item) => {
+    switch (item.type) {
+      case Type.Area:
+        return !options.skipAreasWithoutBlocks || item.children.length > 0;
+      case Type.Block:
+        return !options.skipBlocksWithoutChildAreas || item.children.length > 0;
+    }
+  });
 }
 
-/**
- * @param {HTMLElement} element
- * @param {BlocksCloner~Container} parent
- * @param {BlocksClonerOptions} options
- *
- * @returns {void}
- */
 function parse(element: HTMLElement, parent: Container, options: GetPageStructureOptions): void {
   const area = parseArea(element);
   const block = area ? null : parseBlock(element);
