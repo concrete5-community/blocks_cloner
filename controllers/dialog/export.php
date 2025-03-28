@@ -59,11 +59,11 @@ class Export extends AbstractController
         if (!$block || $block->isError()) {
             throw new UserMessageException(t('Access Denied'));
         }
-        $sx = simplexml_load_string('<root />');
-        $block->export($sx);
-        $this->app->make(ExportFixer::class)->fix($sx);
-        $children = $sx->children();
-        $blockElement = $children[0];
+        $temporaryDocument = simplexml_load_string('<root />');
+        $block->export($temporaryDocument);
+        $temporaryDocumentChildren = $temporaryDocument->children();
+        $blockElement = $temporaryDocumentChildren[0];
+        $this->app->make(ExportFixer::class)->fix($blockElement);
         $doc = new \DOMDocument('1.0');
         $doc->preserveWhiteSpace = false;
         $doc->formatOutput = true;
@@ -82,7 +82,7 @@ class Export extends AbstractController
             ];
         }
         $this->set('blockTypesAndPackages', $blockTypesAndPackages);
-        $this->set('references', $parser->findItems($sx));
+        $this->set('references', $parser->findItems($blockElement));
         $this->set('resolverManager', $this->app->make(ResolverManagerInterface::class));
     }
 
