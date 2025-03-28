@@ -6,9 +6,9 @@ use Concrete\Core\Area\Area;
 use Concrete\Core\Block\Block;
 use Concrete\Core\Block\CustomStyle;
 use Concrete\Core\Database\Connection\Connection;
-use Concrete\Core\Entity\Page\Feed as PageFeed;
 use Concrete\Core\Entity\File\Version;
 use Concrete\Core\Entity\Package;
+use Concrete\Core\Entity\Page\Feed as PageFeed;
 use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\File\Filesystem;
 use Concrete\Core\File\Import\FileImporter;
@@ -19,11 +19,11 @@ use Concrete\Core\File\Service\Zip;
 use Concrete\Core\Http\ResponseFactoryInterface;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Page\Type\Type as PageType;
-use Concrete\Core\Page\Stack\Stack;
 use Concrete\Core\Permission\Checker;
 use Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface;
 use Concrete\Core\Validation\CSRF\Token;
 use Concrete\Package\BlocksCloner\Controller\AbstractController;
+use Concrete\Package\BlocksCloner\Edit\EditState;
 use Concrete\Package\BlocksCloner\ImportChecker;
 use Concrete\Package\BlocksCloner\XmlParser;
 use Doctrine\ORM\EntityManagerInterface;
@@ -254,14 +254,15 @@ class Import extends AbstractController
             if (!$token->validate("blocks_cloner:import:{$this->cID}:{$areaHandle}:" . sha1($xml))) {
                 throw new UserMessageException($token->getErrorMessage());
             }
-            $sx = $this->loadXml($xml);
             $area = Area::get($this->getPage(), $areaHandle);
             if (!$area || $area->isError()) {
                 throw new UserMessageException(t('Unable to find the requested area'));
             }
+            $sx = $this->loadXml($xml);
+            $editState = new EditState($this->getPage(), $area);
             $parser = $this->app->make(XmlParser::class);
             $blockType = $parser->getRootBlockType($xml);
-            $initialBlockIDsInArea = $this->getBlockIDsInArea($area);
+            $initialBlockIDsInArea = $this->getBlockIDsInArea($editState);
             $beforeBlockID = $this->request->request->getInt('beforeBlockID');
             if ($beforeBlockID && !in_array($beforeBlockID, $initialBlockIDsInArea, true)) {
                 throw new UserMessageException(t('Unable to find the requested block'));
@@ -276,19 +277,19 @@ class Import extends AbstractController
             $rollBack = true;
             $cn->beginTransaction();
             try {
-                $newBlock = $blockController->import($this->getPage(), $area, $sx);
+                $newBlock = $blockController->import($editState->page, $editState->area, $sx);
                 $this->app->make('cache/request')->flush();
-                $newBlockIDsInArea = $this->getBlockIDsInArea($area);
+                $newBlockIDsInArea = $this->getBlockIDsInArea($editState);
                 if (!$newBlock) {
                     $deltaBlockIDs = array_diff($newBlockIDsInArea, $initialBlockIDsInArea);
                     if (count($deltaBlockIDs) !== 1) {
                         throw new UserMessageException(t('Failed to retrieve the ID of the new block'));
                     }
-                    $newBlock = $this->getImportedBlockByArea($area, array_shift($deltaBlockIDs));
+                    $newBlock = $this->getImportedBlock($editState, array_shift($deltaBlockIDs));
                 }
                 if ($beforeBlockID) {
                     $newBlockIDsInArea = $this->sortBlockIDs((int) $newBlock->getBlockID(), $beforeBlockID, $newBlockIDsInArea);
-                    $this->getPage()->processArrangement($area->getAreaID(), $newBlock->getBlockID(), $newBlockIDsInArea);
+                    $editState->processArrangement($editState->area->getAreaID(), $newBlock->getBlockID(), $newBlockIDsInArea);
                 }
                 $response = $this->app->make(ResponseFactoryInterface::class)->json(['bID' => (int) $newBlock->getBlockID()]);
                 $cn->commit();
@@ -327,11 +328,12 @@ class Import extends AbstractController
                 if (!$area || $area->isError()) {
                     throw new UserMessageException(t('Unable to find the requested area'));
                 }
+                $editState = new EditState($this->getPage(), $area);
                 foreach ($blockIDs as $blockID) {
                     if (!is_int($blockID) || $blockID < 1) {
                         throw new UserMessageException(t('Access Denied'));
                     }
-                    $block = $this->getImportedBlockByArea($area, $blockID);
+                    $block = $this->getImportedBlock($editState, $blockID);
                     $customStyle = $block->getCustomStyle();
                     $customStyleSet = $customStyle ? $customStyle->getStyleSet() : null;
                     if (!$customStyleSet) {
@@ -465,11 +467,11 @@ class Import extends AbstractController
     /**
      * @return int[]
      */
-    private function getBlockIDsInArea(Area $area)
+    private function getBlockIDsInArea(EditState $state)
     {
         return array_map(
             static function (array $arr) { return (int) $arr['bID']; },
-            $this->getPage()->getBlockIDs($area->getAreaHandle())
+            $state->page->getBlockIDs($state->area->getAreaHandle())
         );
     }
 
@@ -543,41 +545,13 @@ class Import extends AbstractController
     }
 
     /**
-     * @param string $areaHandle
      * @param int $blockID
      *
      * @return \Concrete\Core\Block\Block
      */
-    private function getImportedBlockByAreaHandle($areaHandle, $blockID)
+    private function getImportedBlock(EditState $editState, $blockID)
     {
-        $area = Area::get($this->getPage(), $areaHandle);
-        if (!$area || $area->isError()) {
-            throw new UserMessageException(t('Unable to find the requested area'));
-        }
-
-        return $this->getImportedBlockByArea($area, $blockID);
-    }
-
-    /**
-     * @param int $blockID
-     *
-     * @return \Concrete\Core\Block\Block
-     */
-    private function getImportedBlockByArea(Area $area, $blockID)
-    {
-        if ($area->isGlobalArea()) {
-            $stack = Stack::getByName($area->getAreaHandle());
-            if (!$stack || $stack->isError()) {
-                throw new UserMessageException(t('Unable to find the requested area'));
-            }
-            $block = Block::getByID($blockID, $stack, STACKS_AREA_NAME);
-            if ($block && !$block->isError()) {
-                $block->setBlockAreaObject($area);
-            }
-        } else {
-            $block = Block::getByID($blockID, $this->getPage(), $area);
-        }
-
+        $block = Block::getByID($blockID, $editState->page, $editState->area);
         if (!$block || $block->isError()) {
             throw new Exception(('Unable to find the requested block'));
         }
