@@ -1,8 +1,12 @@
 import {localize} from './i18n';
-import {type Area, type Block, findParentArea, parseArea, parseBlock} from './page-structure';
+import {type Area, type Block, findParentArea, getEditingStackID, parseArea, parseBlock} from './page-structure';
 
 interface Menu {
   $element?: JQuery;
+}
+
+function getEditingCollectionID(): number {
+  return getEditingStackID() || window.CCM_CID;
 }
 
 function injectMenuItems(menu: Menu, menuElement: JQuery): void {
@@ -35,7 +39,7 @@ function setupAreaMenu(menu: Menu, menuElement: JQuery, area: Area): void {
       .attr('class', 'dialog-launch dropdown-item')
       .attr('dialog-width', '90%')
       .attr('dialog-height', '80%')
-      .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import?cID=${window.CCM_CID}&aID=${area.id}&aHandle=${encodeURIComponent(area.handle)}`)
+      .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import?cID=${getEditingCollectionID()}&aID=${area.id}&aHandle=${encodeURIComponent(area.handle)}`)
       .text(localize('importBlockFromXml') || 'Import Block from XML')
       .dialog(),
   );
@@ -58,7 +62,7 @@ function setupBlockMenu(menu: Menu, menuElement: JQuery, block: Block): void {
       .attr('class', 'dialog-launch dropdown-item')
       .attr('dialog-width', '90%')
       .attr('dialog-height', '80%')
-      .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export?cID=${window.CCM_CID}&aHandle=${encodeURIComponent(area.handle)}&bID=${block.id}`)
+      .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export?cID=${getEditingCollectionID()}&aHandle=${encodeURIComponent(area.handle)}&bID=${block.id}`)
       .text(localize('exportAsXml') || 'Export as XML')
       .dialog(),
   );

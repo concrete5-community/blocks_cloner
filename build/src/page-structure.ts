@@ -80,7 +80,8 @@ export function parseBlock(element: HTMLElement): Block | null {
 }
 
 export function getPageStructure(options?: GetPageStructureOptions): Area[] {
-  return getPageStructureStartingAt(document.body, options).filter((item) => item.type === Type.Area) as Area[];
+  let rootElement = getEditingStackID() ? (document.querySelector('#ccm-stack-container') as HTMLElement) : null;
+  return getPageStructureStartingAt(rootElement || document.body, options).filter((item) => item.type === Type.Area) as Area[];
 }
 
 export function getPageStructureStartingAt(element: HTMLElement, options?: GetPageStructureOptions): Array<Area | Block> {
@@ -143,4 +144,15 @@ export function findParentArea(element: HTMLElement): Area | null {
     parent = parent.parentElement;
   }
   return null;
+}
+
+export function getEditingStackID(): number | null {
+  if (!window.CCM_CID || window.CCM_CID != window.ccmBlocksClonerDynamicData?.stackEditPageID) {
+    return null;
+  }
+  const editContainer = document.querySelector('#ccm-stack-container');
+  const mainAreaElement = editContainer?.querySelector('[data-area-handle="Main"][data-cID]');
+  const cID = Number(mainAreaElement?.getAttribute('data-cID'));
+
+  return cID || null;
 }

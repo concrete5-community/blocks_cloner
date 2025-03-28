@@ -7,6 +7,8 @@ use Concrete\Core\Controller\Controller;
 use Concrete\Core\Entity\Block\BlockType\BlockType;
 use Concrete\Core\Http\ResponseFactoryInterface;
 use Concrete\Core\Package\PackageService;
+use Concrete\Core\Page\Page;
+use Concrete\Core\Permission\Checker;
 use Concrete\Package\BlocksCloner\Plugin\ConvertImport;
 use Concrete\Package\BlocksCloner\PluginManager;
 use Doctrine\ORM\EntityManagerInterface;
@@ -48,6 +50,14 @@ EOT
     private function buildCCMBlocksClonerDynamicData()
     {
         $config = $this->app->make(Repository::class);
+        $stackEditPageID = null;
+        $stackEditPage = Page::getByPath('/dashboard/blocks/stacks');
+        if ($stackEditPage && !$stackEditPage->isError()) {
+            $checker = new Checker($stackEditPage);
+            if ($checker->canViewPage()) {
+                $stackEditPageID = (int) $stackEditPage->getCollectionID();
+            }
+        }
 
         return 'window.ccmBlocksClonerDynamicData = window.ccmBlocksClonerDynamicData || ' . json_encode([
             'i18n' => [
@@ -56,6 +66,7 @@ EOT
                 'importBlockFromXml' => t('Import Block from XML'),
                 'importBlockFromXmlIntoAreaName' => t('Import Block from XML into %s'),
             ],
+            'stackEditPageID' => $stackEditPageID,
             'blockTypeNames' => $this->getBlockTypeNames(),
             'environment' => [
                 'core' => $config->get('concrete.version'),
