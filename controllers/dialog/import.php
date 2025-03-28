@@ -334,6 +334,10 @@ class Import extends AbstractController
                         throw new UserMessageException(t('Access Denied'));
                     }
                     $block = $this->getImportedBlock($context, $blockID);
+                    if ($area->isGlobalArea()) {
+                        // See https://github.com/concretecms/concretecms/issues/3135
+                        $block->setBlockAreaObject($area);
+                    }
                     $customStyle = $block->getCustomStyle();
                     $customStyleSet = $customStyle ? $customStyle->getStyleSet() : null;
                     if (!$customStyleSet) {

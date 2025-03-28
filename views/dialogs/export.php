@@ -347,7 +347,7 @@ new Vue({
             } else {
                 this.copyHighlighed = true;
                 setTimeout(() => this.copyHighlighed = false, 500);
-            } 
+            }
         }
     },
 });

@@ -272,7 +272,7 @@ final class XmlParser
         $pageType = $item->getContentObject();
         $result[self::KEY_PAGEFEEDS][$key] = $pageType ?: t('Page Feed not found');
     }
-    
+
     /**
      * @return \Concrete\Core\Entity\Block\BlockType\BlockType[]
      */
