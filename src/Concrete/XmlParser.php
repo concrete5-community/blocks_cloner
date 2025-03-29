@@ -7,6 +7,7 @@ use Concrete\Core\Backup\ContentImporter\ValueInspector\Item;
 use Concrete\Core\Config\Repository\Repository;
 use Concrete\Core\Entity\Block\BlockType\BlockType;
 use Concrete\Core\Entity\File\Version;
+use Concrete\Core\Entity\Page\Container;
 use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\Page\Stack\Stack;
 use Concrete\Core\Permission\Checker;
@@ -28,6 +29,8 @@ final class XmlParser
     const KEY_PAGEFEEDS = 'pageFeeds';
 
     const KEY_STACKS = 'stacks';
+
+    const KEY_CONTAINERS = 'containers';
 
     /**
      * @var \Doctrine\ORM\EntityManagerInterface
@@ -358,6 +361,12 @@ final class XmlParser
             case BLOCK_HANDLE_STACK_PROXY:
                 $this->inspectCoreStackDisplayBlockElement($blockElement, $result);
                 break;
+            default:
+                if (defined('BLOCK_HANDLE_CONTAINER_PROXY') && $type === BLOCK_HANDLE_CONTAINER_PROXY) {
+                    $this->inspectCoreContainerBlockElement($blockElement, $result);
+                    break;
+                }
+                break;
         }
     }
 
@@ -420,5 +429,28 @@ final class XmlParser
         }
 
         return $this->canImportStacksByPath;
+    }
+
+    private function inspectCoreContainerBlockElement(SimpleXMLElement $blockElement, array &$result)
+    {
+        if (!isset($blockElement->container)) {
+            return;
+        }
+        $handle = isset($blockElement->container['handle']) ? (string) $blockElement->container['handle'] : '';
+        if ($$handle === '') {
+            return;
+        }
+        if (!isset($result[self::KEY_CONTAINERS])) {
+            $result[self::KEY_CONTAINERS] = [];
+        }
+        if (array_key_exists($handle, $result[self::KEY_CONTAINERS])) {
+            return;
+        }
+        $container = $this->entityManager->getRepository(Container::class)->findOneByContainerHandle($handle);
+        if ($container === null) {
+            $result[self::KEY_CONTAINERS][$handle] = t('Unable to find a container with handle %s', $handle);
+        } else {
+            $result[self::KEY_CONTAINERS][$handle] = $container;
+        }
     }
 }

@@ -3,11 +3,13 @@
 namespace Concrete\Package\BlocksCloner\Controller\Dialog;
 
 use Concrete\Core\Area\Area;
+use Concrete\Core\Area\CustomStyle as AreaCustomStyle;
 use Concrete\Core\Block\Block;
-use Concrete\Core\Block\CustomStyle;
+use Concrete\Core\Block\CustomStyle as BlockCustomStyle;
 use Concrete\Core\Database\Connection\Connection;
 use Concrete\Core\Entity\File\Version;
 use Concrete\Core\Entity\Package;
+use Concrete\Core\Entity\Page\Container;
 use Concrete\Core\Entity\Page\Feed as PageFeed;
 use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\File\Filesystem;
@@ -199,6 +201,15 @@ class Import extends AbstractController
                                 $serialized['error'] = $item;
                             }
                             break;
+                        case XmlParser::KEY_CONTAINERS:
+                            if ($item instanceof Container) {
+                                $serialized += [
+                                    'name' => $item->getContainerDisplayName(),
+                                ];
+                            } else {
+                                $serialized['error'] = $item;
+                            }
+                            break;
                         default:
                             $serialized['error'] = t('Unsuppored category: %s', $categoryKey);
                             break;
@@ -338,7 +349,7 @@ class Import extends AbstractController
     /**
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function getBlocksDesign()
+    public function getDesigns()
     {
         try {
             $blockIDsByAreaHandles = json_decode(
@@ -346,7 +357,15 @@ class Import extends AbstractController
                 true,
                 0 | (defined('JSON_THROW_ON_ERROR') ? JSON_THROW_ON_ERROR : 0)
             );
-            if (empty($blockIDsByAreaHandles || !is_array($blockIDsByAreaHandles))) {
+            if (!is_array($blockIDsByAreaHandles)) {
+                throw new UserMessageException(t('Access Denied'));
+            }
+            $areas = json_decode(
+                (string) $this->request->request->get('areas'),
+                true,
+                0 | (defined('JSON_THROW_ON_ERROR') ? JSON_THROW_ON_ERROR : 0)
+            );
+            if (!is_array($areas)) {
                 throw new UserMessageException(t('Access Denied'));
             }
             $result = [];
@@ -370,7 +389,7 @@ class Import extends AbstractController
                     if (!$customStyleSet) {
                         continue;
                     }
-                    $style = new CustomStyle($customStyleSet, $block, $this->getPage()->getCollectionThemeObject());
+                    $style = new BlockCustomStyle($customStyleSet, $block, $this->getPage()->getCollectionThemeObject());
                     $css = (string) $style->getCSS();
                     if ($css === '') {
                         continue;
@@ -381,6 +400,37 @@ class Import extends AbstractController
                         'htmlStyleElement' => $style->getStyleWrapper($css),
                     ];
                 }
+            }
+            foreach ($areas as $rawArea) {
+                $areaHandle = is_array($rawArea) && isset($rawArea['handle']) && is_string($rawArea['handle']) ? $rawArea['handle'] : '';
+                if ($areaHandle === '') {
+                    throw new UserMessageException(t('Access Denied'));
+                }
+                $areaID = is_array($rawArea) && isset($rawArea['id']) && is_int($rawArea['id']) ? $rawArea['id'] : 0;
+                if ($areaID < 1) {
+                    throw new UserMessageException(t('Access Denied'));
+                }
+                $area = Area::get($this->getPage(), $areaHandle);
+                if (!$area || $area->isError() || $areaID !== (int) $area->getAreaID()) {
+                    throw new UserMessageException(t('Unable to find the requested area'));
+                }
+                $context = Context::forReading($this->getPage(), $area);
+                $customStyle = $this->getPage()->getAreaCustomStyle($context->area);
+                $customStyleSet = $customStyle ? $customStyle->getStyleSet() : null;
+                if (!$customStyleSet) {
+                    continue;
+                }
+                $style = new AreaCustomStyle($customStyleSet, $area, $this->getPage()->getCollectionThemeObject());
+                $css = (string) $style->getCSS();
+                if ($css === '') {
+                    continue;
+                }
+                $result[] = [
+                    'areaID' => $areaID,
+                    'issID' => (int) $customStyleSet->getID(),
+                    'htmlStyleElement' => $style->getStyleWrapper($css),
+                    'containerClass' => $style->getContainerClass(),
+                ];
             }
             $response = $this->app->make(ResponseFactoryInterface::class)->json($result);
         } catch (Exception $x) {

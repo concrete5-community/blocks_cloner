@@ -258,6 +258,29 @@ defined('C5_EXECUTE') or die('Access Denied.');
                     </tr>
                 </tbody>
             </table>
+            <table v-if="referenced.containers.length" class="table table-hover table-sm table-contensed caption-top">
+                <caption>
+                    <strong>{{ someContainersWithErrors ? ICON.BAD : ICON.GOOD }}<?= t('Referenced Containers') ?></strong>
+                </caption>
+                <colgroup>
+                    <col width="1" />
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th style="white-space: nowrap"><?= t('Handle') ?></th>
+                        <th><?= t('Name') ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="i in referenced.containers">
+                        <td style="white-space: nowrap"><code>{{ i.key }}</code></td>
+                        <td>
+                            <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
+                            <span v-else>{{ i.name }}</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
         <div class="text-right text-end">
             <button v-on:click.prevent="step = STEPS.INPUT" v-bind:disabled="busy" class="btn btn-secondary btn-default"><?= t('Back') ?></button>
@@ -333,6 +356,7 @@ new Vue({
                 pageTypes: [],
                 pageFeeds: [],
                 stacks: [],
+                containers: [],
             },
         };
     },
@@ -413,6 +437,9 @@ new Vue({
         },
         someStacksWithErrors() {
             return this.referenced.stacks.some((stack) => stack.error);
+        },
+        someContainersWithErrors() {
+            return this.referenced.containers.some((container) => container.error);
         },
     },
     methods: {
@@ -598,7 +625,7 @@ new Vue({
                 }
                 _.defer(() => {
                     ccmEditMode.scanBlocks();
-                    this.refreshBlockDesign(ccmArea.getHandle(), bID);
+                    setTimeout(() => this.refreshBlockDesign(ccmArea.getHandle(), bID), 100);
                 });
             } catch (e) {
                 window.ConcreteAlert.error({
@@ -623,27 +650,28 @@ new Vue({
             const blockIDsByAreaHandles = {
                 [areaHandle]: [bID],
             };
+            const areas = [];
             function walk(item, parentAreaHandle) {
+                let childAreaHandle = parentAreaHandle;
                 switch (item.type) {
                     case 'area':
-                        parentAreaHandle = item.handle;
+                        areas.push({handle: item.handle, id: item.id});
+                        childAreaHandle = item.handle;
                         break;
                     case 'block':
-                        if (parentAreaHandle !== undefined) {
-                            blockIDsByAreaHandles[parentAreaHandle] = blockIDsByAreaHandles[parentAreaHandle] || [];
-                            if (!blockIDsByAreaHandles[item.handle].includes(item.id)) {
-                                blockIDsByAreaHandles[item.handle].push(item.id);
-                            }
+                        blockIDsByAreaHandles[parentAreaHandle] = blockIDsByAreaHandles[parentAreaHandle] || [];
+                        if (!blockIDsByAreaHandles[parentAreaHandle].includes(item.id)) {
+                            blockIDsByAreaHandles[parentAreaHandle].push(item.id);
                         }
                         break;
                 }
-                item.children.forEach(walk, parentAreaHandle);
+                item.children.forEach((child) => walk(child, childAreaHandle));
             }
             for (const item of window.ccmBlocksCloner.getPageStructureStartingAt(blockElement)) {
-                walk(item);
+                walk(item, areaHandle);
             }
             const response = await window.fetch(
-                `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/get-blocks-design?cID=<?= $cID ?>`,
+                `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/get-designs?cID=<?= $cID ?>`,
                 {
                     method: 'POST',
                     headers: {
@@ -652,6 +680,7 @@ new Vue({
                     },
                     body: new URLSearchParams([
                         ['blockIDsByAreaHandles', JSON.stringify(blockIDsByAreaHandles)],
+                        ['areas', JSON.stringify(areas)],
                         ['__ccm_consider_request_as_xhr', '1'],
                     ]),
                 }
@@ -663,6 +692,17 @@ new Vue({
             const head = document.querySelector('head');
             responseData.forEach((item) => {
                 document.head.insertAdjacentHTML('beforeend', item.htmlStyleElement);
+                if (item.containerClass) {
+                    let ccmItem = null;
+                    if (item.blockID) {
+                        ccmItem = ccmEditMode.getBlockByID(item.areaID);
+                    } else if (item.areaID) {
+                        ccmItem = ccmEditMode.getAreaByID(item.areaID);
+                    }
+                    if (ccmItem) {
+                        ccmItem.getElem().addClass(item.containerClass);
+                    }
+                }
             });
         },
     },
