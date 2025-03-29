@@ -41,7 +41,7 @@ final class Context
         }
         if ($forWriting) {
             $this->page = $actualPage->getVersionToModify();
-            if ($this->page !== $actualPage && $stack !== null) {
+            if ($stack !== null) {
                 $page->getVersionToModify()->relateVersionEdits($this->page);
             }
         } else {
