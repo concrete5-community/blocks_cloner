@@ -7,6 +7,8 @@ use DOMElement;
 use DOMXPath;
 use SimpleXMLElement;
 
+defined('C5_EXECUTE') or die('Access Denied.');
+
 class ExportFixer
 {
     /**

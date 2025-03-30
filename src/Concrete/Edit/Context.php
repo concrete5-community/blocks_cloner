@@ -7,6 +7,8 @@ use Concrete\Core\Page\Page;
 use Concrete\Core\Page\Stack\Stack;
 use Concrete\Core\Error\UserMessageException;
 
+defined('C5_EXECUTE') or die('Access Denied.');
+
 /**
  * @readonly
  */

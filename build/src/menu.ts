@@ -18,11 +18,20 @@ function injectMenuItems(menu: Menu, menuElement: JQuery): void {
   if (area !== null) {
     setupAreaMenu(menu, menuElement, area);
   } else {
-    const block = parseBlock(sourceElement);
+    const block = parseBlock(sourceElement) || findCoreContainerBlock(sourceElement);
     if (block !== null) {
       setupBlockMenu(menu, menuElement, block);
     }
   }
+}
+
+function findCoreContainerBlock(menuElement: HTMLElement): Block | null {
+  const containerElement = menuElement.parentElement?.parentElement;
+  if (containerElement?.dataset.container !== 'block') {
+    return null;
+  }
+  const blockElement = containerElement.querySelector(':scope>div[data-block-type-handle="core_container"]') as HTMLElement | null;
+  return blockElement ? parseBlock(blockElement) : null;
 }
 
 function setupAreaMenu(menu: Menu, menuElement: JQuery, area: Area): void {

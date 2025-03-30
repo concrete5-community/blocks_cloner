@@ -16,4 +16,4 @@ $router->get('dialogs/import', 'Dialog\Import::view');
 $router->post('dialogs/import/analyze', 'Dialog\Import::analyze');
 $router->post('dialogs/import/upload-file', 'Dialog\Import::uploadFile');
 $router->post('dialogs/import/import', 'Dialog\Import::import');
-$router->post('dialogs/import/get-blocks-design', 'Dialog\Import::getBlocksDesign');
+$router->post('dialogs/import/get-designs', 'Dialog\Import::getDesigns');
