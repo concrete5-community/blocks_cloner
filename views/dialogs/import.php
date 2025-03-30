@@ -111,15 +111,15 @@ defined('C5_EXECUTE') or die('Access Denied.');
                 </colgroup>
                 <thead>
                     <tr>
-                        <th style="white-space: nowrap"><?= t('Handle') ?></th>
-                        <th style="white-space: nowrap"><?= t('Name') ?></th>
-                        <th style="white-space: nowrap"><?= t('Package') ?></th>
+                        <th class="text-nowrap"><?= t('Handle') ?></th>
+                        <th class="text-nowrap"><?= t('Name') ?></th>
+                        <th><?= t('Package') ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="i in referenced.blockTypes">
-                        <td style="white-space: nowrap"><code>{{ i.handle }}</code></td>
-                        <td style="white-space: nowrap">{{ i.displayName }}</td>
+                        <td class="text-nowrap"><code>{{ i.handle }}</code></td>
+                        <td class="text-nowrap">{{ i.displayName }}</td>
                         <td>
                             <span v-if="i.package" v-bind:title="`<?= t('Handle: %s', '${i.package.handle}') ?>`">
                                 <?= t('Provided by package %s', '{{ i.package.displayName }}') ?>
@@ -142,13 +142,13 @@ defined('C5_EXECUTE') or die('Access Denied.');
                 </colgroup>
                 <thead>
                     <tr>
-                        <th style="white-space: nowrap"><?= t('Key') ?></th>
+                        <th class="text-nowrap"><?= t('Key') ?></th>
                         <th><?= t('File Name') ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="i in referenced.files">
-                        <td style="white-space: nowrap"><code>{{ i.key }}</code></td>
+                        <td class="text-nowrap"><code>{{ i.key }}</code></td>
                         <td>
                             <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
                             <span v-else v-bind:title="`<?= t('Prefix: %s', '${i.prefix}') ?>`">{{ i.name }}</span>
@@ -174,13 +174,13 @@ defined('C5_EXECUTE') or die('Access Denied.');
                 </colgroup>
                 <thead>
                     <tr>
-                        <th style="white-space: nowrap"><?= t('Path') ?></th>
+                        <th class="text-nowrap"><?= t('Path') ?></th>
                         <th><?= t('Name') ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="i in referenced.pages">
-                        <td style="white-space: nowrap"><code>{{ i.key }}</code></td>
+                        <td class="text-nowrap"><code>{{ i.key }}</code></td>
                         <td>
                             <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
                             <a v-else target="_blank" v-bind:href="i.link" v-bind:title="`<?= t('ID: %s', '${i.cID}') ?>`">{{ i.name }}</a>
@@ -197,13 +197,13 @@ defined('C5_EXECUTE') or die('Access Denied.');
                 </colgroup>
                 <thead>
                     <tr>
-                        <th style="white-space: nowrap"><?= t('Handle') ?></th>
+                        <th class="text-nowrap"><?= t('Handle') ?></th>
                         <th><?= t('Name') ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="i in referenced.pageTypes">
-                        <td style="white-space: nowrap"><code>{{ i.key }}</code></td>
+                        <td class="text-nowrap"><code>{{ i.key }}</code></td>
                         <td>
                             <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
                             <a v-else target="_blank" v-bind:href="i.link" v-bind:title="`<?= t('ID: %s', '${i.cID}') ?>`">{{ i.name }}</a>
@@ -220,13 +220,13 @@ defined('C5_EXECUTE') or die('Access Denied.');
                 </colgroup>
                 <thead>
                     <tr>
-                        <th style="white-space: nowrap"><?= t('Handle') ?></th>
+                        <th class="text-nowrap"><?= t('Handle') ?></th>
                         <th><?= t('Title') ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="i in referenced.pageFeeds">
-                        <td style="white-space: nowrap"><code>{{ i.key }}</code></td>
+                        <td class="text-nowrap"><code>{{ i.key }}</code></td>
                         <td>
                             <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
                             <a v-else target="_blank" v-bind:href="i.link" v-bind:title="`<?= t('ID: %s', '${i.cID}') ?>`">{{ i.title }}</a>
@@ -243,13 +243,13 @@ defined('C5_EXECUTE') or die('Access Denied.');
                 </colgroup>
                 <thead>
                     <tr>
-                        <th style="white-space: nowrap"><?= t('Key') ?></th>
+                        <th class="text-nowrap"><?= t('Key') ?></th>
                         <th><?= t('Name') ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="i in referenced.stacks">
-                        <td style="white-space: nowrap"><code>{{ i.key }}</code></td>
+                        <td class="text-nowrap"><code>{{ i.key }}</code></td>
                         <td>
                             <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
                             <a v-else target="_blank" v-bind:href="i.link">{{ i.name }}</a>
@@ -267,13 +267,13 @@ defined('C5_EXECUTE') or die('Access Denied.');
                 </colgroup>
                 <thead>
                     <tr>
-                        <th style="white-space: nowrap"><?= t('Handle') ?></th>
+                        <th class="text-nowrap"><?= t('Handle') ?></th>
                         <th><?= t('Name') ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="i in referenced.containers">
-                        <td style="white-space: nowrap"><code>{{ i.key }}</code></td>
+                        <td class="text-nowrap"><code>{{ i.key }}</code></td>
                         <td>
                             <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
                             <span v-else>{{ i.name }}</span>

@@ -256,15 +256,15 @@ class PixelTheme2To9 implements ConvertExport, ConvertImport
                 ->setNewBlockTypeHandle('pixel_gallery')
                 ->renameDataTable('btWhaleGallery', 'btPixelGallery')
                 ->addRecordFields('btWhaleGallery', [
-                      'columnsSm' => '0',
-                      'columnsMd' => '0',
-                      'columnsLg' => '0',
-                      'columnsXl' => '0',
-                      'columnsXxl' => '0',
-                      'gutter' => '0',
-                      'cropImage' => '0',
-                      'maxWidth' => '0',
-                      'maxHeight' => '0',
+                    'columnsSm' => '0',
+                    'columnsMd' => '0',
+                    'columnsLg' => '0',
+                    'columnsXl' => '0',
+                    'columnsXxl' => '0',
+                    'gutter' => '0',
+                    'cropImage' => '0',
+                    'maxWidth' => '0',
+                    'maxHeight' => '0',
                 ])
             )
             ->addBlockType('whale_image_slider', Import\BlockType::create()
