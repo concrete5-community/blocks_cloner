@@ -27,7 +27,7 @@ $view->markHeaderAssetPosition();
 }
 </style>
 <section id="blocks_cloner-export" v-cloak>
-    <header><?= t('Export Block as XML') ?></header>
+    <header><?= t('Export as XML') ?></header>
     <div v-if="items.length === 0" class="alert alert-info">
         <?= t('No blocks found in the page') ?>
     </div>
@@ -35,34 +35,25 @@ $view->markHeaderAssetPosition();
         <li
             v-for="item in flatItems"
             v-bind:key="`${item.type}-${item.id}`"
-            style="white-space: nowrap"
+            class="text-nowrap"
             v-bind:style="{'margin-left': (item.depth * 1) + 'rem'}"
         >
             <a
-                v-if="item.type === 'area' || item.children.length > 0"
+                v-if="item.children.length > 0"
                 style="text-decoration: none; display: inline"
                 href="javascript:void(0)"
                 v-on:click.prevent="item.expanded = item.children.length === 0 || !item.expanded"
             >
                 {{ item.expanded ? '\u229f' : '\u229e' }}
-                <span
-                    v-if="item.type !== 'block'"
-                    v-on:mouseenter="highlight(item, true)"
-                    v-on:mouseleave="highlight(item, false)"
-                >
-                    {{ item.displayName }}
-                    <span v-if="item.isGlobal">(<?= tc('Area', 'sitewide') ?>)</span>
-                </span>
             </a>
             <span v-else style="opacity: 0.5">&#x22A1;</span>
             <a
-                v-if="item.type === 'block'"
                 style="text-decoration: none; display: inline"
-                v-bind:dialog-title="`<?= t('Export %s block as XML', '${item.displayName}') ?>`"
+                v-bind:dialog-title="item.type === 'block' ? `<?= t('Export %s block as XML', '${item.displayName}') ?>` : `<?= t('Export %s area as XML', '${item.displayName}') ?>`"
                 class="dialog-launch"
                 dialog-width="90%"
                 dialog-height="80%"
-                v-bind:href="getBlockExportUrl(item)"
+                v-bind:href="getItemExportUrl(item)"
                 v-on:mouseenter="highlight(item, true)"
                 v-on:mouseleave="highlight(item, false)"
             >
@@ -83,12 +74,10 @@ $view->markFooterAssetPosition();
 new Vue({
     el: '#blocks_cloner-export',
     data() {
-        const items = window.ccmBlocksCloner.getPageStructure({
-            skipAreasWithoutBlocks: true,
-        });
+        const items = window.ccmBlocksCloner.getPageStructure();
         const walk = function(item, depth) {
             item.depth = depth;
-            item.expanded = depth === 0 || item.children.length === 0;
+            item.expanded = depth === 0;
             item.children.forEach((child) => walk(child, depth + 1));
         };
         items.forEach((item) => walk(item, 0));
@@ -127,13 +116,18 @@ new Vue({
             };
             this.items.forEach((item) => walk(item));
         },
-        getBlockExportUrl(block) {
-            const area = window.ccmBlocksCloner.findParentArea(block.element);
-            if (!area) {
-                console.error('Failed to find the parent area for the element', element);
-                return '';
+        getItemExportUrl(item) {
+            switch (item.type) {
+                case 'area':
+                    return `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export/area?cID=<?= $cID ?>&aHandle=${encodeURIComponent(item.handle)}&aID=${item.id}`;
+                case 'block':
+                    const area = window.ccmBlocksCloner.findParentArea(item.element);
+                    if (!area) {
+                        console.error('Failed to find the parent area for the element', element);
+                        return '';
+                    }
+                    return `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export/block?cID=<?= $cID ?>&aHandle=${encodeURIComponent(area.handle)}&bID=${item.id}`;
             }
-            return `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export?cID=<?= $cID ?>&aHandle=${encodeURIComponent(area.handle)}&bID=${block.id}`;
         },
     },
 });

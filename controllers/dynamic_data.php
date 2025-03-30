@@ -61,11 +61,12 @@ EOT
 
         return 'window.ccmBlocksClonerDynamicData = window.ccmBlocksClonerDynamicData || ' . json_encode([
             'i18n' => [
-                'exportAsXml' => t('Export as XML'),
+                'exportAreaAsXml' => t('Export Area as XML'),
+                'exportAreaNameAsXmlName' => t('Export %s area as XML'),
+                'exportBlockAsXml' => t('Export Block as XML'),
                 'exportBlockTypeNameAsXml' => t('Export %s block as XML'),
-                'importBlockFromXml' => t('Import Block from XML'),
-                'importBlockFromXml' => t('Import Block from XML'),
-                'importBlockFromXmlIntoAreaName' => t('Import Block from XML into %s'),
+                'importFromXml' => t('Import from XML'),
+                'importFromXmlIntoAreaName' => t('Import from XML into %s'),
             ],
             'stackEditPageID' => $stackEditPageID,
             'blockTypeNames' => $this->getBlockTypeNames(),

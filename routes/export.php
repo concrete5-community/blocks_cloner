@@ -12,5 +12,6 @@ defined('C5_EXECUTE') or die('Access Denied.');
  */
 
 $router->all('panels/export', 'Panel\Export::view');
-$router->get('dialogs/export', 'Dialog\Export::view');
-$router->get('dialogs/export/files', 'Dialog\Export::downloadFiles');
+$router->get('dialogs/export/area', 'Dialog\Export\Area::view');
+$router->get('dialogs/export/block', 'Dialog\Export\Block::view');
+$router->get('dialogs/export/files', 'Dialog\Export\Files::view');

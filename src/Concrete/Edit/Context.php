@@ -3,9 +3,9 @@
 namespace Concrete\Package\BlocksCloner\Edit;
 
 use Concrete\Core\Area\Area;
+use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Page\Stack\Stack;
-use Concrete\Core\Error\UserMessageException;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -25,10 +25,16 @@ final class Context
     public $area;
 
     /**
+     * @var \Concrete\Core\Area\Area
+     */
+    public $pageSpecificArea;
+
+    /**
      * @param bool $forWriting
      */
     private function __construct(Page $page, Area $area, $forWriting)
     {
+        $this->pageSpecificArea = $area;
         if ($area->isGlobalArea()) {
             $stack = Stack::getByName($area->getAreaHandle());
             if (!$stack || $stack->isError()) {
@@ -39,7 +45,7 @@ final class Context
         } else {
             $stack = null;
             $actualPage = $page;
-            $this->area = $area;
+            $this->area = $this->pageSpecificArea;
         }
         if ($forWriting) {
             $this->page = $actualPage->getVersionToModify();
