@@ -41,7 +41,7 @@ abstract class AbstractController extends CoreController
      * @var \Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface|null
      */
     private $resolverManager;
-    
+
     public function __construct()
     {
         parent::__construct();
@@ -91,10 +91,10 @@ abstract class AbstractController extends CoreController
         if ($this->resolverManager === null) {
             $this->resolverManager = $this->app->make(ResolverManagerInterface::class);
         }
-        
+
         return $this->resolverManager;
     }
-    
+
     /**
      * @param string[] $expectedElementNames
      *
@@ -132,8 +132,6 @@ abstract class AbstractController extends CoreController
 
     /**
      * @param string $referenceType
-     * @param mixed $reference
-     * @param int $cID
      *
      * @return array
      */
@@ -172,6 +170,7 @@ abstract class AbstractController extends CoreController
                 $package = $packages[$packageID];
             }
         }
+
         return [
             'handle' => $blockType->getBlockTypeHandle(),
             'name' => t($blockType->getBlockTypeName()),

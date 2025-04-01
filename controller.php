@@ -141,7 +141,7 @@ class Controller extends Package implements ProviderAggregateInterface
             );
         }
         $assetList = AssetList::getInstance();
-        $assetList->register('javascript-localized', 'blocks_cloner-view', "/ccm/blocks-cloner/dynamic-data", ['minify' => false, 'combine' => false, 'version' => $this->pkgVersion], 'blocks_cloner');
+        $assetList->register('javascript-localized', 'blocks_cloner-view', '/ccm/blocks-cloner/dynamic-data', ['minify' => false, 'combine' => false, 'version' => $this->pkgVersion], 'blocks_cloner');
         $assetList->register('javascript', 'blocks_cloner-view', 'js/view.js', ['minify' => false, 'combine' => false, 'version' => $this->pkgVersion], 'blocks_cloner');
         $assetList->registerGroup('blocks_cloner-view', [
             ['javascript-localized', 'blocks_cloner-view'],

@@ -53,6 +53,7 @@ class Files extends Export
             }
             $result[] = $fileVersion;
         }
+
         return $result;
     }
 
