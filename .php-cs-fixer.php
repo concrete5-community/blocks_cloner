@@ -318,8 +318,6 @@ return $config
         'standardize_increment' => true,
         // Replace all `<>` with `!=`.
         'standardize_not_equals' => true,
-        // Each statement must be indented.
-        'statement_indentation' => true,
         // Lambdas not (indirectly) referencing `$this` must be declared `static`.
         'static_lambda' => true,
         // Handles implicit backslashes in strings and heredocs. Depending on the chosen strategy, it can escape implicit backslashes to ease the understanding of which are special chars interpreted by PHP and which not (`escape`), or it can remove these additional backslashes if you find them superfluous (`unescape`). You can also leave them as-is using `ignore` strategy.
