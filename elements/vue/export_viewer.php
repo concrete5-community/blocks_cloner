@@ -28,7 +28,8 @@ ob_start();
                 nowrap
                 spellcheck="false"
                 class="form-control"
-                style="flex-grow: 1; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 0.9em; resize: none" v-bind:value="outputXml"
+                style="flex-grow: 1; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 0.9em; resize: none"
+                v-bind:value="outputXml"
             ></textarea>
             <div class="text-end text-right" style="padding-top: 1rem">
                 <button
@@ -116,11 +117,12 @@ Vue.component('blocks-cloner-export-viewer', {
         copy(andClose) {
             try {
                 if (window.navigator && window.navigator.clipboard && window.navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(this.finalXml)
+                    navigator.clipboard.writeText(this.outputXml)
                         .then(() => this.reportCopyResult(null, andClose))
                         .catch((e) => this.reportCopyResult(e || <?= json_encode(t('Unknown error')) ?>))
                     ;
                 } else {
+                    this.$refs.textarea.focus();
                     this.$refs.textarea.select();
                     document.execCommand('copy');
                     this.reportCopyResult(null, andClose);
