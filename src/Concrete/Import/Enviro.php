@@ -53,7 +53,6 @@ class Enviro
         if (!$area || $area->isError()) {
             throw new UserMessageException(t('Unable to find the requested area'));
         }
-        xdebug_break();
         $this->area = $area;
         $this->beforeBlockID = $request->request->getInt('beforeBlockID');
         switch ($this->sx->getName()) {
