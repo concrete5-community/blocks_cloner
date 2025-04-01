@@ -16,6 +16,7 @@ use Concrete\Core\File\Service\VolatileDirectory;
 use Concrete\Core\File\Service\Zip;
 use Concrete\Core\Http\ResponseFactoryInterface;
 use Concrete\Core\Permission\Checker;
+use Concrete\Core\Tree\Node\Type\FileFolder;
 use Concrete\Core\Validation\CSRF\Token;
 use Concrete\Package\BlocksCloner\Controller\AbstractController;
 use Concrete\Package\BlocksCloner\Edit\Context;
@@ -131,6 +132,11 @@ class Import extends AbstractController
             $token = $this->app->make(Token::class);
             if (!$token->validate('blocks_cloner:import:uploadFile')) {
                 throw new UserMessageException($token->getErrorMessage());
+            }
+            $fileFolder = $this->app->make(Filesystem::class)->getRootFolder() ?: new FileFolder();
+            $checker = new Checker($fileFolder);
+            if (!$checker->canAddFiles()) {
+                throw new UserMessageException(t("You don't have the permission to upload files"));
             }
             $file = $this->request->files->get('file');
             if (!$file) {

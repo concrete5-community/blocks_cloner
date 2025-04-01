@@ -1,7 +1,9 @@
 <?php
 
+use Concrete\Core\File\Filesystem;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Permission\Checker;
+use Concrete\Core\Tree\Node\Type\FileFolder;
 use Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface;
 use Concrete\Core\Validation\CSRF\Token;
 
@@ -39,6 +41,10 @@ if ($page && !$page->isError()) {
         $viewFileManagerUrl = (string) $resolverManager->resolve([$page]);
     }
 }
+
+$fileFolder = app(Filesystem::class)->getRootFolder() ?: new FileFolder();
+$checker = new Checker($fileFolder);
+$enableUpload = $checker->canAddFiles();
 
 $token = app(Token::class);
 
@@ -101,10 +107,16 @@ ob_start();
                     -
                     <a v-bind:href="viewFileManagerUrl" target="_blank"><?= t('File Manager') ?></a>
                 </span>
-                <span v-if="operation === 'import' && someErrors('files')">
-                    -
-                    <a href="#" v-on:click.prevent="pickFile()"><?= t('Upload File') ?></a>
-                </span>
+                <?php
+                if ($enableUpload) {
+                    ?>
+                    <span v-if="operation === 'import' && someErrors('files')">
+                        -
+                        <a href="#" v-on:click.prevent="pickFile()"><?= t('Upload File') ?></a>
+                    </span>
+                    <?php
+                }
+                ?>
             </caption>
             <colgroup>
                 <col v-if="operation === 'export'" width="1" />
