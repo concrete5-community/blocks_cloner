@@ -21,7 +21,7 @@ class Controller extends Package implements ProviderAggregateInterface
 {
     protected $pkgHandle = 'blocks_cloner';
 
-    protected $pkgVersion = '0.9.12';
+    protected $pkgVersion = '1.0.0';
 
     /**
      * {@inheritdoc}
