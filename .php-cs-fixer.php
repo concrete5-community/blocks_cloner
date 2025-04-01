@@ -1,10 +1,12 @@
 <?php
+
 /*
  * This document has been generated with
  * https://mlocati.github.io/php-cs-fixer-configurator/#version:3.75.0|configurator
  * you can change this configuration by importing this file.
  */
 $config = new PhpCsFixer\Config();
+
 return $config
     ->setRiskyAllowed(true)
     ->setRules([
@@ -37,7 +39,7 @@ return $config
         // Class, trait and interface elements must be separated with one or none blank line.
         'class_attributes_separation' => true,
         // Whitespace around the keywords of a class, trait, enum or interfaces definition should be one space.
-        'class_definition' => ['inline_constructor_arguments' => false,'space_before_parenthesis' => true],
+        'class_definition' => ['inline_constructor_arguments' => false, 'space_before_parenthesis' => true],
         // When referencing an internal class it must be written using the correct casing.
         'class_reference_name_casing' => true,
         // Namespace must not contain spacing, comments or PHPDoc.
@@ -227,9 +229,9 @@ return $config
         // Orders the elements of classes/interfaces/traits/enums.
         'ordered_class_elements' => ['order' => ['use_trait']],
         // Ordering `use` statements.
-        'ordered_imports' => ['imports_order' => ['class','function','const'],'sort_algorithm' => 'none'],
+        'ordered_imports' => ['imports_order' => ['class', 'function', 'const'], 'sort_algorithm' => 'none'],
         // Sort union types and intersection types using configured order.
-        'ordered_types' => ['null_adjustment' => 'always_last','sort_algorithm' => 'none'],
+        'ordered_types' => ['null_adjustment' => 'always_last', 'sort_algorithm' => 'none'],
         // PHPDoc should contain `@param` for all params.
         'phpdoc_add_missing_param_annotation' => ['only_untyped' => false],
         // All items of the given PHPDoc tags must be either left-aligned or (by default) aligned vertically.
@@ -239,7 +241,7 @@ return $config
         // Docblocks should have the same indentation as the documented subject.
         'phpdoc_indent' => true,
         // Changes doc blocks from single to multi line, or reversed. Works for class constants, properties and methods only.
-        'phpdoc_line_span' => ['const' => 'multi','method' => 'multi','property' => 'multi'],
+        'phpdoc_line_span' => ['const' => 'multi', 'method' => 'multi', 'property' => 'multi'],
         // No alias PHPDoc tags should be used.
         'phpdoc_no_alias_tag' => true,
         // Classy that does not inherit must not have `@inheritdoc` tags.
@@ -267,7 +269,7 @@ return $config
         // The correct case must be used for standard PHP types in PHPDoc.
         'phpdoc_types' => true,
         // Sorts PHPDoc types.
-        'phpdoc_types_order' => ['null_adjustment' => 'always_last','sort_algorithm' => 'none'],
+        'phpdoc_types_order' => ['null_adjustment' => 'always_last', 'sort_algorithm' => 'none'],
         // `@var` and `@type` annotations must have type and name in the correct order.
         'phpdoc_var_annotation_correct_order' => true,
         // `@var` and `@type` annotations of classy properties should not contain the name.
@@ -305,7 +307,7 @@ return $config
         // Convert double quotes to single quotes for simple strings.
         'single_quote' => true,
         // Ensures a single space after language constructs.
-        'single_space_around_construct' => ['constructs_followed_by_a_single_space' => ['abstract','as','case','catch','class','const','const_import','do','else','elseif','enum','final','finally','for','foreach','function','function_import','if','insteadof','interface','match','named_argument','namespace','new','private','protected','public','readonly','static','switch','trait','try','type_colon','use','use_lambda','while'],'constructs_preceded_by_a_single_space' => ['as','else','elseif','use_lambda']],
+        'single_space_around_construct' => ['constructs_followed_by_a_single_space' => ['abstract', 'as', 'case', 'catch', 'class', 'const', 'const_import', 'do', 'else', 'elseif', 'enum', 'final', 'finally', 'for', 'foreach', 'function', 'function_import', 'if', 'insteadof', 'interface', 'match', 'named_argument', 'namespace', 'new', 'private', 'protected', 'public', 'readonly', 'static', 'switch', 'trait', 'try', 'type_colon', 'use', 'use_lambda', 'while'], 'constructs_preceded_by_a_single_space' => ['as', 'else', 'elseif', 'use_lambda']],
         // Each trait `use` must be done as single statement.
         'single_trait_insert_per_statement' => true,
         // Fix whitespace after a semicolon.
@@ -345,19 +347,17 @@ return $config
         // Unary operators should be placed adjacent to their operands.
         'unary_operator_spaces' => ['only_dec_inc' => true],
         // Visibility MUST be declared on all properties and methods; `abstract` and `final` MUST be declared before the visibility; `static` MUST be declared after the visibility.
-        'visibility_required' => ['elements' => ['method','property']],
+        'visibility_required' => ['elements' => ['method', 'property']],
         // In array declaration, there MUST be a whitespace after each comma.
         'whitespace_after_comma_in_array' => true,
         // Write conditions in Yoda style (`true`), non-Yoda style (`['equal' => false, 'identical' => false, 'less_and_greater' => false]`) or ignore those conditions (`null`) based on configuration.
-        'yoda_style' => ['always_move_variable' => false,'equal' => false,'identical' => false,'less_and_greater' => false],
+        'yoda_style' => ['always_move_variable' => false, 'equal' => false, 'identical' => false, 'less_and_greater' => false],
     ])
-    ->setFinder(PhpCsFixer\Finder::create()
-        ->in(__DIR__)
-        // ->exclude([
-        //     'folder-to-exclude',
-        // ])
-        // ->append([
-        //     'file-to-include',
-        // ])
+    ->setFinder(
+        PhpCsFixer\Finder::create()
+            ->in(__DIR__)
+            ->append([
+                __FILE__,
+            ])
     )
 ;
