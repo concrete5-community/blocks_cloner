@@ -513,7 +513,7 @@ class Import extends AbstractController
                     if ($structure === null) {
                         break;
                     }
-                    if ($structure['blocks'] === []) {
+                    if ($structure['block'] === []) {
                         $xBlocks = null;
                     }
                 }
