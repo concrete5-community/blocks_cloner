@@ -116,12 +116,12 @@ class Controller extends Package implements ProviderAggregateInterface
                 $this->pkgHandle,
                 [
                     'icon' => 'download',
-                    'label' => t('Export Block as XML'),
+                    'label' => t('Export as XML'),
                     'position' => 'left',
                     'href' => false,
                     'linkAttributes' => [
                         'data-launch-panel' => 'blocks_cloner-export',
-                        'title' => t('Export Block as XML'),
+                        'title' => t('Export as XML'),
                     ],
                 ]
             );
@@ -130,12 +130,12 @@ class Controller extends Package implements ProviderAggregateInterface
                 $this->pkgHandle,
                 [
                     'icon' => 'upload',
-                    'label' => t('Import Block from XML'),
+                    'label' => t('Import from XML'),
                     'position' => 'left',
                     'href' => false,
                     'linkAttributes' => [
                         'data-launch-panel' => 'blocks_cloner-import',
-                        'title' => t('Import Block from XML'),
+                        'title' => t('Import from XML'),
                     ],
                 ]
             );

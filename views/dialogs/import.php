@@ -11,13 +11,15 @@ defined('C5_EXECUTE') or die('Access Denied.');
  * @var string $sitemapPageUrl
  */
 
+$view->element('vue/references_viewer', null, 'blocks_cloner');
+
 ?>
-<div id="ccm-blockscloker-import" v-cloak style="display: flex; height: 100%; width: 100%" v-cloak>
+<div id="ccm-blockscloker-import" style="display: flex; height: 100%; width: 100%" v-cloak>
     <div v-if="step === STEPS.INPUT" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
         <div style="flex-grow: 1; display: flex; flex-direction: row">
             <div style="display: flex; flex-direction: column; height: 100%; flex: 1; padding-right: 10px;">
                 <div>
-                    <?= t('Paste here the XML of the block to be added to the area') ?>
+                    <?= t('Paste here the XML of the data to be added to the area') ?>
                 </div>
                 <textarea
                     class="form-control"
@@ -49,7 +51,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
             </div>
             <div style="display: flex; flex-direction: column">
                 <div>
-                    <?= t('Insert block') ?>
+                    <?= t('Insert blocks') ?>
                 </div>
                 <select
                     class="form-control"
@@ -100,199 +102,24 @@ defined('C5_EXECUTE') or die('Access Denied.');
         </div>
     </div>
     <div v-else-if="step === STEPS.CHECK" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
-        <div style="flex-grow: 1">
-            <table class="table table-hover table-sm table-contensed caption-top">
-                <caption>
-                    <strong>{{ ICON.GOOD}} <?= t('Referenced Block Types') ?></strong>
-                </caption>
-                <colgroup>
-                    <col width="1" />
-                    <col width="1" />
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th class="text-nowrap"><?= t('Handle') ?></th>
-                        <th class="text-nowrap"><?= t('Name') ?></th>
-                        <th><?= t('Package') ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="i in referenced.blockTypes">
-                        <td class="text-nowrap"><code>{{ i.handle }}</code></td>
-                        <td class="text-nowrap">{{ i.displayName }}</td>
-                        <td>
-                            <span v-if="i.package" v-bind:title="`<?= t('Handle: %s', '${i.package.handle}') ?>`">
-                                <?= t('Provided by package %s', '{{ i.package.displayName }}') ?>
-                            </span>
-                            <i v-else><?= t('Provided by %s', 'Concrete') ?></i>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <table v-if="referenced.files.length" class="table table-hover table-sm table-contensed caption-top">
-                <caption>
-                    <strong>{{ someFilesWithErrors ? ICON.BAD : ICON.GOOD }} <?= t('Referenced Files') ?></strong>
-                    <span v-if="someFilesWithErrors">
-                        -
-                        <a href="#" v-on:click.prevent="pickFile()"><?= t('Upload File') ?></a>
-                    </span>
-                </caption>
-                <colgroup>
-                    <col width="1" />
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th class="text-nowrap"><?= t('Key') ?></th>
-                        <th><?= t('File Name') ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="i in referenced.files">
-                        <td class="text-nowrap"><code>{{ i.key }}</code></td>
-                        <td>
-                            <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
-                            <span v-else v-bind:title="`<?= t('Prefix: %s', '${i.prefix}') ?>`">{{ i.name }}</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <table v-if="referenced.pages.length" class="table table-hover table-sm table-contensed caption-top">
-                <caption>
-                    <strong>{{ somePagesWithErrors ? ICON.BAD : ICON.GOOD }} <?= t('Referenced Pages') ?></strong>
-                    <?php
-                    if ($sitemapPageUrl !== '') {
-                        ?>
-                        <span v-if="somePagesWithErrors">
-                            - <a target="_blank" href="<?= h($sitemapPageUrl) ?>"><?= t('open sitemap') ?></a>
-                        </span>
-                        <?php
-                    }
-                    ?>
-                </caption>
-                <colgroup>
-                    <col width="1" />
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th class="text-nowrap"><?= t('Path') ?></th>
-                        <th><?= t('Name') ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="i in referenced.pages">
-                        <td class="text-nowrap"><code>{{ i.key }}</code></td>
-                        <td>
-                            <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
-                            <a v-else target="_blank" v-bind:href="i.link" v-bind:title="`<?= t('ID: %s', '${i.cID}') ?>`">{{ i.name }}</a>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <table v-if="referenced.pageTypes.length" class="table table-hover table-sm table-contensed caption-top">
-                <caption>
-                    <strong>{{ somePageTypesWithErrors ? ICON.BAD : ICON.GOOD }} <?= t('Referenced Page Types') ?></strong>
-                </caption>
-                <colgroup>
-                    <col width="1" />
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th class="text-nowrap"><?= t('Handle') ?></th>
-                        <th><?= t('Name') ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="i in referenced.pageTypes">
-                        <td class="text-nowrap"><code>{{ i.key }}</code></td>
-                        <td>
-                            <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
-                            <a v-else target="_blank" v-bind:href="i.link" v-bind:title="`<?= t('ID: %s', '${i.cID}') ?>`">{{ i.name }}</a>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <table v-if="referenced.pageFeeds.length" class="table table-hover table-sm table-contensed caption-top">
-                <caption>
-                    <strong>{{ somePageFeedsWithErrors ? ICON.BAD : ICON.GOOD }}<?= t('Referenced RSS Page Feeds') ?></strong>
-                </caption>
-                <colgroup>
-                    <col width="1" />
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th class="text-nowrap"><?= t('Handle') ?></th>
-                        <th><?= t('Title') ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="i in referenced.pageFeeds">
-                        <td class="text-nowrap"><code>{{ i.key }}</code></td>
-                        <td>
-                            <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
-                            <a v-else target="_blank" v-bind:href="i.link" v-bind:title="`<?= t('ID: %s', '${i.cID}') ?>`">{{ i.title }}</a>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <table v-if="referenced.stacks.length" class="table table-hover table-sm table-contensed caption-top">
-                <caption>
-                    <strong>{{ someStacksWithErrors ? ICON.BAD : ICON.GOOD }}<?= t('Referenced Stacks') ?></strong>
-                </caption>
-                <colgroup>
-                    <col width="1" />
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th class="text-nowrap"><?= t('Key') ?></th>
-                        <th><?= t('Name') ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="i in referenced.stacks">
-                        <td class="text-nowrap"><code>{{ i.key }}</code></td>
-                        <td>
-                            <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
-                            <a v-else target="_blank" v-bind:href="i.link">{{ i.name }}</a>
-                            <span v-else>{{ i.name }}</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <table v-if="referenced.containers.length" class="table table-hover table-sm table-contensed caption-top">
-                <caption>
-                    <strong>{{ someContainersWithErrors ? ICON.BAD : ICON.GOOD }}<?= t('Referenced Containers') ?></strong>
-                </caption>
-                <colgroup>
-                    <col width="1" />
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th class="text-nowrap"><?= t('Handle') ?></th>
-                        <th><?= t('Name') ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="i in referenced.containers">
-                        <td class="text-nowrap"><code>{{ i.key }}</code></td>
-                        <td>
-                            <div class="text-danger" v-if="i.error" style="white-space: pre-wrap">{{ i.error }}</div>
-                            <span v-else>{{ i.name }}</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <blocks-cloner-references-viewer
+            v-bind:cid="<?= $cID ?>"
+            v-bind:references="references"
+            v-bind:flex-grow="true"
+            operation="import"
+            v-on:change="analyzeXml()"
+            v-bind:busy="busy"
+        ></blocks-cloner-references-viewer>
         <div class="text-right text-end">
             <button v-on:click.prevent="step = STEPS.INPUT" v-bind:disabled="busy" class="btn btn-secondary btn-default"><?= t('Back') ?></button>
             <button v-on:click.prevent="analyzeXml()" v-bind:disabled="busy" class="btn btn-secondary btn-default"><?= t('Reanalyze') ?></button>
-            <button v-on:click.prevent="importXml()" v-bind:disabled="busy" class="btn btn-primary"><?= t('Import') ?></button>
+            <button v-on:click.prevent="importXml()" v-bind:disabled="!canImport" class="btn btn-primary"><?= t('Import') ?></button>
         </div>
     </div>
-    <input type="file" ref="pickFile" style="display: none" />
 </div>
 <script>$(document).ready(function() {
 
-const currentEnvironment = window.ccmBlocksCloner.envirorment.getCurrent();
+const currentEnvironment = window.ccmBlocksCloner.environment.getCurrent();
 
 function getExistingBlocksInArea()
 {
@@ -348,23 +175,13 @@ new Vue({
             selectedConverters: [],
             addBefore: null,
             analyzeError: '',
+            importType: '',
             importToken: '',
-            referenced: {
-                blockTypes: [],
-                files: [],
-                pages: [],
-                pageTypes: [],
-                pageFeeds: [],
-                stacks: [],
-                containers: [],
-            },
+            references: {},
         };
     },
     mounted() {
-        this.$nextTick(() => this.$refs.inputXml.focus());
-        this.$refs.pickFile.addEventListener('change', (e) => {
-            this.pickFileChanged();
-        });
+        this.$nextTick(() => this.$refs.inputXml?.focus());
     },
     watch: {
         inputXml() {
@@ -383,7 +200,9 @@ new Vue({
             try {
                 const doc = window.ccmBlocksCloner.xml.parse(this.inputXml, false);
                 if (doc.documentElement.tagName !== 'block' || !doc.documentElement.getAttribute('type')) {
-                    throw new Error(<?= json_encode(t('The XML does not represent a block in ConcreteCMS CIF Format')) ?>);
+                    if (doc.documentElement.tagName !== 'area') {
+                        throw new Error(<?= json_encode(t('The XML does not represent a block in ConcreteCMS CIF Format')) ?>);
+                    }
                 }
             } catch (e) {
                 return (e ? (e.message || e.toString()) : <?= json_encode(t('Unknown error')) ?>);
@@ -395,7 +214,7 @@ new Vue({
                 return null;
             }
             try {
-                return window.ccmBlocksCloner.envirorment.extractFromXml(this.inputXml);
+                return window.ccmBlocksCloner.environment.extractFromXml(this.inputXml);
             } catch (e) {
                 console.warn(e);
                 return null;
@@ -423,23 +242,16 @@ new Vue({
         allConverters() {
             return window.ccmBlocksCloner.conversion.getConverters();
         },
-        someFilesWithErrors() {
-            return this.referenced.files.some((file) => file.error);
-        },
-        somePagesWithErrors() {
-            return this.referenced.pages.some((page) => page.error);
-        },
-        somePageTypesWithErrors() {
-            return this.referenced.pageTypes.some((pageType) => pageType.error);
-        },
-        somePageFeedsWithErrors() {
-            return this.referenced.pageFeeds.some((pageFeed) => pageFeed.error);
-        },
-        someStacksWithErrors() {
-            return this.referenced.stacks.some((stack) => stack.error);
-        },
-        someContainersWithErrors() {
-            return this.referenced.containers.some((container) => container.error);
+        canImport() {
+            if (this.busy) {
+                return false;
+            }
+            if (this.references.blockTypes) {
+                if (Object.values(this.references.blockTypes).some((blockType) => blockType.error)) {
+                    return false;
+                }
+            }
+            return true;
         },
     },
     methods: {
@@ -492,96 +304,42 @@ new Vue({
                     `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/analyze?cID=<?= $cID ?>`,
                     request
                 );
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
                 const responseData = await response.json();
                 if (responseData.error) {
                     throw new Error(responseData.error);
                 }
                 this.importToken = responseData.importToken;
-                delete responseData.importToken;
-                const referencedKeys = Object.keys(this.referenced);
-                referencedKeys.forEach((key) => this.referenced[key].splice(0, this.referenced[key].length));
-                Object.keys(responseData).forEach((key) => {
-                    if (!referencedKeys.includes(key)) {
-                        throw new Error(`Invalid key: ${key}`);
-                    }
-                    responseData[key].forEach((value) => this.referenced[key].push(value));
-                });
+                this.importType = responseData.importType;
+                this.references = responseData.references;
             } catch (e) {
-                this.analyzeError = e?.messsage || e?.toString() || <?= json_encode(t('Unknown error')) ?>;
+                this.analyzeError = e?.message || e?.toString() || <?= json_encode(t('Unknown error')) ?>;
                 return;
             } finally {
                 this.busy = false;
             }
             this.step = this.STEPS.CHECK;
         },
-        pickFile() {
-            this.$refs.pickFile.click();
-        },
-        async pickFileChanged() {
-            let reanalyze = false;
-            try {
-                if (this.busy || this.step !== this.STEPS.CHECK) {
-                    return;
-                }
-                const file = this.$refs.pickFile.files?.length === 1 ? this.$refs.pickFile.files[0] : null;
-                if (!file) {
-                    return;
-                }
-                const decompressZip = /\.zip$/i.test(file.name) && window.confirm(<?= json_encode(t('Should the ZIP archive be extracted?')) ?>);
-                this.busy = true;
-                try {
-                    const request = {
-                        method: 'POST',
-                        headers: {
-                            Accept: 'application/json',
-                        },
-                        body: new FormData(),
-                    };
-                    request.body.append('file', file);
-                    request.body.append('decompressZip', decompressZip ? 'true' : 'false');
-                    request.body.append('__ccm_consider_request_as_xhr', '1');
-                    request.body.append(<?= json_encode($token::DEFAULT_TOKEN_NAME) ?>, <?= json_encode($token->generate('blocks_cloner:import:uploadFile')) ?>);
-                    const response = await window.fetch(
-                        `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/upload-file?cID=<?= $cID ?>`,
-                        request
-                    );
-                    const responseData = await response.json();
-                    if (responseData.error) {
-                        throw new Error(responseData.error);
-                    }
-                    reanalyze = true;
-                } finally {
-                    this.busy = false;
-                }
-            } catch (e) {
-                window.ConcreteAlert.error({
-                    message: e?.messsage || e?.toString() || <?= json_encode(t('Unknown error')) ?>,
-                    delay: 5000,
-                });
-            } finally {
-                this.$refs.pickFile.value = '';
-            }
-            if (reanalyze) {
-                this.analyzeXml();
-            }
-        },
         async importXml() {
-            if (this.busy) {
+            if (this.busy || !this.canImport) {
                 return false;
             }
             this.busy = true;
+            let imported = false;
             try {
                 const ccmEditMode = window.Concrete.getEditMode();
                 const ccmArea = ccmEditMode.getAreaByID(<?= $area->getAreaID() ?>);
                 if (!ccmArea) {
                     throw new Error(<?= json_encode(t('Unable to find the requested area')) ?>);
                 }
-                const ccmBlockBefore = this.addBefore ? ccmEditMode.getBlockByID(this.addBefore.id) : null;
+                let ccmBlockBefore = this.addBefore ? ccmEditMode.getBlockByID(this.addBefore.id) : null;
                 if (this.addBefore !== null && !ccmBlockBefore) {
                     throw new Error(<?= json_encode(t('Unable to find the requested block')) ?>);
                 }
                 const importResponse = await window.fetch(
-                    `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/import?cID=<?= $cID ?>`,
+                    `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/${this.importType}?cID=<?= $cID ?>`,
                     {
                         method: 'POST',
                         headers: {
@@ -597,41 +355,47 @@ new Vue({
                         ]),
                     }
                 );
+                if (!importResponse.ok) {
+                    throw new Error(await importResponse.text());
+                }
                 const importResult = await importResponse.json();
                 if (importResult.error) {
                     throw new Error(importResult.error);
                 }
-                const bID = importResult.bID;
-                const renderResponse = await window.fetch(
-                    `${CCM_DISPATCHER_FILENAME}/ccm/system/block/render?cID=<?= $cID ?>&arHandle=${encodeURIComponent(ccmArea.getHandle())}&bID=${bID}&arEnableGridContainer=${ccmArea.getEnableGridContainer() ? 1 : 0}`,
-                    {
-                        method: 'GET',
-                        headers: {
-                            Accept: 'application/json, text/html',
-                        },
-                    }
-                );
-                if (!renderResponse.ok) {
-                    renderResponse.text().then((text) => {
-                        console.error(text);
-                    });
-                    throw new Error(<?= json_encode(t('Unable to render the block')) ?>);
+                imported = true;
+                if (importResult.oldAreaStyleInlineStylesetID) {
+                    document.querySelector(`head style[data-style-set="${importResult.oldAreaStyleInlineStylesetID}"]`)?.remove();
                 }
-                const renderHtml = await renderResponse.text();
-                if (ccmBlockBefore) {
-                    ccmBlockBefore.getContainer().before(renderHtml);
-                } else {
-                    ccmArea.getBlockContainer().append(renderHtml);
+                if (importResult.newAreaHtmlStyleElement) {
+                    document.head.insertAdjacentHTML('beforeend', importResult.newAreaHtmlStyleElement);
                 }
-                _.defer(() => {
-                    ccmEditMode.scanBlocks();
-                    setTimeout(() => this.refreshBlockDesign(ccmArea.getHandle(), bID), 100);
-                });
+                if (importResult.newAreaContainerClass) {
+                    ccmArea.getElem().addClass(importResult.newAreaContainerClass);
+                }
+                const newBlockIDs = importResult.newBlockIDs;
+                const newBlocksHtml = await Promise.all(newBlockIDs.map((newBlockID) => this.loadNewBlockHtml(ccmArea, newBlockID)));
+                for (let intex = 0; intex < newBlocksHtml.length; intex++) {
+                    const newCCMBlock = await this.renderNewBlockHtml(ccmArea, newBlocksHtml[intex].blockID, newBlocksHtml[intex].html, ccmBlockBefore);
+                    ccmBlockBefore = newCCMBlock;
+                }
+                await this.refreshDesigns(ccmArea, newBlockIDs, false);
             } catch (e) {
                 window.ConcreteAlert.error({
-                    message: e?.messsage || e?.toString() || <?= json_encode(t('Unknown error')) ?>,
+                    message: e?.message || e?.toString() || <?= json_encode(t('Unknown error')) ?>,
                     delay: 5000,
                 });
+                if (imported) {
+                    setTimeout(() => {
+                        if (window.confirm(<?= json_encode(implode("\n", [
+                            t('The data has been imported, but an error occurred while rendering it.'),
+                            '',
+                            t('To avoid problems, please reload the page.'),
+                            t('Do you want to do it now?'),
+                        ])) ?>)) {
+                            window.location.reload();
+                        }
+                    }, 500);
+                }
                 return;
             } finally {
                 this.busy = false;
@@ -643,13 +407,48 @@ new Vue({
             window.ConcretePanelManager.getByIdentifier('blocks_cloner-import')?.hide()
             window.ConcretePanelManager.getByIdentifier('blocks_cloner-export')?.hide()
         },
-        async refreshBlockDesign(areaHandle, bID) {
-            const ccmEditMode = window.Concrete.getEditMode();
-            const ccmBlock = ccmEditMode.getBlockByID(bID);
-            const blockElement = ccmBlock.getElem()[0];
-            const blockIDsByAreaHandles = {
-                [areaHandle]: [bID],
+        async loadNewBlockHtml(ccmArea, newBlockID) {
+            const renderResponse = await window.fetch(
+                `${CCM_DISPATCHER_FILENAME}/ccm/system/block/render?cID=<?= $cID ?>&arHandle=${encodeURIComponent(ccmArea.getHandle())}&bID=${newBlockID}&arEnableGridContainer=${ccmArea.getEnableGridContainer() ? 1 : 0}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'text/html',
+                    },
+                }
+            );
+            if (!renderResponse.ok) {
+                renderResponse.text().then((text) => {
+                    console.error(text);
+                });
+                throw new Error(<?= json_encode(t('Unable to render the block')) ?>);
+            }
+            const newBlockHtml = await renderResponse.text();
+            return {
+                blockID: newBlockID,
+                html: newBlockHtml,
             };
+        },
+        async renderNewBlockHtml(ccmArea, newBlockID, newBlockHtml, ccmBlockBefore) {
+            if (ccmBlockBefore) {
+                ccmBlockBefore.getContainer().before(newBlockHtml);
+            } else {
+                ccmArea.getBlockContainer().append(newBlockHtml);
+            }
+            const ccmEditMode = window.Concrete.getEditMode();
+            for (let i = 0; i < 10; i++) {
+                ccmEditMode.scanBlocks();
+                const ccmBlock = ccmEditMode.getBlockByID(newBlockID);
+                if (ccmBlock) {
+                    return ccmBlock
+                }
+                await new Promise((resolve) => setTimeout(resolve, 10));
+            }
+            throw new Error(<?= json_encode(t('Unable to find the new block')) ?>);
+        },
+        async refreshDesigns(ccmArea, blockIDs) {
+            const ccmEditMode = window.Concrete.getEditMode();
+            const blockIDsByAreaHandles = {};
             const areas = [];
             function walk(item, parentAreaHandle) {
                 let childAreaHandle = parentAreaHandle;
@@ -667,9 +466,13 @@ new Vue({
                 }
                 item.children.forEach((child) => walk(child, childAreaHandle));
             }
-            for (const item of window.ccmBlocksCloner.getPageStructureStartingAt(blockElement)) {
-                walk(item, areaHandle);
-            }
+            blockIDs.forEach((blockID) => {
+                const ccmBlock = ccmEditMode.getBlockByID(blockID);
+                const blockElement = ccmBlock.getElem()[0];
+                for (const item of window.ccmBlocksCloner.getPageStructureStartingAt(blockElement)) {
+                    walk(item, ccmArea.getHandle());
+                }
+            });
             const response = await window.fetch(
                 `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/get-designs?cID=<?= $cID ?>`,
                 {
@@ -685,6 +488,9 @@ new Vue({
                     ]),
                 }
             );
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
             const responseData = await response.json();
             if (responseData?.error || typeof responseData?.length !== 'number') {
                 throw new Error(responseData.error || <?= json_encode(t('Unknown error')) ?>);

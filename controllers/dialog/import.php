@@ -7,10 +7,6 @@ use Concrete\Core\Area\CustomStyle as AreaCustomStyle;
 use Concrete\Core\Block\Block;
 use Concrete\Core\Block\CustomStyle as BlockCustomStyle;
 use Concrete\Core\Database\Connection\Connection;
-use Concrete\Core\Entity\File\Version;
-use Concrete\Core\Entity\Package;
-use Concrete\Core\Entity\Page\Container;
-use Concrete\Core\Entity\Page\Feed as PageFeed;
 use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\File\Filesystem;
 use Concrete\Core\File\Import\FileImporter;
@@ -19,37 +15,34 @@ use Concrete\Core\File\Import\ImportOptions;
 use Concrete\Core\File\Service\VolatileDirectory;
 use Concrete\Core\File\Service\Zip;
 use Concrete\Core\Http\ResponseFactoryInterface;
-use Concrete\Core\Page\Page;
-use Concrete\Core\Page\Stack\Stack;
-use Concrete\Core\Page\Type\Type as PageType;
 use Concrete\Core\Permission\Checker;
-use Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface;
 use Concrete\Core\Validation\CSRF\Token;
 use Concrete\Package\BlocksCloner\Controller\AbstractController;
 use Concrete\Package\BlocksCloner\Edit\Context;
 use Concrete\Package\BlocksCloner\ImportChecker;
 use Concrete\Package\BlocksCloner\XmlParser;
-use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use SimpleXMLElement;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Throwable;
+use Concrete\Core\Entity\Block\BlockType\BlockType;
+use Doctrine\ORM\EntityManagerInterface;
+use Concrete\Package\BlocksCloner\Import\LoadXmlTrait;
+use Concrete\Package\BlocksCloner\Import\Enviro;
+use Concrete\Core\StyleCustomizer\Inline\StyleSet;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
 class Import extends AbstractController
 {
+    use LoadXmlTrait;
+
     /**
      * {@inheritdoc}
      *
      * @see \Concrete\Core\Controller\Controller::$viewPath
      */
     protected $viewPath = '/dialogs/import';
-
-    /**
-     * @var \Concrete\Core\Entity\Package[]|null
-     */
-    private $installedPackages;
 
     /**
      * {@inheritdoc}
@@ -75,13 +68,6 @@ class Import extends AbstractController
         $importChecker->checkArea($area);
         $this->set('area', $area);
         $this->set('token', $this->app->make(Token::class));
-        $resolverManager = $this->app->make(ResolverManagerInterface::class);
-        $page = Page::getByPath('/dashboard/sitemap/full');
-        if ($page && !$page->isError() && (new Checker($page))->canViewPage()) {
-            $this->set('sitemapPageUrl', (string) $resolverManager->resolve([$page]));
-        } else {
-            $this->set('sitemapPageUrl', '');
-        }
     }
 
     /**
@@ -106,117 +92,31 @@ class Import extends AbstractController
             $importChecker->checkArea($area);
             $xml = $this->request->request->get('xml');
             $sx = $this->loadXml($xml);
+            $importType = $this->extractImportType($sx);
             $result = [
-                'importToken' => $this->app->make(Token::class)->generate("blocks_cloner:import:{$this->cID}:{$areaHandle}:" . sha1($xml)),
+                'importType' => $importType,
+                'importToken' => $this->app->make(Token::class)->generate("blocks_cloner:import:{$importType}:{$this->cID}:{$areaHandle}:" . sha1($xml)),
             ];
             $parser = $this->app->make(XmlParser::class);
-            $installedPackages = $this->getInstalledPackages();
-            $result['blockTypes'] = [];
-            $checker = new Checker($this->getPage());
-            foreach ($parser->findBlockTypes($sx) as $blockType) {
-                if (!$checker->canAddBlockType($blockType)) {
-                    throw new UserMessageException(t("You can't add blocks of type %s to this page.", t($blockType->getBlockTypeName())));
-                }
-                $packageID = $blockType->getPackageID();
-                $package = $packageID ? $installedPackages[$packageID] : null;
-                $result['blockTypes'][] = [
-                    'id' => (int) $blockType->getBlockTypeID(),
-                    'handle' => $blockType->getBlockTypeHandle(),
-                    'displayName' => t($blockType->getBlockTypeName()),
-                    'package' => $package ? [
-                        'handle' => $package->getPackageHandle(),
-                        'displayName' => t($package->getPackageName()),
-                    ] : null,
-                ];
-            }
-            $resolverManager = $this->app->make(ResolverManagerInterface::class);
-            $viewStackPage = null;
-            foreach ($parser->findItems($sx) as $categoryKey => $items) {
-                $result[$categoryKey] = [];
-                foreach ($items as $itemKey => $item) {
-                    $serialized = ['key' => $itemKey];
-                    switch ($categoryKey) {
-                        case XmlParser::KEY_FILES:
-                            if ($item instanceof Version) {
-                                $serialized += [
-                                    'fID' => $item->getFileID(),
-                                    'prefix' => $item->getPrefix(),
-                                    'name' => $item->getFileName(),
-                                ];
-                            } else {
-                                $serialized['error'] = $item;
-                            }
-                            break;
-                        case XmlParser::KEY_PAGES:
-                            if ($item instanceof Page) {
-                                $serialized += [
-                                    'cID' => (int) $item->getCollectionID(),
-                                    'name' => (string) $item->getCollectionName(),
-                                    'link' => (string) $item->getCollectionLink(),
-                                ];
-                            } else {
-                                $serialized['error'] = $item;
-                            }
-                            break;
-                        case XmlParser::KEY_PAGETYPES:
-                            if ($item instanceof PageType) {
-                                $serialized += [
-                                    'name' => (string) t($item->getPageTypeName()),
-                                    'id' => $item->getPageTypeID(),
-                                ];
-                            } else {
-                                $serialized['error'] = $item;
-                            }
-                            break;
-                        case XmlParser::KEY_PAGEFEEDS:
-                            if ($item instanceof PageFeed) {
-                                $serialized += [
-                                    'title' => $item->getFeedDisplayTitle('text'),
-                                ];
-                            } else {
-                                $serialized['error'] = $item;
-                            }
-                            break;
-                        case XmlParser::KEY_STACKS:
-                            if ($item instanceof Stack) {
-                                $serialized += [
-                                    'name' => $item->getCollectionName(),
-                                    'link' => '',
-                                ];
-                                if ($viewStackPage === null) {
-                                    $viewStackPage = Page::getByPath('/dashboard/blocks/stacks');
-                                    if (!$viewStackPage || $viewStackPage->isError()) {
-                                        $viewStackPage = false;
-                                    } else {
-                                        $checker = new Checker($viewStackPage);
-                                        if (!$checker->canViewPage()) {
-                                            $viewStackPage = false;
-                                        }
-                                    }
-                                }
-                                if ($viewStackPage) {
-                                    $serialized['link'] = (string) $resolverManager->resolve([$viewStackPage, 'view_details', $item->getCollectionID()]);
-                                }
-                            } else {
-                                $serialized['error'] = $item;
-                            }
-                            break;
-                        case XmlParser::KEY_CONTAINERS:
-                            if ($item instanceof Container) {
-                                $serialized += [
-                                    'name' => $item->getContainerDisplayName(),
-                                ];
-                            } else {
-                                $serialized['error'] = $item;
-                            }
-                            break;
-                        default:
-                            $serialized['error'] = t('Unsuppored category: %s', $categoryKey);
-                            break;
+            $references = $parser->extractReferences($sx);
+            if (isset($references[XmlParser::KEY_BLOCKTYPES])) {
+                $checker = new Checker($this->getPage());
+                $references[XmlParser::KEY_BLOCKTYPES] = array_map(
+                    static function ($blockType) use ($checker) {
+                        if ($blockType instanceof BlockType && !$checker->canAddBlockType($blockType)) {
+                            return t("You can't add blocks of type %s to this page.", t($blockType->getBlockTypeName()));
+                        }
+                        return $blockType;
+                    },
+                    $references[XmlParser::KEY_BLOCKTYPES]
+                );
+                foreach ($references[XmlParser::KEY_BLOCKTYPES] as $blockType) {
+                    if (!$blockType instanceof BlockType) {
+                        $result['importToken'] = '';
                     }
-                    $result[$categoryKey][] = $serialized;
                 }
             }
+            $result['references'] = $this->serializeReferences($references);
 
             return $this->app->make(ResponseFactoryInterface::class)->json($result);
         } catch (Exception $x) {
@@ -277,59 +177,17 @@ class Import extends AbstractController
     /**
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function import()
+    public function importBlock()
     {
         try {
-            $xml = $this->request->request->get('xml');
-            if (!$xml || !is_string($xml)) {
-                throw new UserMessageException(t('Access Denied'));
-            }
-            $areaHandle = (string) $this->request->request->get('areaHandle');
-            if ($areaHandle === '') {
-                throw new UserMessageException(t('Access Denied'));
-            }
-            $token = $this->app->make(Token::class);
-            if (!$token->validate("blocks_cloner:import:{$this->cID}:{$areaHandle}:" . sha1($xml))) {
-                throw new UserMessageException($token->getErrorMessage());
-            }
-            $area = Area::get($this->getPage(), $areaHandle);
-            if (!$area || $area->isError()) {
-                throw new UserMessageException(t('Unable to find the requested area'));
-            }
-            $sx = $this->loadXml($xml);
-            $context = Context::forWriting($this->getPage(), $area);
-            $parser = $this->app->make(XmlParser::class);
-            $blockType = $parser->getRootBlockType($xml);
-            $initialBlockIDsInArea = $this->getBlockIDsInArea($context);
-            $beforeBlockID = $this->request->request->getInt('beforeBlockID');
-            if ($beforeBlockID && !in_array($beforeBlockID, $initialBlockIDsInArea, true)) {
-                throw new UserMessageException(t('Unable to find the requested block'));
-            }
-            $blockController = $blockType->getController();
-            if (!$blockController) {
-                $blockType->loadController();
-                $blockController = $blockType->getController();
-            }
-            /** @var \Concrete\Core\Block\BlockController $blockController */
+            $enviro = $this->app->make(Enviro::class, ['page' => $this->getPage(), 'importType' => 'block']);
             $cn = $this->app->make(Connection::class);
             $rollBack = true;
             $cn->beginTransaction();
             try {
-                $newBlock = $blockController->import($context->page, $context->area, $sx);
-                $this->app->make('cache/request')->flush();
-                $newBlockIDsInArea = $this->getBlockIDsInArea($context);
-                if (!$newBlock) {
-                    $deltaBlockIDs = array_diff($newBlockIDsInArea, $initialBlockIDsInArea);
-                    if (count($deltaBlockIDs) !== 1) {
-                        throw new UserMessageException(t('Failed to retrieve the ID of the new block'));
-                    }
-                    $newBlock = $this->getImportedBlock($context, array_shift($deltaBlockIDs));
-                }
-                if ($beforeBlockID) {
-                    $newBlockIDsInArea = $this->sortBlockIDs((int) $newBlock->getBlockID(), $beforeBlockID, $newBlockIDsInArea);
-                    $context->processArrangement($context->area->getAreaID(), $newBlock->getBlockID(), $newBlockIDsInArea);
-                }
-                $response = $this->app->make(ResponseFactoryInterface::class)->json(['bID' => (int) $newBlock->getBlockID()]);
+                $context = Context::forWriting($this->getPage(), $enviro->area);
+                $newBlock = $this->importXBlock($enviro->sx, $context, $enviro);
+                $response = $this->app->make(ResponseFactoryInterface::class)->json(['newBlockIDs' => [(int) $newBlock->getBlockID()]]);
                 $cn->commit();
                 $rollBack = false;
             } finally {
@@ -337,13 +195,78 @@ class Import extends AbstractController
                     $cn->rollBack();
                 }
             }
+
+            return $response;
         } catch (Exception $x) {
             return $this->buildErrorResponse($x);
         } catch (Throwable $x) {
             return $this->buildErrorResponse($x);
         }
+    }
 
-        return $response;
+    /**
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function importArea()
+    {
+        try {
+            $enviro = $this->app->make(Enviro::class, ['page' => $this->getPage(), 'importType' => 'area']);
+            $cn = $this->app->make(Connection::class);
+            $rollBack = true;
+            $cn->beginTransaction();
+            try {
+                $areaStyleData = [];
+                $context = Context::forWriting($this->getPage(), $enviro->area);
+                if (isset($enviro->sx->style)) {
+                    $oldCustomStyle = $this->getPage()->getAreaCustomStyle($context->area);
+                    $oldCustomStyleSet = $oldCustomStyle ? $oldCustomStyle->getStyleSet() : null;
+                    if ($oldCustomStyleSet) {
+                        $areaStyleData['oldAreaStyleInlineStylesetID'] = (int) $oldCustomStyleSet->getID();
+                    }
+                    $newCustomStyleSet = StyleSet::import($enviro->sx->style);
+                    $this->getPage()->setCustomStyleSet($context->pageSpecificArea, $newCustomStyleSet);
+                    $newCustomStyle = new AreaCustomStyle($newCustomStyleSet, $context->pageSpecificArea, $this->getPage()->getCollectionThemeObject());
+                    $newCss = (string) $newCustomStyle->getCSS();
+                    if ($newCss !== '') {
+                        $areaStyleData += [
+                            'newAreaStyleInlineStylesetID' => (int) $newCustomStyleSet->getID(),
+                            'newAreaHtmlStyleElement' => $newCustomStyle->getStyleWrapper($newCss),
+                            'newAreaContainerClass' => $newCustomStyle->getContainerClass(),
+                        ];
+                    }
+                }
+                $xBlockList = [];
+                if (isset($enviro->sx->blocks) && isset($enviro->sx->blocks->block)) {
+                    foreach ($enviro->sx->blocks->block as $xBlock) {
+                        $xBlockList[] = $xBlock;
+                    }
+                }
+                $newBlockIDs = [];
+                foreach (array_reverse($xBlockList) as $xBlock) {
+                    $newBlock = $this->importXBlock($xBlock, $context, $enviro);
+                    $newBlockID = (int) $newBlock->getBlockID();
+                    $newBlockIDs[] = $newBlockID;
+                    $enviro->beforeBlockID = $newBlockID;
+                }
+                $response = $this->app->make(ResponseFactoryInterface::class)->json(
+                    $areaStyleData + [
+                        'newBlockIDs' => $newBlockIDs,
+                    ]
+                );
+                $cn->commit();
+                $rollBack = false;
+            } finally {
+                if ($rollBack) {
+                    $cn->rollBack();
+                }
+            }
+
+            return $response;
+        } catch (Exception $x) {
+            return $this->buildErrorResponse($x);
+        } catch (Throwable $x) {
+            return $this->buildErrorResponse($x);
+        }
     }
 
     /**
@@ -455,55 +378,6 @@ class Import extends AbstractController
     }
 
     /**
-     * @param string|mixed $xml
-     *
-     * @throws \Concrete\Core\Error\UserMessageException
-     *
-     * @return \SimpleXMLElement
-     */
-    private function loadXml($xml)
-    {
-        if (!is_string($xml) || $xml === '') {
-            throw new UserMessageException(t('Please specify the XML to be imported'));
-        }
-        $restore = libxml_use_internal_errors(true);
-        try {
-            $sx = simplexml_load_string($xml);
-            $errors = libxml_get_errors();
-        } finally {
-            libxml_use_internal_errors($restore);
-        }
-        if (!empty($errors)) {
-            $lines = [];
-            foreach ($errors as $error) {
-                $line = '';
-                switch ($error->level) {
-                    case LIBXML_ERR_WARNING:
-                        $line .= '[' . t('Warning') . '] ';
-                        break;
-                    case LIBXML_ERR_ERROR:
-                        $line .= '[' . t('Error') . '] ';
-                        break;
-                    case LIBXML_ERR_FATAL:
-                        $line .= '[' . t('Fatal error') . '] ';
-                        break;
-                }
-                $line .= $error->message;
-                if ($error->line) {
-                    $line .= ' (' . t('at line %s', $error->line) . ')';
-                }
-                $lines[] = $line;
-            }
-            throw new UserMessageException(implode("\n", $lines));
-        }
-        if (!$sx) {
-            throw new UserMessageException(t('Failed to parse the XML'));
-        }
-
-        return $sx;
-    }
-
-    /**
      * @return \SimpleXMLElement[]|\Generator
      */
     private function listBlockNodes(SimpleXMLElement $sx)
@@ -525,24 +399,6 @@ class Import extends AbstractController
                 yield $blockNode;
             }
         }
-    }
-
-    /**
-     * @return \Concrete\Core\Entity\Package[]
-     */
-    private function getInstalledPackages()
-    {
-        if ($this->installedPackages === null) {
-            $installedPackages = [];
-            $em = $this->app->make(EntityManagerInterface::class);
-            $repo = $em->getRepository(Package::class);
-            foreach ($repo->findAll() as $package) {
-                $installedPackages[$package->getPackageID()] = $package;
-            }
-            $this->installedPackages = $installedPackages;
-        }
-
-        return $this->installedPackages;
     }
 
     /**
@@ -620,7 +476,7 @@ class Import extends AbstractController
         foreach ($fileInfos as $fileInfo) {
             $fileExtension = $fileService->getExtension($fileInfo['name']);
             if (!$checker->canAddFileType($fileExtension)) {
-                throw new ImportException(ImportException::E_FILE_INVALID_EXTENSION);
+                throw ImportException::fromErrorCode(ImportException::E_FILE_INVALID_EXTENSION);
             }
         }
     }
@@ -638,5 +494,76 @@ class Import extends AbstractController
         }
 
         return $block;
+    }
+
+    /**
+     * @return string
+     */
+    private function extractImportType(SimpleXMLElement $doc)
+    {
+        switch ($doc->getName()) {
+            case 'block':
+                return 'block';
+            case 'area':
+                $structure = $this->extractChildElements($doc, ['style', 'blocks']);
+                if ($structure === null || count($structure['style']) > 1 && count($structure['blocks']) > 1) {
+                    break;
+                }
+                $xStyle = array_shift($structure['style']);
+                $xBlocks = array_shift($structure['blocks']);
+                if ($xBlocks !== null) {
+                    $structure = $this->extractChildElements($xBlocks, ['block']);
+                    if ($structure === null) {
+                        break;
+                    }
+                    if ($structure['blocks'] === []) {
+                        $xBlocks = null;
+                    }
+                }
+                if ($xStyle === null && $xBlocks === null) {
+                    throw new UserMessageException(t('The XML is empty'));
+                }
+                return 'area';
+        }
+
+        throw new UserMessageException(t('The XML is not valid'));
+    }
+
+    /**
+     * @throws \Concrete\Core\Error\UserMessageException
+     *
+     * @return \Concrete\Core\Block\Block
+     */
+    private function importXBlock(SimpleXMLElement $xBlock, Context $context, Enviro $enviro)
+    {
+        $initialBlockIDsInArea = $this->getBlockIDsInArea($context);
+        if ($enviro->beforeBlockID !== 0 && !in_array($enviro->beforeBlockID, $initialBlockIDsInArea, true)) {
+            throw new UserMessageException(t('Unable to find the requested block'));
+        }
+        $blockTypeHandle = (string) $xBlock['type'];
+        $blockType = $this->app->make(EntityManagerInterface::class)->getRepository(BlockType::class)->findOneBy(['btHandle' => $blockTypeHandle]);
+        $blockController = $blockType->getController();
+        if (!$blockController) {
+            $blockType->loadController();
+            $blockController = $blockType->getController();
+        }
+        /** @var \Concrete\Core\Block\BlockController $blockController */
+        $initialBlockIDsInArea = $this->getBlockIDsInArea($context);
+        $newBlock = $blockController->import($context->page, $context->area, $xBlock);
+        $this->app->make('cache/request')->flush();
+        $newBlockIDsInArea = $this->getBlockIDsInArea($context);
+        if (!$newBlock) {
+            $deltaBlockIDs = array_diff($newBlockIDsInArea, $initialBlockIDsInArea);
+            if (count($deltaBlockIDs) !== 1) {
+                throw new UserMessageException(t('Failed to retrieve the ID of the new block'));
+            }
+            $newBlock = $this->getImportedBlock($context, array_shift($deltaBlockIDs));
+        }
+        if ($enviro->beforeBlockID !== 0) {
+            $newBlockIDsInArea = $this->sortBlockIDs((int) $newBlock->getBlockID(), $enviro->beforeBlockID, $newBlockIDsInArea);
+            $context->page->processArrangement($context->area->getAreaID(), $newBlock->getBlockID(), $newBlockIDsInArea);
+        }
+
+        return $newBlock;
     }
 }

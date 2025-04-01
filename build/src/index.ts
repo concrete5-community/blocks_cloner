@@ -11,7 +11,7 @@ if ((window as any).ccmBlocksCloner === undefined) {
     getPageStructureStartingAt,
     findParentArea,
     setElementHighlighted,
-    envirorment: {
+    environment: {
       getCurrent: getCurrentEnvironment,
       addCurrentToXml: addCurrentEnvironmentComment,
       extractFromXml: extractEnvironment,

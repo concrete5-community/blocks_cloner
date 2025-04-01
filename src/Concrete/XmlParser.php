@@ -20,6 +20,8 @@ defined('C5_EXECUTE') or die('Access Denied.');
 
 final class XmlParser
 {
+    const KEY_BLOCKTYPES = 'blockTypes';
+
     const KEY_FILES = 'files';
 
     const KEY_PAGES = 'pages';
@@ -69,32 +71,6 @@ final class XmlParser
     }
 
     /**
-     * @param \SimpleXMLElement|\DOMDocument|\DOMElement|string $xml
-     *
-     * @throws \Concrete\Core\Error\UserMessageException
-     *
-     * @return \Concrete\Core\Entity\Block\BlockType\BlockType[]
-     */
-    public function findBlockTypes($xml)
-    {
-        return $this->listBlockTypes($xml, false);
-    }
-
-    /**
-     * @param \SimpleXMLElement|\DOMDocument|\DOMElement|string $xml
-     *
-     * @throws \Concrete\Core\Error\UserMessageException
-     *
-     * @return \Concrete\Core\Entity\Block\BlockType\BlockType
-     */
-    public function getRootBlockType($xml)
-    {
-        $blockTypes = $this->listBlockTypes($xml, true);
-
-        return $blockTypes[0];
-    }
-
-    /**
     /**
      * @param \SimpleXMLElement|\DOMDocument|\DOMElement|string $xml
      *
@@ -102,7 +78,7 @@ final class XmlParser
      *
      * @return array
      */
-    public function findItems($xml)
+    public function extractReferences($xml)
     {
         $xml = $this->ensureSimpleXMLElement($xml);
         $result = [];
@@ -312,51 +288,16 @@ final class XmlParser
         return $this->installedBlockTypes;
     }
 
-    /**
-     * @param \SimpleXMLElement|\DOMDocument|\DOMElement|string $xml
-     * @param bool $onlyFirst
-     *
-     * @throws \Concrete\Core\Error\UserMessageException
-     *
-     * @return \Concrete\Core\Entity\Block\BlockType\BlockType[]
-     */
-    private function listBlockTypes($xml, $onlyFirst)
-    {
-        $xml = $this->ensureSimpleXMLElement($xml);
-        if ($xml->getName() !== 'block') {
-            throw new UserMessageException(t('The XML does not represent a block in ConcreteCMS CIF Format'));
-        }
-        $result = [];
-        $errors = [];
-        $blockTypes = $this->getInstalledBlockTypes();
-        foreach ($this->listBlockElements($xml) as $xBlock) {
-            $type = isset($xBlock['type']) ? (string) $xBlock['type'] : '';
-            if ($type === '') {
-                $errors[] = t('A %1$s element is missing the %2$s attribute.', '<block>', 'type');
-                continue;
-            }
-            if (!isset($blockTypes[$type])) {
-                $errors[] = t('The XML references to a block type with handle %s which is not currently installed.', $type);
-                continue;
-            }
-            $blockType = $blockTypes[$type];
-            if (!in_array($blockType, $result, true)) {
-                $result[] = $blockType;
-            }
-            if ($onlyFirst) {
-                break;
-            }
-        }
-        if ($errors !== []) {
-            throw new UserMessageException(implode("\n", $errors));
-        }
-
-        return $result;
-    }
-
     private function inspectBlockElement(SimpleXMLElement $blockElement, array &$result)
     {
         $type = isset($blockElement['type']) ? (string) $blockElement['type'] : '';
+        if (!isset($result[self::KEY_BLOCKTYPES])) {
+            $result[self::KEY_BLOCKTYPES] = [];
+        }
+        if (!isset($result[self::KEY_BLOCKTYPES][$type])) {
+            $installedBlockTypes = $this->getInstalledBlockTypes();
+            $result[self::KEY_BLOCKTYPES][$type] = isset($installedBlockTypes[$type]) ? $installedBlockTypes[$type] : t('The XML references to a block type with handle %s which is not currently installed.', $type);
+        }
         switch ($type) {
             case BLOCK_HANDLE_STACK_PROXY:
                 $this->inspectCoreStackDisplayBlockElement($blockElement, $result);
