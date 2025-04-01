@@ -47,8 +47,6 @@ class ExportFixer
     }
 
     /**
-     * @param \SimpleXMLElement $element
-     *
      * @return \SimpleXMLElement[]|\Generator
      */
     private function listBlockElements(SimpleXMLElement $element)

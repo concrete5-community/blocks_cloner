@@ -6,6 +6,4 @@ use Concrete\Core\Application\UserInterface\Menu\Item\Controller as CoreControll
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
-class Controller extends CoreController
-{
-}
+class Controller extends CoreController {}

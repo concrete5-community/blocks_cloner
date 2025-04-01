@@ -106,6 +106,7 @@ class Import extends AbstractController
                         if ($blockType instanceof BlockType && !$checker->canAddBlockType($blockType)) {
                             return t("You can't add blocks of type %s to this page.", t($blockType->getBlockTypeName()));
                         }
+
                         return $blockType;
                     },
                     $references[XmlParser::KEY_BLOCKTYPES]
@@ -125,6 +126,7 @@ class Import extends AbstractController
             return $this->buildErrorResponse($x);
         }
     }
+
     /**
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
@@ -523,6 +525,7 @@ class Import extends AbstractController
                 if ($xStyle === null && $xBlocks === null) {
                     throw new UserMessageException(t('The XML is empty'));
                 }
+
                 return 'area';
         }
 

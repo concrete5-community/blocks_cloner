@@ -20,8 +20,7 @@ abstract class Export extends AbstractController
         $doc->formatOutput = true;
         $doc->loadXML($sx->asXML());
         $xml = $doc->saveXML();
-        $xml = preg_replace('{^<\?xml[^>]*>\s}i', '', $xml);
 
-        return $xml;
+        return preg_replace('{^<\?xml[^>]*>\s}i', '', $xml);
     }
 }

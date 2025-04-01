@@ -43,7 +43,7 @@ class PluginManager
 
     /**
      * @param string $withInterface
-    /**
+     *
      * @return \Concrete\Package\BlocksCloner\Plugin[]
      */
     public function getPlugins($withInterface = '')
@@ -63,8 +63,8 @@ class PluginManager
      */
     public function registerDefaultPlugins()
     {
-        $dirPrefix = rtrim(str_replace(DIRECTORY_SEPARATOR, '/', __DIR__), '/'). '/Plugins/';
-        $namespacePrefix = __NAMESPACE__ . '\\Plugins\\';
+        $dirPrefix = rtrim(str_replace(DIRECTORY_SEPARATOR, '/', __DIR__), '/') . '/Plugins/';
+        $namespacePrefix = __NAMESPACE__ . '\Plugins\\';
         foreach ($this->fileService->getDirectoryContents($dirPrefix, [], true) as $item) {
             $item = str_replace(DIRECTORY_SEPARATOR, '/', $item);
             if (stripos($item, $dirPrefix) !== 0 || substr($item, -4) !== '.php') {

@@ -63,14 +63,12 @@ final class XmlParser
         EntityManagerInterface $entityManager,
         Application $valueInspectorProvider,
         Repository $config
-    )
-    {
+    ) {
         $this->entityManager = $entityManager;
         $this->valueInspector = $valueInspectorProvider->make('import/value_inspector');
         $this->config = $config;
     }
 
-    /**
     /**
      * @param \SimpleXMLElement|\DOMDocument|\DOMElement|string $xml
      *
@@ -124,6 +122,7 @@ final class XmlParser
             if (!$simpleXml) {
                 throw new UserMessageException(t('Failed to parse XML'));
             }
+
             return $simpleXml;
         }
 
@@ -164,7 +163,7 @@ final class XmlParser
                 }
             }
         }
-        $value= trim((string) $el);
+        $value = trim((string) $el);
         if ($value !== '') {
             yield $value;
         }
@@ -378,7 +377,7 @@ final class XmlParser
             return;
         }
         $handle = isset($blockElement->container['handle']) ? (string) $blockElement->container['handle'] : '';
-        if ($$handle === '') {
+        if ($handle === '') {
             return;
         }
         if (!isset($result[self::KEY_CONTAINERS])) {

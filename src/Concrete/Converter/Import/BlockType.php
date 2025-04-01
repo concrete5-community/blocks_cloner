@@ -184,14 +184,6 @@ class BlockType implements JsonSerializable
         return $this;
     }
 
-    /*
-    readonly ?: Readonly<Record<string, ReadonlyArray<string>>>;
-    readonly removeRecordFields?: Readonly<Record<string, ReadonlyArray<string>>>;
-    readonly fontAwesome4to5Fields?: Readonly<Record<string, ReadonlyArray<string>>>;
-    readonly renameDataTables?: Readonly<Record<string, string>>;
-    readonly customConversion?: (blockElement: Element) => void;
-    */
-
     /**
      * {@inheritdoc}
      *

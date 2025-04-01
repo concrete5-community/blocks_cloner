@@ -106,6 +106,7 @@ class Area extends Export
                 if ($structure === null) {
                     return null;
                 }
+
                 return [
                     'style' => $xStyle,
                     'blocks' => $structure['block'],
@@ -118,6 +119,7 @@ class Area extends Export
             if (count($structure['style']) > 1) {
                 return null;
             }
+
             return [
                 'style' => $structure['style'] === [] ? null : $structure['style'][0],
                 'blocks' => $structure['block'],
@@ -148,10 +150,10 @@ class Area extends Export
         }
         $xml .= '</area>';
         $sx = simplexml_load_string($xml);
+
         return [
             'xml' => $this->formatXml($sx),
             'references' => $this->serializeReferences($parser->extractReferences($sx)),
         ];
     }
 }
-
