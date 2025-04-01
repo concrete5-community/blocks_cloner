@@ -45,6 +45,17 @@ $token = app(Token::class);
 ob_start();
 ?>
 <div style="display: flex; flex-direction: column" v-bind:style="{'flex-grow': flexGrow ? 1 : 0}">
+    <div v-if="unrecognizedReferenceTypes.length" class="alert alert-danger">
+        <?= t('Unrecognized reference types') ?>
+        <ul>
+            <li v-for="t in unrecognizedReferenceTypes">
+                <code>{{ t }}</code>
+            </li>
+        </ul>
+    </div>
+    <div v-else-if="noReferences" class="alert alert-info">
+        <?= t('No references found') ?>
+    </div>
     <div v-if="references?.blockTypes" v-bind:style="listStyle">
         <table class="table table-striped table-sm table-condensed caption-top">
             <caption>
@@ -239,6 +250,16 @@ ob_end_clean();
 ?>
 <script>$(document).ready(function() {
 
+const RECOGNIZED_REFERENCE_TYPES = [
+    'blockTypes',
+    'files',
+    'pages',
+    'pageTypes',
+    'pageFeeds',
+    'stacks',
+    'containers',
+];
+
 Vue.component('blocks-cloner-references-viewer', {
     template: <?= json_encode($template) ?>,
     props: {
@@ -300,6 +321,15 @@ Vue.component('blocks-cloner-references-viewer', {
                 });
             }
             return result;
+        },
+        unrecognizedReferenceTypes() {
+            if (!this.references) {
+                return [];
+            }
+            return Object.keys(this.references).filter((key) => !RECOGNIZED_REFERENCE_TYPES.includes(key));
+        },
+        noReferences() {
+            return !this.references || Object.keys(this.references).length === 0;
         },
     },
     methods: {
