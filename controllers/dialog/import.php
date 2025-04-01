@@ -19,7 +19,6 @@ use Concrete\Core\Permission\Checker;
 use Concrete\Core\Validation\CSRF\Token;
 use Concrete\Package\BlocksCloner\Controller\AbstractController;
 use Concrete\Package\BlocksCloner\Edit\Context;
-use Concrete\Package\BlocksCloner\ImportChecker;
 use Concrete\Package\BlocksCloner\XmlParser;
 use Exception;
 use SimpleXMLElement;
@@ -64,8 +63,6 @@ class Import extends AbstractController
         if (!$area || $area->isError() || $area->getAreaID() != $aID) {
             throw new UserMessageException(t('Access Denied'));
         }
-        $importChecker = $this->app->make(ImportChecker::class);
-        $importChecker->checkArea($area);
         $this->set('area', $area);
         $this->set('token', $this->app->make(Token::class));
     }
@@ -88,8 +85,6 @@ class Import extends AbstractController
             if (!$area || $area->isError() || $area->getAreaID() != $aID) {
                 throw new UserMessageException(t('Access Denied'));
             }
-            $importChecker = $this->app->make(ImportChecker::class);
-            $importChecker->checkArea($area);
             $xml = $this->request->request->get('xml');
             $sx = $this->loadXml($xml);
             $importType = $this->extractImportType($sx);
