@@ -26,7 +26,7 @@ $view->element('vue/export_viewer', null, 'blocks_cloner');
             v-bind:cid="<?= $cID ?>"
             v-bind:references="selectedVariant.data.references"
             v-bind:xml="selectedVariant.data.xml"
-        ></blocks-cloner-references-viewer>
+        ></blocks-cloner-export-viewer>
 
     </div>
 </div>
