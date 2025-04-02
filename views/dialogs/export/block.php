@@ -16,8 +16,8 @@ $view->element('vue/export_viewer', null, 'blocks_cloner');
 <div id="ccm-blockscloker-export-block" style="display: flex; flex-direction: column; height: 100%;" v-cloak>
     <blocks-cloner-export-viewer
         v-bind:cid="<?= $cID ?>"
-        v-bind:references="<?= h(json_encode($references)) ?>"
-        v-bind:xml="<?= h(json_encode($xml)) ?>"
+        v-bind:references="<?= htmlspecialchars(json_encode($references), ENT_QUOTES, APP_CHARSET, true) ?>"
+        v-bind:xml="<?= htmlspecialchars(json_encode($xml), ENT_QUOTES, APP_CHARSET, true) ?>"
     ></blocks-cloner-references-viewer>
 </div>
 
