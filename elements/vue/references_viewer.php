@@ -101,7 +101,7 @@ ob_start();
                 <strong><?= t('Referenced Files and Images') ?></strong>
                 <span v-if="operation === 'export' && fileIDs.length">
                     -
-                    <a v-bind:href="`${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export/files?cID=${cid}&fIDs=${fileIDs.join(',')}`"><?= t('Download All') ?></a>
+                    <a v-bind:href="`${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export/files?cID=${cid}&fIDs=${fileIDs.join(',')}`"><?= t('Download All') ?></a>
                 </span>
                 <span v-if="operation === 'import' && viewFileManagerUrl">
                     -
@@ -126,7 +126,7 @@ ob_start();
                 <tr v-for="(file, key) in references.files">
                     <td v-if="operation === 'export'" class="text-nowrap">
                         <button v-if="file.error" class="btn btn-sm btn-xs btn-primary" disabled><?= t('Download') ?></button>
-                        <a v-else class="btn btn-sm btn-xs btn-primary" v-bind:href="`${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export/files?cID=${cid}&fIDs=${file.id}`"><?= t('Download') ?></a>
+                        <a v-else class="btn btn-sm btn-xs btn-primary" v-bind:href="`${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export/files?cID=${cid}&fIDs=${file.id}`"><?= t('Download') ?></a>
                     </td>
                     <td class="text-nowrap">
                         <code>{{ key }}</code>
@@ -308,6 +308,7 @@ Vue.component('blocks-cloner-references-viewer', {
                 // CROSS MARK
                 BAD: '\u274c',
             },
+            CCM_DISPATCHER_FILENAME: window.CCM_DISPATCHER_FILENAME,
             viewStackUrl: <?= json_encode($viewStackUrl) ?>,
             viewSitemapUrl: <?= json_encode($viewSitemapUrl) ?>,
             viewFileManagerUrl: <?= json_encode($viewFileManagerUrl) ?>,
@@ -379,7 +380,7 @@ Vue.component('blocks-cloner-references-viewer', {
                     request.body.append('__ccm_consider_request_as_xhr', '1');
                     request.body.append(<?= json_encode($token::DEFAULT_TOKEN_NAME) ?>, <?= json_encode($token->generate('blocks_cloner:import:uploadFile')) ?>);
                     const response = await window.fetch(
-                        `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/upload-file?cID=${this.cid}`,
+                        `${this.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/upload-file?cID=${this.cid}`,
                         request
                     );
                     const responseData = await response.json();
