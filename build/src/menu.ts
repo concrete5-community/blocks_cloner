@@ -89,7 +89,7 @@ function setupBlockMenu(menu: Menu, menuElement: JQuery, block: Block): void {
   );
 }
 
-function injectStackMenuItems(): void {
+function injectStackMenuItems(stackID: number): void {
   let menuElement: HTMLElement | null = null;
   let version: number;
 
@@ -100,22 +100,38 @@ function injectStackMenuItems(): void {
   } else {
     return;
   }
+  if (menuElement.querySelector('li[data-ccm-blocks-cloner]')) {
+    return;
+  }
   const area = getPageStructure()[0];
   if (!area) {
     return;
   }
-  $(menuElement).append(
-    $(`<li${version >= 9 ? ' class="nav-item"' : ''} />`).append(
-      $('<a />')
-        .attr('dialog-title', localize('importFromXml', 'Import from XML'))
-        .attr('class', `dialog-launch${version >= 9 ? ' nav-link' : ''}`)
-        .attr('dialog-width', '90%')
-        .attr('dialog-height', '80%')
-        .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import?cID=${getEditingCollectionID()}&aID=${area.id}&aHandle=${encodeURIComponent(area.handle)}`)
-        .text(localize('importFromXml', 'Import from XML'))
-        .dialog(),
-    ),
-  );
+  $(menuElement)
+    .append(
+      $(`<li${version >= 9 ? ' class="nav-item"' : ''} />`).append(
+        $('<a data-ccm-blocks-cloner />')
+          .attr('dialog-title', localize('importFromXml', 'Import from XML'))
+          .attr('class', `dialog-launch${version >= 9 ? ' nav-link' : ''}`)
+          .attr('dialog-width', '90%')
+          .attr('dialog-height', '80%')
+          .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import?cID=${stackID}&aID=${area.id}&aHandle=${encodeURIComponent(area.handle)}`)
+          .text(localize('importFromXml', 'Import from XML'))
+          .dialog(),
+      ),
+    )
+    .append(
+      $(`<li${version >= 9 ? ' class="nav-item"' : ''} />`).append(
+        $('<a data-ccm-blocks-cloner />')
+          .attr('dialog-title', localize('exportStackAsXml', 'Export Stack as XML'))
+          .attr('class', `dialog-launch${version >= 9 ? ' nav-link' : ''}`)
+          .attr('dialog-width', '90%')
+          .attr('dialog-height', '80%')
+          .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export/area?cID=${stackID}&aID=${area.id}&aHandle=${encodeURIComponent(area.handle)}`)
+          .text(localize('exportStackAsXml', 'Export Stack as XML'))
+          .dialog(),
+      ),
+    );
 }
 
 export function hook(): void {
@@ -127,8 +143,9 @@ export function hook(): void {
         injectMenuItems(menu, menuElement);
       }
     });
-    if (getEditingStackID() !== null) {
-      injectStackMenuItems();
+    const stackID = getEditingStackID();
+    if (stackID !== null) {
+      injectStackMenuItems(stackID);
     }
   });
 }
