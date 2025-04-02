@@ -9,6 +9,7 @@ use Concrete\Core\File\Service\VolatileDirectory;
 use Concrete\Core\Permission\Checker;
 use Concrete\Package\BlocksCloner\Controller\Dialog\Export;
 use Doctrine\ORM\EntityManagerInterface;
+use Illuminate\Filesystem\Filesystem as FS;
 use ZipArchive;
 
 defined('C5_EXECUTE') or die('Access Denied.');
@@ -64,7 +65,8 @@ class Files extends Export
     {
         $volatile = $this->app->make(VolatileDirectory::class);
         $localFile = $volatile->getPath() . '/' . "{$fileVersion->getPrefix()}_{$fileVersion->getFilename()}";
-        if (file_put_contents($localFile, $fileVersion->getFileContents()) === false) {
+        $fs = $this->app->make(FS::class);
+        if ($fs->put($localFile, $fileVersion->getFileContents()) === false) {
             throw new UserMessageException(t('Failed to the contents of the file'));
         }
         $this->app->make('helper/file')->forceDownload($localFile);
