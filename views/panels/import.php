@@ -96,6 +96,7 @@ new Vue({
         };
         items.forEach((item) => walk(item, 0));
         return {
+            CCM_DISPATCHER_FILENAME: window.CCM_DISPATCHER_FILENAME,
             items,
         };
     },
