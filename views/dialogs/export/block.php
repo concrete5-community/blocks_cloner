@@ -18,7 +18,7 @@ $view->element('vue/export_viewer', null, 'blocks_cloner');
         v-bind:cid="<?= $cID ?>"
         v-bind:references="<?= htmlspecialchars(json_encode($references), ENT_QUOTES, APP_CHARSET, true) ?>"
         v-bind:xml="<?= htmlspecialchars(json_encode($xml), ENT_QUOTES, APP_CHARSET, true) ?>"
-    ></blocks-cloner-references-viewer>
+    ></blocks-cloner-export-viewer>
 </div>
 
 <script>$(document).ready(function() {
