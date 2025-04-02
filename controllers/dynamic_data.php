@@ -65,6 +65,7 @@ EOT
                 'exportAreaNameAsXmlName' => t('Export %s area as XML'),
                 'exportBlockAsXml' => t('Export Block as XML'),
                 'exportBlockTypeNameAsXml' => t('Export %s block as XML'),
+                'exportStackAsXml' => t('Export Stack as XML'),
                 'importFromXml' => t('Import from XML'),
                 'importFromXmlIntoAreaName' => t('Import from XML into %s'),
             ],
