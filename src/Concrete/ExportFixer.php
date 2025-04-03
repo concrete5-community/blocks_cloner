@@ -155,7 +155,7 @@ class ExportFixer
                 if (!$fileSet) {
                     continue;
                 }
-                if (FileSet::TYPE_PUBLIC !== (int) $fileSet->getFileSetType()) {
+                if ((int) $fileSet->getFileSetType() !== FileSet::TYPE_PUBLIC) {
                     continue;
                 }
                 $newTextContent = $fileSet->getFileSetName();
@@ -174,7 +174,7 @@ class ExportFixer
         if ($newValue === '') {
             return;
         }
-        if (strpbrk($newValue, "&<>") !== false) { // '>' is not strictly required, only ']]>' is, but libxml2 escapes even '>' alone
+        if (strpbrk($newValue, '&<>') !== false) { // '>' is not strictly required, only ']]>' is, but libxml2 escapes even '>' alone
             $cdata = $element->ownerDocument->createCDataSection($newValue);
             $element->appendChild($cdata);
         } else {
