@@ -107,6 +107,8 @@ $view->element('vue/references_viewer', null, 'blocks_cloner');
             v-bind:references="references"
             v-bind:flex-grow="true"
             operation="import"
+            v-on:files-upload-started="busy = true"
+            v-on:files-upload-completed="filesUploadCompleted"
             v-on:change="analyzeXml()"
             v-bind:busy="busy"
         ></blocks-cloner-references-viewer>
@@ -182,6 +184,18 @@ new Vue({
     },
     mounted() {
         this.$nextTick(() => this.$refs.inputXml?.focus());
+        const unloadHook = (e) => {
+            if (this.busy) {
+                e.preventDefault();
+            }
+        };
+        window.addEventListener('beforeunload', unloadHook);
+        $('#ccm-blockscloker-import').closest('.ui-dialog-content').dialog('option', 'beforeClose', () => {
+            if (this.busy) {
+                return false;
+            }
+            window.removeEventListener('beforeunload', unloadHook);
+        });
     },
     watch: {
         inputXml() {
@@ -321,6 +335,12 @@ new Vue({
                 this.busy = false;
             }
             this.step = this.STEPS.CHECK;
+        },
+        filesUploadCompleted(withSuccess) {
+            this.busy =  false;
+            if (withSuccess) {
+                this.analyzeXml();
+            }
         },
         async importXml() {
             if (this.busy || !this.canImport) {
