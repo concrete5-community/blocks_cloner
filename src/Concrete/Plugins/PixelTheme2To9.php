@@ -26,6 +26,11 @@ class PixelTheme2To9 implements ConvertExport, ConvertImport
                 Export\BlockType::create()
                     ->addContentField('btWhaleCta', ['paragraph'])
             )
+            ->addBlockType(
+                'whale_gallery',
+                Export\BlockType::create()
+                    ->addFileSetIDField('btWhaleGallery', ['fsID'])
+            )
         ;
 
         return [$converter];
@@ -308,6 +313,7 @@ class PixelTheme2To9 implements ConvertExport, ConvertImport
             )
             ->addBlockType(
                 'whale_gallery',
+                // @todo fsID references to a file set ID: there's no way to export/import file set IDs
                 Import\BlockType::create()
                     ->setNewBlockTypeHandle('pixel_gallery')
                     ->renameDataTable('btWhaleGallery', 'btPixelGallery')
