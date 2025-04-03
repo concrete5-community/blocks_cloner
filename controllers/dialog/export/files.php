@@ -67,7 +67,7 @@ class Files extends Export
         $localFile = $volatile->getPath() . '/' . "{$fileVersion->getPrefix()}_{$fileVersion->getFilename()}";
         $fs = $this->app->make(FS::class);
         if ($fs->put($localFile, $fileVersion->getFileContents()) === false) {
-            throw new UserMessageException(t('Failed to the contents of the file'));
+            throw new UserMessageException(t('Failed to save the contents of the file'));
         }
         $this->app->make('helper/file')->forceDownload($localFile);
     }

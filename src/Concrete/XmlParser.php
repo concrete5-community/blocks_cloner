@@ -114,19 +114,19 @@ final class XmlParser
         if ($xml instanceof DOMElement) {
             $simpleXml = simplexml_import_dom($xml);
             if (!$simpleXml) {
-                throw new UserMessageException(t('Failed to parse XML'));
+                throw new UserMessageException(t('Failed to parse the XML'));
             }
         }
         if (is_string($xml)) {
             $simpleXml = simplexml_load_string($xml);
             if (!$simpleXml) {
-                throw new UserMessageException(t('Failed to parse XML'));
+                throw new UserMessageException(t('Failed to parse the XML'));
             }
 
             return $simpleXml;
         }
 
-        throw new UserMessageException(t('Failed to parse XML'));
+        throw new UserMessageException(t('Failed to parse the XML'));
     }
 
     /**
