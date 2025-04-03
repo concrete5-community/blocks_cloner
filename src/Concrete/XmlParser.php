@@ -358,12 +358,10 @@ final class XmlParser
                     $this->canImportStacksByPath = version_compare($version, '8.9999.9999') >= 0;
                     break;
                 case 9:
-                    // @todo see https://github.com/concretecms/concretecms/pull/12508
-                    $this->canImportStacksByPath = version_compare($version, '9.9999.9999') >= 0;
+                    $this->canImportStacksByPath = version_compare($version, '9.4.0RC2') >= 0;
                     break;
                 default:
-                    // @todo
-                    $this->canImportStacksByPath = $majorVersion > 9999;
+                    $this->canImportStacksByPath = $majorVersion > 9;
                     break;
             }
         }
