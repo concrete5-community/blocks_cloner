@@ -356,7 +356,7 @@ Vue.component('blocks-cloner-references-viewer', {
             this.$refs.filePicker.click();
         },
         async filePickerChanged() {
-            let reanalyze = false;
+            let emitCompleted = null;
             try {
                 if (this.busy || this.uploadingFile) {
                     return;
@@ -365,6 +365,8 @@ Vue.component('blocks-cloner-references-viewer', {
                 if (!file) {
                     return;
                 }
+                emitCompleted = false;
+                this.$emit('files-upload-started');
                 const decompressZip = /\.zip$/i.test(file.name) && window.confirm(<?= json_encode(t('Should the ZIP archive be extracted?')) ?>);
                 this.uploadingFile = true;
                 try {
@@ -387,7 +389,7 @@ Vue.component('blocks-cloner-references-viewer', {
                     if (responseData.error) {
                         throw new Error(responseData.error);
                     }
-                    reanalyze = true;
+                    emitCompleted = true;
                 } finally {
                     this.uploadingFile = false;
                 }
@@ -399,8 +401,8 @@ Vue.component('blocks-cloner-references-viewer', {
             } finally {
                 this.$refs.filePicker.value = '';
             }
-            if (reanalyze) {
-                this.$emit('change');
+            if (emitCompleted !== null) {
+                this.$emit('files-upload-completed', emitCompleted);
             }
         },
     },
