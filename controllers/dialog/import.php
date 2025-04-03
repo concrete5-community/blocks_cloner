@@ -7,6 +7,7 @@ use Concrete\Core\Area\CustomStyle as AreaCustomStyle;
 use Concrete\Core\Block\Block;
 use Concrete\Core\Block\CustomStyle as BlockCustomStyle;
 use Concrete\Core\Database\Connection\Connection;
+use Concrete\Core\Entity\Block\BlockType\BlockType;
 use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\File\Filesystem;
 use Concrete\Core\File\Import\FileImporter;
@@ -16,20 +17,19 @@ use Concrete\Core\File\Service\VolatileDirectory;
 use Concrete\Core\File\Service\Zip;
 use Concrete\Core\Http\ResponseFactoryInterface;
 use Concrete\Core\Permission\Checker;
-use Concrete\Core\Tree\Node\Type\FileFolder;
+use Concrete\Core\StyleCustomizer\Inline\StyleSet;
+use Concrete\Core\User\User;
 use Concrete\Core\Validation\CSRF\Token;
 use Concrete\Package\BlocksCloner\Controller\AbstractController;
 use Concrete\Package\BlocksCloner\Edit\Context;
+use Concrete\Package\BlocksCloner\Import\Enviro;
+use Concrete\Package\BlocksCloner\Import\LoadXmlTrait;
 use Concrete\Package\BlocksCloner\XmlParser;
+use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use SimpleXMLElement;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Throwable;
-use Concrete\Core\Entity\Block\BlockType\BlockType;
-use Doctrine\ORM\EntityManagerInterface;
-use Concrete\Package\BlocksCloner\Import\LoadXmlTrait;
-use Concrete\Package\BlocksCloner\Import\Enviro;
-use Concrete\Core\StyleCustomizer\Inline\StyleSet;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -133,11 +133,11 @@ class Import extends AbstractController
             if (!$token->validate('blocks_cloner:import:uploadFile')) {
                 throw new UserMessageException($token->getErrorMessage());
             }
-            $fileFolder = $this->app->make(Filesystem::class)->getRootFolder() ?: new FileFolder();
-            $checker = new Checker($fileFolder);
-            if (!$checker->canAddFiles()) {
-                throw new UserMessageException(t("You don't have the permission to upload files"));
+            $uploadToFolderID = $this->request->request->getInt('uploadToFolder');
+            if ($uploadToFolderID < 1) {
+                throw new UserMessageException(t('Access Denied'));
             }
+            $fileFolder = $this->resolveUploadFolder($uploadToFolderID, false);
             $file = $this->request->files->get('file');
             if (!$file) {
                 throw new UserMessageException(t('No files uploaded'));
@@ -156,6 +156,7 @@ class Import extends AbstractController
             $importer = $this->app->make(FileImporter::class);
             $importOptions = $this->app->make(ImportOptions::class)
                 ->setCanChangeLocalFile(true)
+                ->setImportToFolder($fileFolder)
             ;
             $matches = null;
             foreach ($fileInfos as $fileInfo) {
@@ -369,6 +370,30 @@ class Import extends AbstractController
     }
 
     /**
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function checkUploadFolder()
+    {
+        try {
+            $requestedFolderID = $this->request->query->getInt('folderID');
+            $fallbackToRoot = $this->request->query->getBoolean('fallbackToRoot');
+            $folder = $this->resolveUploadFolder($requestedFolderID, $fallbackToRoot);
+            $result = [
+                'id' => (int) $folder->getTreeNodeID(),
+                'name' => (string) $folder->getTreeNodeDisplayName('text'),
+                'path' => $folder->getTreeNodeDisplayPath(),
+            ];
+            $response = $this->app->make(ResponseFactoryInterface::class)->json($result);
+        } catch (Exception $x) {
+            return $this->buildErrorResponse($x);
+        } catch (Throwable $x) {
+            return $this->buildErrorResponse($x);
+        }
+
+        return $response;
+    }
+
+    /**
      * @param \Exception|\Throwable $error
      *
      * @return \Symfony\Component\HttpFoundation\JsonResponse
@@ -569,5 +594,58 @@ class Import extends AbstractController
         }
 
         return $newBlock;
+    }
+
+    /**
+     * @param int|null $id
+     * @param bool $fallbackToRoot;
+     *
+     * @throws \Concrete\Core\Error\UserMessageException
+     *
+     * @return \Concrete\Core\Tree\Node\Type\FileFolder
+     */
+    private function resolveUploadFolder($id = null, $fallbackToRoot = false)
+    {
+        $service = $this->app->make(Filesystem::class);
+        $folder = null;
+        $id = empty($id) ? 0 : (int) $id;
+        if ($id < 1) {
+            $fallbackToRoot = true;
+            $user = $this->app->make(User::class);
+            if ($user->isRegistered()) {
+                $userInfo = $user->getUserInfoObject();
+                if ($userInfo && method_exists($userInfo, 'getUserHomeFolderId')) {
+                    $id = (int) $user->getUserInfoObject()->getUserHomeFolderId();
+                }
+            }
+        }
+        if ($id > 0) {
+            $folder = $service->getFolder($id);
+            if (!$folder) {
+                if (!$fallbackToRoot) {
+                    throw new UserMessageException(t('Unable to find the folder specified'));
+                }
+            } else {
+                $checker = new Checker($folder);
+                if (!$checker->canAddFiles()) {
+                    if (!$fallbackToRoot) {
+                        throw new UserMessageException(t("You don't have the permission to upload files to the specified folder"));
+                    }
+                    $folder = null;
+                }
+            }
+        }
+        if (!$folder) {
+            $folder = $service->getRootFolder();
+            if (!$folder) {
+                throw new UserMessageException(t("The root file folder doesn't exist"));
+            }
+            $checker = new Checker($folder);
+            if (!$checker->canAddFiles()) {
+                throw new UserMessageException(t("You don't have the permission to upload files"));
+            }
+        }
+
+        return $folder;
     }
 }
