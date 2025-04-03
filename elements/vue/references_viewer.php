@@ -1,9 +1,7 @@
 <?php
 
-use Concrete\Core\File\Filesystem;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Permission\Checker;
-use Concrete\Core\Tree\Node\Type\FileFolder;
 use Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface;
 use Concrete\Core\Validation\CSRF\Token;
 
@@ -41,10 +39,6 @@ if ($page && !$page->isError()) {
         $viewFileManagerUrl = (string) $resolverManager->resolve([$page]);
     }
 }
-
-$fileFolder = app(Filesystem::class)->getRootFolder() ?: new FileFolder();
-$checker = new Checker($fileFolder);
-$enableUpload = $checker->canAddFiles();
 
 $token = app(Token::class);
 
@@ -105,18 +99,14 @@ ob_start();
                 </span>
                 <span v-if="operation === 'import' && viewFileManagerUrl">
                     -
-                    <a v-bind:href="viewFileManagerUrl" target="_blank"><?= t('File Manager') ?></a>
+                    <a v-bind:href="viewFileManagerUrlWithFolder" target="_blank"><?= t('Open File Manager') ?></a>
                 </span>
-                <?php
-                if ($enableUpload) {
-                    ?>
-                    <span v-if="operation === 'import' && someErrors('files')">
-                        -
-                        <a href="#" v-on:click.prevent="pickFile()"><?= t('Upload File') ?></a>
-                    </span>
-                    <?php
-                }
-                ?>
+                <span v-if="operation === 'import' && someErrors('files') && uploadToFolder?.id">
+                    -
+                    <a href="#" v-on:click.prevent="pickFile()"><?= t('Upload File') ?></a>
+                    to
+                    <a href="#" v-on:click.prevent="pickUploadFolder()" v-bind:title="uploadToFolder.path">{{ uploadToFolder.name }}</a>
+                </span>
             </caption>
             <colgroup>
                 <col v-if="operation === 'export'" width="1" />
@@ -312,6 +302,7 @@ Vue.component('blocks-cloner-references-viewer', {
             viewStackUrl: <?= json_encode($viewStackUrl) ?>,
             viewSitemapUrl: <?= json_encode($viewSitemapUrl) ?>,
             viewFileManagerUrl: <?= json_encode($viewFileManagerUrl) ?>,
+            uploadToFolder: null,
             uploadingFile: false,
         };
     },
@@ -319,6 +310,9 @@ Vue.component('blocks-cloner-references-viewer', {
         this.$refs.filePicker.addEventListener('change', (e) => {
             this.filePickerChanged();
         });
+        if (this.operation === 'import') {
+            this.retrieveInizialUploadFolder();
+        }
     },
     computed: {
         listStyle() {
@@ -344,8 +338,81 @@ Vue.component('blocks-cloner-references-viewer', {
         noReferences() {
             return !this.references || Object.keys(this.references).length === 0;
         },
+        viewFileManagerUrlWithFolder() {
+            if (!this.viewFileManagerUrl) {
+                return '';
+            }
+            <?php
+            if (version_compare(APP_VERSION, '8.9999.9999') <= 0) {
+                ?>
+                return this.viewFileManagerUrl;
+                <?php
+            } else {
+                ?>
+                if (!this.uploadToFolder?.path || this.uploadToFolder.path === '/') {
+                    return this.viewFileManagerUrl;
+                }
+                return `${this.viewFileManagerUrl}/folder/${this.uploadToFolder.id}`;
+                <?php
+            }
+            ?>
+        },
     },
     methods: {
+        async setUploadFolder(id, fallbackToRoot) {
+            id = Number(id) || 0
+            const response = await window.fetch(
+                `${this.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/check-upload-folder?cID=${this.cid}&folderID=${id}&fallbackToRoot=${fallbackToRoot ? 1 : 0}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                }
+            );
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+            const responseData = await response.json();
+            if (responseData.error) {
+                throw new Error(responseData.error);
+            }
+            this.uploadToFolder = responseData;
+        },
+        async retrieveInizialUploadFolder() {
+            try {
+                await this.setUploadFolder(window.localStorage.getItem('ccmBlocksCloner-uploadToFolderID'), true);
+            } catch (e) {
+                console.error('Failed to load the initial upload folder', e);
+            }
+        },
+        pickUploadFolder() {
+            ConcreteEvent.unsubscribe('FileManagerJumpToFolder.ccmBlocksCloner');
+            ConcreteEvent.subscribe('FileManagerJumpToFolder.ccmBlocksCloner', async (e, r) => {
+                ConcreteEvent.unsubscribe('FileManagerJumpToFolder.ccmBlocksCloner');
+                const folderID = Number(r?.folderID) || 0;
+                if (folderID < 1) {
+                    return;
+                }
+                try {
+                    await this.setUploadFolder(folderID, false);
+                } catch(e) {
+                    window.ConcreteAlert.error({
+                        message: e?.message || e?.toString() || <?= json_encode(t('Unknown error')) ?>,
+                        delay: 2000,
+                    });
+                    return;
+                }
+                window.localStorage.setItem('ccmBlocksCloner-uploadToFolderID', folderID.toString());
+            });
+            $.fn.dialog.open({
+                width: 560,
+                height: 500,
+                modal: true,
+                title: <?= json_encode(t('Select the upload folder')) ?>,
+                href: CCM_DISPATCHER_FILENAME + '/ccm/system/dialogs/file/jump_to_folder',
+            });
+        },
         someErrors(referenceKey) {
             if (!this.references || !this.references.hasOwnProperty(referenceKey)) {
                 return false;
@@ -379,12 +446,16 @@ Vue.component('blocks-cloner-references-viewer', {
                     };
                     request.body.append('file', file);
                     request.body.append('decompressZip', decompressZip ? 'true' : 'false');
+                    request.body.append('uploadToFolder', this.uploadToFolder.id);
                     request.body.append('__ccm_consider_request_as_xhr', '1');
                     request.body.append(<?= json_encode($token::DEFAULT_TOKEN_NAME) ?>, <?= json_encode($token->generate('blocks_cloner:import:uploadFile')) ?>);
                     const response = await window.fetch(
                         `${this.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/upload-file?cID=${this.cid}`,
                         request
                     );
+                    if (!response.ok) {
+                        throw new Error(await response.text());
+                    }
                     const responseData = await response.json();
                     if (responseData.error) {
                         throw new Error(responseData.error);

@@ -18,3 +18,4 @@ $router->post('dialogs/import/upload-file', 'Dialog\Import::uploadFile');
 $router->post('dialogs/import/block', 'Dialog\Import::importBlock');
 $router->post('dialogs/import/area', 'Dialog\Import::importArea');
 $router->post('dialogs/import/get-designs', 'Dialog\Import::getDesigns');
+$router->get('dialogs/import/check-upload-folder', 'Dialog\Import::checkUploadFolder');
