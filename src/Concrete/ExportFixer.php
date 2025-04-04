@@ -3,6 +3,7 @@
 namespace Concrete\Package\BlocksCloner;
 
 use Concrete\Core\Editor\LinkAbstractor;
+use Concrete\Core\File\File;
 use Concrete\Core\File\Set\Set as FileSet;
 use DOMElement;
 use DOMXPath;
@@ -81,6 +82,7 @@ class ExportFixer
         }
         $this->fixExportedBlockContent($blockElement, $blockTypeConverters);
         $this->fixExportedBlockFileSetID($blockElement, $blockTypeConverters);
+        $this->fixExportedBlockFileID($blockElement, $blockTypeConverters);
     }
 
     /**
@@ -159,6 +161,50 @@ class ExportFixer
                     continue;
                 }
                 $newTextContent = $fileSet->getFileSetName();
+                $this->replaceElementValue($fieldElement, $newTextContent);
+            }
+        }
+    }
+
+    /**
+     * @param \Concrete\Package\BlocksCloner\Converter\Export\BlockType[] $converters
+     */
+    private function fixExportedBlockFileID(SimpleXMLElement $blockElement, array $converters)
+    {
+        $domElement = dom_import_simplexml($blockElement);
+        if (!$domElement instanceof DOMElement) {
+            return;
+        }
+        $xpath = new DOMXPath($domElement->ownerDocument);
+        foreach ($xpath->query('./data', $domElement) as $dataElement) {
+            /** @var \DOMElement $dataElement */
+            $tableName = (string) $dataElement->getAttribute('table');
+            $fieldNames = [];
+            foreach ($converters as $converter) {
+                $fieldNames = array_merge($fieldNames, $converter->getFileIDFieldsForTable($tableName));
+            }
+            if ($fieldNames === []) {
+                continue;
+            }
+            foreach ($xpath->query('./record/*', $dataElement) as $fieldElement) {
+                /** @var \DOMElement $fieldElement */
+                if (!in_array($fieldElement->nodeName, $fieldNames, true)) {
+                    continue;
+                }
+                $originalTextContent = trim((string) $fieldElement->textContent);
+                if (!preg_match('/^[1-9]\d{0,18}$/', $originalTextContent)) {
+                    continue;
+                }
+                $fileID = (int) $originalTextContent;
+                $file = File::getByID($fileID);
+                if (!$file) {
+                    continue;
+                }
+                $fileVersion = $file->getApprovedVersion();
+                if (!$fileVersion) {
+                    continue;
+                }
+                $newTextContent = '{ccm:export:file:' . $fileVersion->getPrefix() . ':' . $fileVersion->getFileName() . '}';
                 $this->replaceElementValue($fieldElement, $newTextContent);
             }
         }
