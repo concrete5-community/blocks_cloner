@@ -10,6 +10,8 @@ class BlockType
 
     private $fileSetIDFields = [];
 
+    private $fileIDFields = [];
+
     /**
      * @return static
      */
@@ -70,6 +72,31 @@ class BlockType
 
     /**
      * @param string $tableName
+     * @param string[] $fieldNames
+     *
+     * @return $this
+     */
+    public function addFileIDField($tableName, array $fieldNames)
+    {
+        $tableName = (string) $tableName;
+        $fieldNames = array_values(array_map('strval', $fieldNames));
+        if (!isset($this->fileIDFields[$tableName])) {
+            $this->fileIDFields[$tableName] = [];
+        }
+        $this->fileIDFields[$tableName] = array_values(
+            array_unique(
+                array_merge(
+                    $this->fileIDFields[$tableName],
+                    array_values(array_map('strval', $fieldNames))
+                )
+            )
+        );
+
+        return $this;
+    }
+
+    /**
+     * @param string $tableName
      *
      * @return string[]
      */
@@ -90,5 +117,17 @@ class BlockType
         $tableName = (string) $tableName;
 
         return isset($this->fileSetIDFields[$tableName]) ? $this->fileSetIDFields[$tableName] : [];
+    }
+
+    /**
+     * @param string $tableName
+     *
+     * @return string[]
+     */
+    public function getFileIDFieldsForTable($tableName)
+    {
+        $tableName = (string) $tableName;
+
+        return isset($this->fileIDFields[$tableName]) ? $this->fileIDFields[$tableName] : [];
     }
 }
