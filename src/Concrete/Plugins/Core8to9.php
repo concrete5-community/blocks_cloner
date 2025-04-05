@@ -2,8 +2,8 @@
 
 namespace Concrete\Package\BlocksCloner\Plugins;
 
-use Concrete\Package\BlocksCloner\Converter\Import;
 use Concrete\Package\BlocksCloner\Converter\ApplicableTo;
+use Concrete\Package\BlocksCloner\Converter\Import;
 use Concrete\Package\BlocksCloner\Converter\Import\BlockType;
 use Concrete\Package\BlocksCloner\Plugin\ConvertImport;
 

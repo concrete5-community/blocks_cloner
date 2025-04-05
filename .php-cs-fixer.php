@@ -229,7 +229,7 @@ return $config
         // Orders the elements of classes/interfaces/traits/enums.
         'ordered_class_elements' => ['order' => ['use_trait']],
         // Ordering `use` statements.
-        'ordered_imports' => ['imports_order' => ['class', 'function', 'const'], 'sort_algorithm' => 'none'],
+        'ordered_imports' => ['imports_order' => ['class', 'function', 'const']],
         // Sort union types and intersection types using configured order.
         'ordered_types' => ['null_adjustment' => 'always_last', 'sort_algorithm' => 'none'],
         // PHPDoc should contain `@param` for all params.

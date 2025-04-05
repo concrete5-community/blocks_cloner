@@ -3,19 +3,19 @@
 namespace Concrete\Package\BlocksCloner\Controller;
 
 use Concrete\Core\Controller\Controller as CoreController;
-use Concrete\Core\Entity\Package;
-use Concrete\Core\Page\Page;
-use Doctrine\ORM\EntityManagerInterface;
-use SimpleXMLElement;
 use Concrete\Core\Entity\Block\BlockType\BlockType;
 use Concrete\Core\Entity\File\Version as FileVersion;
+use Concrete\Core\Entity\Package;
 use Concrete\Core\Entity\Page\Container;
 use Concrete\Core\Entity\Page\Feed as PageFeed;
 use Concrete\Core\Error\UserMessageException;
+use Concrete\Core\Page\Page;
 use Concrete\Core\Page\Stack\Stack;
 use Concrete\Core\Page\Type\Type as PageType;
-use Concrete\Package\BlocksCloner\XmlParser;
 use Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface;
+use Concrete\Package\BlocksCloner\XmlParser;
+use Doctrine\ORM\EntityManagerInterface;
+use SimpleXMLElement;
 use stdClass;
 
 defined('C5_EXECUTE') or die('Access Denied.');
