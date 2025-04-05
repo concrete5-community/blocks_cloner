@@ -215,7 +215,7 @@ final class XmlParser
             $encodeFlags = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | (defined('JSON_UNESCAPED_LINE_TERMINATORS') ? JSON_UNESCAPED_LINE_TERMINATORS : 0);
         }
 
-        return json_encode($decoded);
+        return json_encode($decoded, $encodeFlags);
     }
 
     private function parseFoundItem(Item\ItemInterface $item, array &$result)
