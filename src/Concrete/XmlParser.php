@@ -153,7 +153,20 @@ final class XmlParser
         }
     }
 
+    /**
+     * @return string[]|\Generator
+     */
     private function extractStrings(SimpleXMLElement $el)
+    {
+        foreach ($this->extractRawStrings($el) as $str) {
+            yield $this->removeJsonEscaping($str);
+        }
+    }
+
+    /**
+     * @return string[]|\Generator
+     */
+    private function extractRawStrings(SimpleXMLElement $el)
     {
         foreach ($el->attributes() as $value) {
             if (is_string($value)) {
@@ -168,10 +181,41 @@ final class XmlParser
             yield $value;
         }
         foreach ($el->children() as $child) {
-            foreach ($this->extractStrings($child) as $value) {
+            foreach ($this->extractRawStrings($child) as $value) {
                 yield $value;
             }
         }
+    }
+
+    /**
+     * @param string $str
+     *
+     * @return string
+     */
+    private function removeJsonEscaping($str)
+    {
+        static $encodeFlags;
+        $lastIndex = strlen($str) - 1;
+        if ($lastIndex < 1) {
+            return $str;
+        }
+        if (($str[0] !== '"' || $str[$lastIndex] !== '"')
+            && ($str[0] !== '[' || $str[$lastIndex] !== ']')
+            && ($str[0] !== '{' || $str[$lastIndex] !== '}')
+        ) {
+            return $str;
+        }
+        set_error_handler(static function () {}, -1);
+        $decoded = json_decode($str);
+        restore_error_handler();
+        if ($decoded === null) {
+            return $str;
+        }
+        if ($encodeFlags === null) {
+            $encodeFlags = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | (defined('JSON_UNESCAPED_LINE_TERMINATORS') ? JSON_UNESCAPED_LINE_TERMINATORS : 0);
+        }
+
+        return json_encode($decoded);
     }
 
     private function parseFoundItem(Item\ItemInterface $item, array &$result)
