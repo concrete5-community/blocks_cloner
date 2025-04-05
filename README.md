@@ -8,17 +8,16 @@ This works by copying and pasting XML text in the so-called [CIF format](https:/
 
 This is also useful for package developers: they can test if new blocks correctly support exporting and importing their data.
 
-## Installation
+## Installation Methods
 
-For composer-based Concrete instances, simply run
-
-```sh
-composer require concrete5-community/blocks_cloner
-```
-
-Otherwise, you can:
-1. download a `blocks_cloner-v….zip` file from the [releases page](https://github.com/concrete5-community/blocks_cloner/releases/latest)
-2. extract the zip file in your `packages` directory
+* To support the author, you can install Blocks Cloner on recent versions of ConcreteCMS through the ConcreteCMS Marketplace - see https://market.concretecms.com/products/blocks-cloner/894b8f94-0f0b-11f0-abb4-0e1cf28cdc53
+* For composer-based Concrete instances, simply run
+   ```sh
+   composer require concrete5-community/blocks_cloner
+   ```
+* Manual installation:
+  1. download a `blocks_cloner-v….zip` file from the [releases page](https://github.com/concrete5-community/blocks_cloner/releases/latest)
+  2. extract the zip file in your `packages` directory
 
 Then, you have to login in your Concrete website, go to the Dashboard > Extend Concrete > Add Functionality, and install the package.
 
