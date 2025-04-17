@@ -37,7 +37,6 @@ class Controller extends Package implements ProviderAggregateInterface
      */
     public function getPackageName()
     {
-        xdebug_break();
         return t('Blocks Cloner');
     }
 

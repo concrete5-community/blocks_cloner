@@ -107,7 +107,7 @@ function convertXml(xml: string, converters: Converter[]): string | null {
   const initialXml = Xml.normalizeDoc(doc, true);
   convertDoc(doc, converters);
   const finalXml = Xml.normalizeDoc(doc, true);
-  debugger
+
   return initialXml === finalXml ? null : finalXml;
 }
 
