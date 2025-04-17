@@ -336,7 +336,7 @@ new Vue({
             this.step = this.STEPS.CHECK;
         },
         filesUploadCompleted(withSuccess) {
-            this.busy =  false;
+            this.busy = false;
             if (withSuccess) {
                 this.analyzeXml();
             }

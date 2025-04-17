@@ -34,7 +34,7 @@ When clicking on a block, the context menu will contain a new "Export Block as X
 You can also export custom area styles, as well as all the blocks in an area.
 To do so, simply click on the area handle: you'll see a new "Export Area as XML" menu item: click on it to export the custom area style and/or the blocks it contains.
 
-### Exporting Blocks and Areas 
+### Exporting Blocks and Areas
 
 You can choose an area or block to export by selecting it from the page structure.
 Do to so, simply click the "Export as XML" icon you see in the toolbar.
