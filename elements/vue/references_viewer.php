@@ -44,7 +44,7 @@ $token = app(Token::class);
 
 ob_start();
 ?>
-<div style="display: flex; flex-direction: column" v-bind:style="{'flex-grow': flexGrow ? 1 : 0}">
+<div style="display: flex; flex-direction: column; overflow-y: auto" v-bind:style="{'flex-grow': maxHeight ? 0 : 1, 'max-height': maxHeight || 'none'}">
     <div v-if="unrecognizedReferenceTypes.length" class="alert alert-danger">
         <?= t('Unrecognized reference types') ?>
         <ul>
@@ -56,7 +56,7 @@ ob_start();
     <div v-else-if="noReferences" class="alert alert-info">
         <?= t('No references found') ?>
     </div>
-    <div v-if="references?.blockTypes" v-bind:style="listStyle">
+    <div v-if="references?.blockTypes">
         <table class="table table-striped table-sm table-condensed caption-top">
             <caption>
                 <span v-if="operation === 'import'">{{ someErrors('blockTypes') ? ICON.BAD : ICON.GOOD }}</span>
@@ -88,7 +88,7 @@ ob_start();
             </tbody>
         </table>
     </div>
-    <div v-if="references?.files" v-bind:style="listStyle">
+    <div v-if="references?.files">
         <table class="table table-striped table-sm table-condensed caption-top">
             <caption>
                 <span v-if="operation === 'import'">{{ someErrors('files') ? ICON.BAD : ICON.GOOD }}</span>
@@ -129,7 +129,7 @@ ob_start();
             </tbody>
         </table>
     </div>
-    <div v-if="references?.pages" v-bind:style="listStyle">
+    <div v-if="references?.pages">
         <table class="table table-striped table-sm table-condensed caption-top">
             <caption>
                 <span v-if="operation === 'import'">{{ someErrors('pages') ? ICON.BAD : ICON.GOOD }}</span>
@@ -154,7 +154,7 @@ ob_start();
             </tbody>
         </table>
     </div>
-    <div v-if="references?.pageTypes" v-bind:style="listStyle">
+    <div v-if="references?.pageTypes">
         <table class="table table-striped table-sm table-condensed caption-top">
             <caption>
                 <span v-if="operation === 'import'">{{ someErrors('pageTypes') ? ICON.BAD : ICON.GOOD }}</span>
@@ -176,7 +176,7 @@ ob_start();
             </tbody>
         </table>
     </div>
-    <div v-if="references?.pageFeeds" v-bind:style="listStyle">
+    <div v-if="references?.pageFeeds">
         <table class="table table-striped table-sm table-condensed caption-top">
             <caption>
                 <span v-if="operation === 'import'">{{ someErrors('pageFeeds') ? ICON.BAD : ICON.GOOD }}</span>
@@ -198,7 +198,7 @@ ob_start();
             </tbody>
         </table>
     </div>
-    <div v-if="references?.stacks" v-bind:style="listStyle">
+    <div v-if="references?.stacks">
         <table class="table table-striped table-sm table-condensed caption-top">
             <caption>
                 <span v-if="operation === 'import'">{{ someErrors('stacks') ? ICON.BAD : ICON.GOOD }}</span>
@@ -221,7 +221,7 @@ ob_start();
             </tbody>
         </table>
     </div>
-    <div v-if="references?.containers" v-bind:style="listStyle">
+    <div v-if="references?.containers">
         <table class="table table-striped table-sm table-condensed caption-top">
             <caption>
                 <span v-if="operation === 'import'">{{ someErrors('containers') ? ICON.BAD : ICON.GOOD }}</span>
@@ -281,13 +281,9 @@ Vue.component('blocks-cloner-references-viewer', {
             type: Boolean,
             default: false,
         },
-        flexGrow: {
-            type: Boolean,
-            default: false,
-        },
-        maxListsHeight: {
-            type: Number,
-            default: 200,
+        maxHeight: {
+            type: String,
+            default: '',
         },
     },
     data() {
@@ -315,9 +311,6 @@ Vue.component('blocks-cloner-references-viewer', {
         }
     },
     computed: {
-        listStyle() {
-            return this.maxListsHeight ? {'max-height' : `${this.maxListsHeight}px`, 'overflow-y': 'auto'} : {};
-        },
         fileIDs() {
             const result = [];
             if (this.references?.files) {

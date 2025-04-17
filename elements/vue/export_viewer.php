@@ -15,7 +15,7 @@ ob_start();
         v-bind:cid="cid"
         v-bind:references="references"
         operation="export"
-        v-bind:max-lists-height="maxListsHeight"
+        max-height="50%"
     ></blocks-cloner-references-viewer>
     <div style="flex-grow: 2">
         <div style="display: flex; flex-direction: column; height: 100%;">
@@ -72,10 +72,6 @@ Vue.component('blocks-cloner-export-viewer', {
             type: String,
             required: true,
         },
-        maxListsHeight: {
-            type: Number,
-            default: 200,
-        },
     },
     data() {
         return {
@@ -86,9 +82,6 @@ Vue.component('blocks-cloner-export-viewer', {
         setTimeout(() => this.$refs.textarea?.focus(), 50);
     },
     computed: {
-        listStyle() {
-            return this.maxListsHeight ? {'max-height' : `${this.maxListsHeight}px`, 'overflow-y': 'auto'} : {};
-        },
         fileIDs() {
             const result = [];
             if (this.references?.files) {

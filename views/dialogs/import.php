@@ -105,7 +105,6 @@ $view->element('vue/references_viewer', null, 'blocks_cloner');
         <blocks-cloner-references-viewer
             v-bind:cid="<?= $cID ?>"
             v-bind:references="references"
-            v-bind:flex-grow="true"
             operation="import"
             v-on:files-upload-started="busy = true"
             v-on:files-upload-completed="filesUploadCompleted"
