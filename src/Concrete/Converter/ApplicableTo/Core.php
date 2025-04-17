@@ -6,4 +6,6 @@ use Concrete\Package\BlocksCloner\Converter\ApplicableTo;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
-class Core extends ApplicableTo {}
+class Core extends ApplicableTo
+{
+}
