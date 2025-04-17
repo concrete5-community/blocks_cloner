@@ -1,6 +1,6 @@
 <?php
 
-namespace Concrete\Package\BlocksCloner\Controller;
+namespace Concrete\Package\BlocksCloner\UI;
 
 use Concrete\Core\Controller\Controller as CoreController;
 use Concrete\Core\Entity\Block\BlockType\BlockType;
@@ -20,7 +20,7 @@ use stdClass;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
-abstract class AbstractController extends CoreController
+abstract class Controller extends CoreController
 {
     /**
      * @var int

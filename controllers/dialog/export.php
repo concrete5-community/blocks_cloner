@@ -2,13 +2,13 @@
 
 namespace Concrete\Package\BlocksCloner\Controller\Dialog;
 
-use Concrete\Package\BlocksCloner\Controller\AbstractController;
+use Concrete\Package\BlocksCloner\UI\Controller;
 use DOMDocument;
 use SimpleXMLElement;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
-abstract class Export extends AbstractController
+abstract class Export extends Controller
 {
     /**
      * @return string

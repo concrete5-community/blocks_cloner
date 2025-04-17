@@ -25,7 +25,7 @@ class Block extends Export
     /**
      * {@inheritdoc}
      *
-     * @see \Concrete\Package\BlocksCloner\Controller\AbstractController::view()
+     * @see \Concrete\Package\BlocksCloner\UI\Controller::view()
      */
     public function view()
     {
