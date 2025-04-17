@@ -1,0 +1,3 @@
+ div.ccm-blockscloker-dialog-content a:link:not(.btn), div.ccm-blockscloker-dialog-content a:visited:not(.btn) {
+    color: rgba(var(--bs-link-color-rgb), var(--bs-link-opacity, 1));
+}

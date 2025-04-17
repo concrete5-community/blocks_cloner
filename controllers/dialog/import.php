@@ -20,10 +20,10 @@ use Concrete\Core\Permission\Checker;
 use Concrete\Core\StyleCustomizer\Inline\StyleSet;
 use Concrete\Core\User\User;
 use Concrete\Core\Validation\CSRF\Token;
-use Concrete\Package\BlocksCloner\Controller\AbstractController;
 use Concrete\Package\BlocksCloner\Edit\Context;
 use Concrete\Package\BlocksCloner\Import\Enviro;
 use Concrete\Package\BlocksCloner\Import\LoadXmlTrait;
+use Concrete\Package\BlocksCloner\UI\Controller\Dialog;
 use Concrete\Package\BlocksCloner\XmlParser;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
@@ -33,7 +33,7 @@ use Throwable;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
-class Import extends AbstractController
+class Import extends Dialog
 {
     use LoadXmlTrait;
 
@@ -47,7 +47,7 @@ class Import extends AbstractController
     /**
      * {@inheritdoc}
      *
-     * @see \Concrete\Package\BlocksCloner\Controller\AbstractController::view()
+     * @see \Concrete\Package\BlocksCloner\UI\Controller::view()
      */
     public function view()
     {

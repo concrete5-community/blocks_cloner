@@ -11,7 +11,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
 
 $view->element('vue/export_viewer', null, 'blocks_cloner');
 ?>
-<div id="ccm-blockscloker-export-area" style="display: flex; flex-direction: column; height: 100%;" v-cloak>
+<div class="ccm-blockscloker-dialog-content" id="ccm-blockscloker-export-area" style="display: flex; flex-direction: column; height: 100%;" v-cloak>
     <div v-if="variants.length === 0" class="alert alert-info">
         <?= t('The area is empty') ?>
     </div>

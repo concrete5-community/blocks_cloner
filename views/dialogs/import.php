@@ -14,7 +14,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
 $view->element('vue/references_viewer', null, 'blocks_cloner');
 
 ?>
-<div id="ccm-blockscloker-import" style="display: flex; height: 100%; width: 100%" v-cloak>
+<div class="ccm-blockscloker-dialog-content" id="ccm-blockscloker-import" style="display: flex; height: 100%; width: 100%" v-cloak>
     <div v-if="step === STEPS.INPUT" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
         <div style="flex-grow: 1; display: flex; flex-direction: row">
             <div style="display: flex; flex-direction: column; height: 100%; flex: 1; padding-right: 10px;">
@@ -105,7 +105,6 @@ $view->element('vue/references_viewer', null, 'blocks_cloner');
         <blocks-cloner-references-viewer
             v-bind:cid="<?= $cID ?>"
             v-bind:references="references"
-            v-bind:flex-grow="true"
             operation="import"
             v-on:files-upload-started="busy = true"
             v-on:files-upload-completed="filesUploadCompleted"
@@ -337,7 +336,7 @@ new Vue({
             this.step = this.STEPS.CHECK;
         },
         filesUploadCompleted(withSuccess) {
-            this.busy =  false;
+            this.busy = false;
             if (withSuccess) {
                 this.analyzeXml();
             }

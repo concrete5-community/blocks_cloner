@@ -42,8 +42,8 @@ jobs:
         name: Check changes
         id: check-changes
         run: |
-          git add --all js
-          if git diff-index --name-status --exit-code HEAD js; then
+          git add --all assets
+          if git diff-index --name-status --exit-code HEAD assets; then
             echo 'No changes detected.'
           else
             echo 'Changes detected.'
@@ -55,7 +55,7 @@ jobs:
         run: |
           git config --local user.name 'GitHub Actions'
           git config --local user.email noreply@github.com
-          git commit -m 'Update js/view.js'
+          git commit -m 'Update assets/view.js'
           git push
 
   check-php-syntax:

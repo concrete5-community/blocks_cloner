@@ -7,7 +7,7 @@ const config = {
     main: './src/index.ts',
   },
   output: {
-    path: path.resolve(__dirname, '../js'),
+    path: path.resolve(__dirname, '../assets'),
     filename: 'view.js',
   },
   resolve: {

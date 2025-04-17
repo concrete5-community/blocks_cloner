@@ -87,6 +87,7 @@ class Controller extends Package implements ProviderAggregateInterface
         $request = $this->app->make(Request::class);
         if (strpos($request->getPath(), '/ccm/blocks_cloner/') === 0) {
             $this->registerRoutes($request->query->getInt('cID'));
+            $this->registerRoutesAssets();
         }
     }
 
@@ -142,7 +143,7 @@ class Controller extends Package implements ProviderAggregateInterface
         }
         $assetList = AssetList::getInstance();
         $assetList->register('javascript-localized', 'blocks_cloner-view', '/ccm/blocks-cloner/dynamic-data', ['minify' => false, 'combine' => false, 'version' => $this->pkgVersion], 'blocks_cloner');
-        $assetList->register('javascript', 'blocks_cloner-view', 'js/view.js', ['minify' => false, 'combine' => false, 'version' => $this->pkgVersion], 'blocks_cloner');
+        $assetList->register('javascript', 'blocks_cloner-view', 'assets/view.js', ['minify' => false, 'combine' => false, 'version' => $this->pkgVersion], 'blocks_cloner');
         $assetList->registerGroup('blocks_cloner-view', [
             ['javascript-localized', 'blocks_cloner-view'],
             ['javascript', 'blocks_cloner-view'],
@@ -181,5 +182,11 @@ class Controller extends Package implements ProviderAggregateInterface
             ->routes('export.php', $this->pkgHandle)
             ->routes('import.php', $this->pkgHandle)
         ;
+    }
+
+    private function registerRoutesAssets()
+    {
+        $assetList = AssetList::getInstance();
+        $assetList->register('css', 'blocks_cloner-dialog-v9', 'assets/dialog-v9.css', ['minify' => false, 'combine' => false, 'version' => $this->pkgVersion], 'blocks_cloner');
     }
 }
