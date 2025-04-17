@@ -77,7 +77,7 @@ ob_start();
                     </td>
                     <td>
                         <span v-if="!blockType.error">
-                            <a v-if="!blockType.package"><?= t('Provided by %s', 'Concrete') ?></a>
+                            <i v-if="!blockType.package"><?= t('Provided by %s', 'Concrete') ?></i>
                             <span v-else>
                                 <?= t('Provided by %s', '{{ blockType.package.name }}') ?><br />
                                 <span class="small text-muted"><?= t('Handle: %s', '<code>{{ blockType.package.handle }}</code>') ?></span>
