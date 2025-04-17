@@ -87,6 +87,7 @@ class Controller extends Package implements ProviderAggregateInterface
         $request = $this->app->make(Request::class);
         if (strpos($request->getPath(), '/ccm/blocks_cloner/') === 0) {
             $this->registerRoutes($request->query->getInt('cID'));
+            $this->registerRoutesAssets();
         }
     }
 
@@ -181,5 +182,11 @@ class Controller extends Package implements ProviderAggregateInterface
             ->routes('export.php', $this->pkgHandle)
             ->routes('import.php', $this->pkgHandle)
         ;
+    }
+
+    private function registerRoutesAssets()
+    {
+        $assetList = AssetList::getInstance();
+        $assetList->register('css', 'blocks_cloner-dialog-v9', 'assets/dialog-v9.css', ['minify' => false, 'combine' => false, 'version' => $this->pkgVersion], 'blocks_cloner');
     }
 }

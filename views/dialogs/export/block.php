@@ -13,7 +13,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
 
 $view->element('vue/export_viewer', null, 'blocks_cloner');
 ?>
-<div id="ccm-blockscloker-export-block" style="display: flex; flex-direction: column; height: 100%;" v-cloak>
+<div class="ccm-blockscloker-dialog-content" id="ccm-blockscloker-export-block" style="display: flex; flex-direction: column; height: 100%;" v-cloak>
     <blocks-cloner-export-viewer
         v-bind:cid="<?= $cID ?>"
         v-bind:references="<?= htmlspecialchars(json_encode($references), ENT_QUOTES, APP_CHARSET, true) ?>"

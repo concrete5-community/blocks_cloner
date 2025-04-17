@@ -14,7 +14,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
 $view->element('vue/references_viewer', null, 'blocks_cloner');
 
 ?>
-<div id="ccm-blockscloker-import" style="display: flex; height: 100%; width: 100%" v-cloak>
+<div class="ccm-blockscloker-dialog-content" id="ccm-blockscloker-import" style="display: flex; height: 100%; width: 100%" v-cloak>
     <div v-if="step === STEPS.INPUT" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
         <div style="flex-grow: 1; display: flex; flex-direction: row">
             <div style="display: flex; flex-direction: column; height: 100%; flex: 1; padding-right: 10px;">

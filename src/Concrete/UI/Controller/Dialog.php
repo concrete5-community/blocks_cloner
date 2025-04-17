@@ -21,5 +21,8 @@ abstract class Dialog extends Controller
         $view->setPackageHandle('blocks_cloner');
         $view->setController($this);
         $this->setViewObject($view);
+        if (version_compare(APP_VERSION, '9') >= 0) {
+            $this->requireAsset('css', 'blocks_cloner-dialog-v9');
+        }
     }
 }
