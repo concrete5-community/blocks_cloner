@@ -2,11 +2,11 @@
 
 namespace Concrete\Package\BlocksCloner\Controller\Panel;
 
-use Concrete\Package\BlocksCloner\UI\Controller;
+use Concrete\Package\BlocksCloner\UI\Controller\Panel;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
-class Export extends Controller
+class Export extends Panel
 {
     /**
      * {@inheritdoc}
