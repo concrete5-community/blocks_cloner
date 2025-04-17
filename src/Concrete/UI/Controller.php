@@ -42,6 +42,11 @@ abstract class Controller extends CoreController
      */
     private $resolverManager;
 
+    /**
+     * {@inheritdoc}
+     *
+     * @see \Concrete\Core\Controller\Controller::__construct()
+     */
     public function __construct()
     {
         parent::__construct();
