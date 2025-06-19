@@ -3,4 +3,5 @@ build/.vscode
 build/.vscode/*
 !build/.vscode/extensions.json
 !build/.vscode/settings.json
+/languages/
 .php-cs-fixer.cache
