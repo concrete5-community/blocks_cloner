@@ -139,6 +139,8 @@ jobs:
           - "9.0"
           - "9.1"
           - "9.2"
+          - "9.3"
+          - "9.4"
           - latest
     steps:
       -
@@ -148,14 +150,19 @@ jobs:
         name: Check composer.json
         run: sudo -u www-data composer --ansi --no-interaction validate --strict -- "$GITHUB_WORKSPACE/composer.json"
       -
-        name: Prepare package
-        run: ln -s "$GITHUB_WORKSPACE" /app/packages/blocks_cloner
-      -
         name: Start services
         run: ccm-service start db
       -
         name: Core info
         run: sudo -u www-data /app/concrete/bin/concrete5 --ansi --no-interaction c5:info
+      -
+        name: Uninstall bundled package
+        run: |
+          sudo -u www-data /app/concrete/bin/concrete5 --ansi --no-interaction c5:package:uninstall blocks_cloner || true
+          rm -rf /app/packages/blocks_cloner
+      -
+        name: Prepare package
+        run: ln -s "$GITHUB_WORKSPACE" /app/packages/blocks_cloner
       -
         name: Install package
         run: sudo -u www-data /app/concrete/bin/concrete5 --ansi --no-interaction c5:package:install blocks_cloner

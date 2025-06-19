@@ -41,6 +41,7 @@ if ($page && !$page->isError()) {
 }
 
 $token = app(Token::class);
+$canStoreZipFilesInFileManager = in_array('zip', app('helper/concrete/file')->getAllowedFileExtensions(), true);
 
 ob_start();
 ?>
@@ -427,7 +428,13 @@ Vue.component('blocks-cloner-references-viewer', {
                 }
                 emitCompleted = false;
                 this.$emit('files-upload-started');
-                const decompressZip = /\.zip$/i.test(file.name) && window.confirm(<?= json_encode(t('Should the ZIP archive be extracted?')) ?>);
+                <?php
+                if ($canStoreZipFilesInFileManager) {
+                    ?>
+                    const decompressZip = /\.zip$/i.test(file.name) && window.confirm(<?= json_encode(t('Should the ZIP archive be extracted?')) ?>);
+                    <?php
+                }
+                ?>
                 this.uploadingFile = true;
                 try {
                     const request = {
@@ -438,7 +445,13 @@ Vue.component('blocks-cloner-references-viewer', {
                         body: new FormData(),
                     };
                     request.body.append('file', file);
-                    request.body.append('decompressZip', decompressZip ? 'true' : 'false');
+                    <?php
+                    if ($canStoreZipFilesInFileManager) {
+                        ?>
+                        request.body.append('decompressZip', decompressZip ? 'true' : 'false');
+                        <?php
+                    }
+                    ?>
                     request.body.append('uploadToFolder', this.uploadToFolder.id);
                     request.body.append('__ccm_consider_request_as_xhr', '1');
                     request.body.append(<?= json_encode($token::DEFAULT_TOKEN_NAME) ?>, <?= json_encode($token->generate('blocks_cloner:import:uploadFile')) ?>);
