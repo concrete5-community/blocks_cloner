@@ -4,8 +4,7 @@ namespace Concrete\Package\BlocksCloner;
 
 use Concrete\Core\Application\Application;
 use Concrete\Core\Asset\AssetList;
-use Concrete\Core\Database\EntityManager\Provider\ProviderAggregateInterface;
-use Concrete\Core\Database\EntityManager\Provider\StandardPackageProvider;
+use Concrete\Core\Database\EntityManager\Provider\ProviderInterface;
 use Concrete\Core\Http\Request;
 use Concrete\Core\Http\ResponseAssetGroup;
 use Concrete\Core\Package\Package;
@@ -17,7 +16,7 @@ use Concrete\Package\BlocksCloner\Controller\DynamicData;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
-class Controller extends Package implements ProviderAggregateInterface
+class Controller extends Package implements ProviderInterface
 {
     protected $pkgHandle = 'blocks_cloner';
 
@@ -53,11 +52,11 @@ class Controller extends Package implements ProviderAggregateInterface
     /**
      * {@inheritdoc}
      *
-     * @see \Concrete\Core\Database\EntityManager\Provider\ProviderAggregateInterface::getEntityManagerProvider()
+     * @see \Concrete\Core\Database\EntityManager\Provider\ProviderInterface::getDrivers()
      */
-    public function getEntityManagerProvider()
+    public function getDrivers()
     {
-        return new StandardPackageProvider($this->app, $this, []);
+        return [];
     }
 
     public function on_start()
