@@ -8,7 +8,6 @@ defined('C5_EXECUTE') or die('Access Denied.');
  * @var int $cID
  * @var Concrete\Core\Area\Area $area
  * @var Concrete\Core\Validation\CSRF\Token $token
- * @var string $sitemapPageUrl
  */
 
 $view->element('vue/references_viewer', null, 'blocks_cloner');
