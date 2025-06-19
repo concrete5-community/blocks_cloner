@@ -149,7 +149,7 @@ class Import extends Dialog
             $volatile = $this->app->make(VolatileDirectory::class);
             $fileInfos = $this->parseUploadedFile(
                 $file,
-                filter_var($this->request->request->get('decompressZip'), FILTER_VALIDATE_BOOLEAN),
+                !$this->canStoreZipFilesInFileManager() || filter_var($this->request->request->get('decompressZip'), FILTER_VALIDATE_BOOLEAN),
                 $volatile
             );
             $this->checkUploadedFiles($fileInfos);
@@ -469,7 +469,7 @@ class Import extends Dialog
      */
     private function parseUploadedFile(UploadedFile $uploadedFile, $decompressZip, VolatileDirectory $volatile)
     {
-        if (!preg_match('/\.zip$/i', $uploadedFile->getClientOriginalName()) || !$decompressZip) {
+        if (!$decompressZip || !preg_match('/\.zip$/i', $uploadedFile->getClientOriginalName())) {
             return [
                 ['name' => $uploadedFile->getClientOriginalName(), 'file' => $uploadedFile],
             ];
@@ -647,5 +647,13 @@ class Import extends Dialog
         }
 
         return $folder;
+    }
+
+    /**
+     * @return bool
+     */
+    private function canStoreZipFilesInFileManager()
+    {
+        return in_array('zip', $this->app->make('helper/concrete/file')->getAllowedFileExtensions(), true);
     }
 }
