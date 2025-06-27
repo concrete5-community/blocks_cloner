@@ -244,6 +244,28 @@ ob_start();
             </tbody>
         </table>
     </div>
+    <div v-if="references?.fileFolders">
+        <table class="table table-striped table-sm table-condensed caption-top">
+            <caption>
+                <span v-if="operation === 'import'">{{ someErrors('fileFolders') ? ICON.BAD : ICON.GOOD }}</span>
+                <strong><?= t('Referenced File Folders') ?></strong>
+            </caption>
+            <colgroup>
+                <col width="1" />
+            </colgroup>
+            <tbody>
+                <tr v-for="(fileFolder, key) in references.fileFolders">
+                    <td class="text-nowrap">
+                        <code>{{ key }}</code>
+                    </td>
+                    <td>
+                        <span v-if="fileFolder.error" class="text-danger">{{ fileFolder.error }}</span>
+                        <span v-else>{{ fileFolder.name }}</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
     <input type="file" ref="filePicker" style="display: none" />
 </div>
 <?php
@@ -261,6 +283,7 @@ const RECOGNIZED_REFERENCE_TYPES = [
     'pageFeeds',
     'stacks',
     'containers',
+    'fileFolders',
 ];
 
 Vue.component('blocks-cloner-references-viewer', {

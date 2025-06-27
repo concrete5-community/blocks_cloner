@@ -34,6 +34,8 @@ final class XmlParser
 
     const KEY_CONTAINERS = 'containers';
 
+    const KEY_FILEFOLDERS = 'fileFolders';
+
     /**
      * @var \Doctrine\ORM\EntityManagerInterface
      */
@@ -228,6 +230,8 @@ final class XmlParser
             $this->parseFoundPageType($item, $result);
         } elseif ($item instanceof Item\PageFeedItem) {
             $this->parseFoundPageFeed($item, $result);
+        } elseif ($item instanceof Item\FileFolderItem) {
+            $this->parseFoundFileFolder($item, $result);
         } else {
             throw new UserMessageException(t('Unable to handle items of type %s', $item->getDisplayName()));
         }
@@ -312,6 +316,19 @@ final class XmlParser
         }
         $pageType = $item->getContentObject();
         $result[self::KEY_PAGEFEEDS][$key] = $pageType ?: t('Page Feed not found');
+    }
+
+    private function parseFoundFileFolder(Item\FileFolderItem $item, array &$result)
+    {
+        if (!isset($result[self::KEY_FILEFOLDERS])) {
+            $result[self::KEY_FILEFOLDERS] = [];
+        }
+        $key = $item->getReference();
+        if (array_key_exists($key, $result[self::KEY_FILEFOLDERS])) {
+            return;
+        }
+        $fileFolder = $item->getContentObject();
+        $result[self::KEY_FILEFOLDERS][$key] = $fileFolder ?: t('File Folder not found');
     }
 
     /**
