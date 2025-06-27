@@ -12,6 +12,7 @@ use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Page\Stack\Stack;
 use Concrete\Core\Page\Type\Type as PageType;
+use Concrete\Core\Tree\Node\Type\FileFolder;
 use Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface;
 use Concrete\Package\BlocksCloner\XmlParser;
 use Doctrine\ORM\EntityManagerInterface;
@@ -157,6 +158,8 @@ abstract class Controller extends CoreController
                 return is_string($reference) ? ['error' => $reference] : $this->serializeStackReference($reference);
             case XmlParser::KEY_CONTAINERS:
                 return is_string($reference) ? ['error' => $reference] : $this->serializeContainerReference($reference);
+            case XmlParser::KEY_FILEFOLDERS:
+                return is_string($reference) ? ['error' => $reference] : $this->serializeFileFolderReference($reference);
             default:
                 throw new UserMessageException(t('Unrecognized reference type: %s', $referenceType));
         }
@@ -248,6 +251,15 @@ abstract class Controller extends CoreController
         return [
             'id' => (int) $container->getContainerID(),
             'name' => $container->getContainerDisplayName(),
+        ];
+    }
+
+    private function serializeFileFolderReference(FileFolder $fileFolder)
+    {
+        return [
+            'id' => (int) $fileFolder->getTreeNodeID(),
+            'name' => $fileFolder->getTreeNodeName(),
+            'path' => $fileFolder->getTreeNodeDisplayPath(),
         ];
     }
 }
