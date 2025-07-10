@@ -1,6 +1,8 @@
 let currentItemHighlighed: HTMLElement | null = null;
 
-const HIGHLIGHTED_STYLE: Map<keyof CSSStyleDeclaration, string> = new Map([
+type HighlightedStyleKeys = 'outline' | 'boxShadow' | 'transition';
+
+const HIGHLIGHTED_STYLE: Map<HighlightedStyleKeys, string> = new Map([
   ['outline', '1px solid red'],
   ['boxShadow', '0 0 3px 3px #ff0000'],
   ['transition', 'box-shadow 0.5s, outline 0.5s'],
@@ -50,7 +52,7 @@ export function setElementHighlighted(element: HTMLElement, highlight: boolean, 
     if (highlight) {
       HIGHLIGHTED_STYLE.forEach((newStyleValue, styleProperty) => {
         element.dataset[`blocksClonerRestore${styleProperty}`] = element.style[styleProperty] as string;
-        (element.style as any)[styleProperty] = newStyleValue;
+        element.style[styleProperty] = newStyleValue;
       });
       element.dataset.blocksClonerHighlighted = '1';
       currentItemHighlighed = element;
@@ -59,7 +61,7 @@ export function setElementHighlighted(element: HTMLElement, highlight: boolean, 
         const restoreStyleValue = element.dataset[`blocksClonerRestore${styleProperty}`];
         if (restoreStyleValue !== undefined) {
           delete element.dataset[`blocksClonerRestore${styleProperty}`];
-          (element.style as any)[styleProperty] = restoreStyleValue;
+          element.style[styleProperty] = restoreStyleValue;
         }
       });
       delete element.dataset.blocksClonerHighlighted;
