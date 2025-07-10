@@ -27,7 +27,49 @@ function normalizeXml(xml: string, wrap?: boolean): string {
   return normalizeDoc(doc, wrap);
 }
 
+function stripUsepessCDATASections(node: Node): void {
+  if (node.nodeType !== Node.CDATA_SECTION_NODE) {
+    node.childNodes.forEach(stripUsepessCDATASections);
+    return;
+  }
+  const text = node.nodeValue || '';
+  if (/[<>&]/.test(text)) {
+    return;
+  }
+  node.parentNode!.replaceChild(node.ownerDocument!.createTextNode(text), node);
+}
+
+function useCDATASections(node: Node): void {
+  if (node.nodeType !== Node.TEXT_NODE) {
+    node.childNodes.forEach(useCDATASections);
+    return;
+  }
+  const text = node.nodeValue || '';
+  if (!/[<>&]/.test(text)) {
+    return;
+  }
+  const doc = node.ownerDocument!;
+  if (!text.includes(']]>')) {
+    const cdata = doc.createCDATASection(text);
+    node.parentNode!.replaceChild(cdata, node);
+    return;
+  }
+  const fragment = doc.createDocumentFragment();
+  text.split(']]>').forEach((part, index) => {
+    if (index > 0) {
+      fragment.appendChild(doc.createTextNode(']]>'));
+    }
+    if (part !== '') {
+      fragment.appendChild(doc.createCDATASection(part));
+    }
+  });
+  node.parentNode!.replaceChild(fragment, node);
+}
+
 function normalizeDoc(doc: XMLDocument, isWrapped?: boolean): string {
+  doc = doc.cloneNode(true) as XMLDocument;
+  stripUsepessCDATASections(doc.documentElement);
+  useCDATASections(doc.documentElement);
   const xml = isWrapped ? doc.documentElement.innerHTML : xmlSerializer.serializeToString(doc.documentElement);
 
   return (xmlFormatter as any)(xml, {
