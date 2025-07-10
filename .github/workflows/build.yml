@@ -156,11 +156,6 @@ jobs:
         name: Core info
         run: sudo -u www-data /app/concrete/bin/concrete5 --ansi --no-interaction c5:info
       -
-        name: Uninstall bundled package
-        run: |
-          sudo -u www-data /app/concrete/bin/concrete5 --ansi --no-interaction c5:package:uninstall blocks_cloner || true
-          rm -rf /app/packages/blocks_cloner
-      -
         name: Prepare package
         run: ln -s "$GITHUB_WORKSPACE" /app/packages/blocks_cloner
       -
