@@ -2,11 +2,9 @@
 
 namespace Concrete\Package\BlocksCloner\Controller;
 
-use Concrete\Core\Config\Repository\Repository;
 use Concrete\Core\Controller\Controller;
 use Concrete\Core\Entity\Block\BlockType\BlockType;
 use Concrete\Core\Http\ResponseFactoryInterface;
-use Concrete\Core\Package\PackageService;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Permission\Checker;
 use Concrete\Package\BlocksCloner\Plugin\ConvertImport;
@@ -49,7 +47,6 @@ EOT
      */
     private function buildCCMBlocksClonerDynamicData()
     {
-        $config = $this->app->make(Repository::class);
         $stackEditPageID = null;
         $stackEditPage = Page::getByPath('/dashboard/blocks/stacks');
         if ($stackEditPage && !$stackEditPage->isError()) {
@@ -71,10 +68,6 @@ EOT
             ],
             'stackEditPageID' => $stackEditPageID,
             'blockTypeNames' => $this->getBlockTypeNames(),
-            'environment' => [
-                'core' => $config->get('concrete.version'),
-                'packages' => $this->getPackagesAndVersions(),
-            ],
         ]) . ';';
     }
 
@@ -89,21 +82,6 @@ EOT
         foreach ($repo->findAll() as $blockType) {
             $result[$blockType->getBlockTypeHandle()] = t($blockType->getBlockTypeName());
         }
-
-        return $result;
-    }
-
-    /**
-     * @return array
-     */
-    private function getPackagesAndVersions()
-    {
-        $packageService = $this->app->make(PackageService::class);
-        $result = [];
-        foreach ($packageService->getInstalledList() as $package) {
-            $result[$package->getPackageHandle()] = $package->getPackageVersion();
-        }
-        ksort($result);
 
         return $result;
     }

@@ -1,4 +1,3 @@
-import {addCurrentEnvironmentComment, extractEnvironment, getCurrentEnvironment} from './environment';
 import {setElementHighlighted} from './highlighter';
 import {hook as hookMenus} from './menu';
 import {findParentArea, getPageStructure, getPageStructureStartingAt} from './page-structure';
@@ -11,11 +10,6 @@ if ((window as any).ccmBlocksCloner === undefined) {
     getPageStructureStartingAt,
     findParentArea,
     setElementHighlighted,
-    environment: {
-      getCurrent: getCurrentEnvironment,
-      addCurrentToXml: addCurrentEnvironmentComment,
-      extractFromXml: extractEnvironment,
-    },
     conversion: Conversion,
     xml: Xml,
   };

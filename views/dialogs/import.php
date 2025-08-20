@@ -30,21 +30,6 @@ $view->element('vue/references_viewer', null, 'blocks_cloner');
                     v-bind:readonly="busy"
                     style="flex-grow: 1; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 0.9em; resize: none"
                 ></textarea>
-                <div v-if="convertedXml !== null">
-                    <?= t('Converted XML') ?>
-                </div>
-                <div v-if="convertedXml !== null && convertedXml === inputXml" class="alert alert-info">
-                    <?= t('The conversion did not produce any changes') ?>
-                </div>
-                <textarea
-                    v-if="convertedXml !== null && convertedXml !== inputXml"
-                    class="form-control"
-                    v-bind:value="convertedXml"
-                    nowrap
-                    spellcheck="false"
-                    readonly
-                    style="flex-grow: 1; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 0.9em; resize: none"
-                ></textarea>
                 <div v-if="inputXml && xmlInputError" class="alert alert-danger" v-html="xmlInputError" style="white-space: pre-wrap"></div>
                 <div v-else-if="analyzeError" class="alert alert-danger" style="white-space: pre-wrap">{{ analyzeError }}</div>
             </div>
@@ -65,39 +50,41 @@ $view->element('vue/references_viewer', null, 'blocks_cloner');
                 <div>
                     <?= t('Conversion') ?>
                 </div>
-                <div style="flex-grow: 1; width: 100%">
+                <div style="flex-grow: 0; width: 100%">
                     <div v-if="allConverters.length === 0" class="alert alert-info">
                         <?= t('No converters available') ?>
                     </div>
                     <div v-else>
                         <select
                             class="form-control"
-                            v-model="inputConversionMode"
+                            v-model="conversionMode"
                             v-bind:disabled="busy"
                         >
                             <option v-bind:value="CONVERSION_MODE.NONE"><?= t('No Conversion') ?></option>
-                            <option v-bind:value="CONVERSION_MODE.AUTO" v-if="allowAutoConverters"><?= t('Automatic Converter Selection') ?></option>
+                            <option v-bind:value="CONVERSION_MODE.AUTO"><?= t('Automatic Converter Selection') ?></option>
                             <option v-bind:value="CONVERSION_MODE.MANUAL"><?= t('Manual Converter Selection') ?></option>
                         </select>
-                        <div v-for="(c, i) in allConverters" class="form-check" v-if="conversionMode !== CONVERSION_MODE.NONE">
-                            <input
-                                type="checkbox"
-                                class="form-check-input"
-                                v-bind:value="c"
-                                v-bind:id="`ccm-blockscloker-import-converter-${i}`"
-                                v-model="selectedConverters"
-                                v-bind:disabled="busy || conversionMode === CONVERSION_MODE.AUTO"
-                            />
-                            <label class="form-check-label" v-bind:for="`ccm-blockscloker-import-converter-${i}`">
-                                {{ c.name }}
-                            </label>
+                        <div v-bind:style="{visibility: conversionMode === CONVERSION_MODE.MANUAL ? '' : 'hidden'}">
+                            <div v-for="c in allConverters" class="form-check">
+                                <input
+                                    type="checkbox"
+                                    class="form-check-input"
+                                    v-bind:value="c"
+                                    v-bind:id="`ccm-blockscloker-import-converter-${c.handle}`"
+                                    v-model="selectedConverters"
+                                    v-bind:disabled="busy"
+                                />
+                                <label class="form-check-label" v-bind:for="`ccm-blockscloker-import-converter-${c.handle}`">
+                                    {{ c.name }}
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="text-right text-end">
-            <button v-on:click.prevent="analyzeXml()" v-bind:disabled="busy || !finalXml || !!xmlInputError" class="btn btn-primary"><?= t('Analyze') ?></button>
+            <button v-on:click.prevent="analyzeXml()" v-bind:disabled="busy || !inputXml || !!xmlInputError" class="btn btn-primary"><?= t('Analyze') ?></button>
         </div>
     </div>
     <div v-else-if="step === STEPS.CHECK" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
@@ -118,8 +105,6 @@ $view->element('vue/references_viewer', null, 'blocks_cloner');
     </div>
 </div>
 <script>$(document).ready(function() {
-
-const currentEnvironment = window.ccmBlocksCloner.environment.getCurrent();
 
 function getExistingBlocksInArea()
 {
@@ -154,9 +139,9 @@ new Vue({
             CHECK: 2,
         };
         const CONVERSION_MODE = {
-            NONE: 0,
-            AUTO: 1,
-            MANUAL: 2,
+            NONE: 'none',
+            AUTO: 'auto',
+            MANUAL: 'manual',
         }
         return {
             STEPS,
@@ -171,9 +156,10 @@ new Vue({
             busy: false,
             inputXml: '',
             CONVERSION_MODE,
-            inputConversionMode: CONVERSION_MODE.MANUAL,
+            conversionMode: CONVERSION_MODE.AUTO,
             selectedConverters: [],
             addBefore: null,
+            processedXml: '',
             analyzeError: '',
             importType: '',
             importToken: '',
@@ -198,10 +184,7 @@ new Vue({
     watch: {
         inputXml() {
             this.analyzeError = '';
-            this.recalcSelectedConverters(true);
-        },
-        conversionMode() {
-            this.recalcSelectedConverters();
+            this.processedXml = '';
         },
     },
     computed: {
@@ -210,52 +193,22 @@ new Vue({
                 return <?= json_encode(t('Please specify the XML to be imported')) ?>;
             }
             try {
-                const doc = window.ccmBlocksCloner.xml.parse(this.inputXml, false);
+                const doc = window.ccmBlocksCloner.xml.parse(this.inputXml);
                 if (doc.documentElement.tagName !== 'block' || !doc.documentElement.getAttribute('type')) {
                     if (doc.documentElement.tagName !== 'area') {
                         throw new Error(<?= json_encode(t('The XML does not represent a block in ConcreteCMS CIF Format')) ?>);
                     }
                 }
             } catch (e) {
-                return (e ? (e.message || e.toString()) : <?= json_encode(t('Unknown error')) ?>);
+                return e?.message || e?.toString() || <?= json_encode(t('Unknown error')) ?>;
             }
             return '';
-        },
-        xmlEnvironment() {
-            if (this.inputXml === '' || this.xmlInputError !== '') {
-                return null;
-            }
-            try {
-                return window.ccmBlocksCloner.environment.extractFromXml(this.inputXml);
-            } catch (e) {
-                console.warn(e);
-                return null;
-            }
-        },
-        convertedXml() {
-            if (this.inputXml === '' || this.xmlInputError !== '' || this.conversionMode === this.CONVERSION_MODE.NONE || this.selectedConverters.length === 0) {
-                return null;
-            }
-
-            return window.ccmBlocksCloner.conversion.convertXml(this.inputXml, this.selectedConverters) ?? this.inputXml;
-        },
-        finalXml() {
-            return this.convertedXml || this.inputXml;
-        },
-        conversionMode() {
-            return this.allowAutoConverters ? this.inputConversionMode : this.CONVERSION_MODE.MANUAL;
-        },
-        allowAutoConverters() {
-            return this.xmlEnvironment !== null;
-        },
-        suggestedConverters() {
-            return window.ccmBlocksCloner.conversion.getConvertersForEvironments(this.xmlEnvironment, currentEnvironment);
         },
         allConverters() {
             return window.ccmBlocksCloner.conversion.getConverters();
         },
         canImport() {
-            if (this.busy) {
+            if (this.busy || !this.processedXml) {
                 return false;
             }
             if (this.references.blockTypes) {
@@ -270,23 +223,10 @@ new Vue({
         normalizeInputXml() {
             if (this.inputXml && !this.xmlInputError) {
                 try {
-                    this.inputXml = window.ccmBlocksCloner.xml.normalizeXml(this.inputXml, true);
+                    this.inputXml = window.ccmBlocksCloner.xml.normalizeXml(this.inputXml);
                 } catch (e) {
                 }
             }
-        },
-        recalcSelectedConverters(setAutoIfApplicable) {
-            if (this.allowAutoConverters) {
-                if (setAutoIfApplicable) {
-                    this.inputConversionMode = this.CONVERSION_MODE.AUTO;
-                }
-            } else {
-                if (this.inputConversionMode === this.CONVERSION_MODE.AUTO) {
-                    this.inputConversionMode = this.CONVERSION_MODE.MANUAL;
-                }
-            }
-            this.selectedConverters.splice(0, this.selectedConverters.length);
-            this.suggestedConverters.forEach((c) => this.selectedConverters.push(c));
         },
         async analyzeXml() {
             if (this.busy) {
@@ -309,7 +249,9 @@ new Vue({
                         ['__ccm_consider_request_as_xhr', '1'],
                         ['aID', <?= $area->getAreaID() ?>],
                         ['aHandle', <?= json_encode($area->getAreaHandle()) ?>],
-                        ['xml', this.finalXml],
+                        ['conversionMode', this.conversionMode],
+                        ['selectedConverters', this.selectedConverters.map((c) => c.handle).join(' ')],
+                        ['xml', this.inputXml],
                     ]),
                 };
                 const response = await window.fetch(
@@ -323,9 +265,11 @@ new Vue({
                 if (responseData.error) {
                     throw new Error(responseData.error);
                 }
+                const processedXml = window.ccmBlocksCloner.xml.normalizeXml(responseData.processedXml);
                 this.importToken = responseData.importToken;
                 this.importType = responseData.importType;
                 this.references = responseData.references;
+                this.processedXml = processedXml;
             } catch (e) {
                 this.analyzeError = e?.message || e?.toString() || <?= json_encode(t('Unknown error')) ?>;
                 return;
@@ -366,7 +310,7 @@ new Vue({
                         },
                         body: new URLSearchParams([
                             [<?= json_encode($token::DEFAULT_TOKEN_NAME) ?>, this.importToken],
-                            ['xml', this.finalXml],
+                            ['xml', this.processedXml],
                             ['areaHandle', <?= json_encode($area->arHandle) ?>],
                             ['beforeBlockID', this.addBefore?.id || ''],
                             ['__ccm_consider_request_as_xhr', '1'],

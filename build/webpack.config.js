@@ -1,6 +1,4 @@
-//webpack.config.js
 const path = require('path');
-const {argv} = require('process');
 
 const config = {
   entry: {

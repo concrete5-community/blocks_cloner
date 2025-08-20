@@ -2,11 +2,11 @@
 
 namespace Concrete\Package\BlocksCloner\Converter\Import;
 
+use Closure;
+
 defined('C5_EXECUTE') or die('Access Denied.');
 
-use JsonSerializable;
-
-class BlockType implements JsonSerializable
+class BlockType
 {
     /**
      * @var string
@@ -16,7 +16,7 @@ class BlockType implements JsonSerializable
     /**
      * @var array
      */
-    private $templateRemapping = [];
+    private $templateRemappings = [];
 
     /**
      * @var array
@@ -44,6 +44,11 @@ class BlockType implements JsonSerializable
     private $renameDataTables = [];
 
     /**
+     * @var \Closure|null
+     */
+    private $customConversion = null;
+
+    /**
      * @return static
      */
     public static function create()
@@ -64,39 +69,63 @@ class BlockType implements JsonSerializable
     }
 
     /**
+     * @return string
+     */
+    public function getNewBlockTypeHandle()
+    {
+        return $this->newBlockTypeHandle;
+    }
+
+    /**
      * @param string $sourceTemplate
      * @param string|null $newTemplate
-     * @param string $newCustomClasses
+     * @param string|string[] $newCustomClasses
      *
      * @return $this
      */
     public function addTemplateRemapping($sourceTemplate, $newTemplate = null, $newCustomClasses = '')
     {
         $sourceTemplate = preg_replace('/\.php$/', '', (string) $sourceTemplate);
-        if (isset($this->templateRemapping[$sourceTemplate])) {
+        if (isset($this->templateRemappings[$sourceTemplate])) {
             throw new \RuntimeException(t('Duplicated source template handle: %s', $sourceTemplate));
         }
         if ($newTemplate !== null) {
             $newTemplate = (string) $newTemplate;
         }
-        $newCustomClasses = (string) $newCustomClasses;
-        if ($newTemplate === null) {
-            if ($newCustomClasses === '') {
-                throw new \RuntimeException(t('No conversion will be applied'));
-            }
-            $this->templateRemapping[$sourceTemplate] = [
-                'newCustomClasses' => $newCustomClasses,
-            ];
-        } elseif ($newCustomClasses === '') {
-            $this->templateRemapping[$sourceTemplate] = $newTemplate;
+        if (is_array($newCustomClasses)) {
+            $newCustomClasses = array_values(
+                array_filter(
+                    array_map(
+                        static function ($cls) {
+                            return is_string($cls) ? trim($cls) : '';
+                        },
+                        $newCustomClasses
+                    ),
+                    static function ($cls) {
+                        return $cls !== '';
+                    }
+                )
+            );
         } else {
-            $this->templateRemapping[$sourceTemplate] = [
-                'newTemplate' => $newTemplate,
-                'newCustomClasses' => $newCustomClasses,
-            ];
+            $newCustomClasses = is_string($newCustomClasses) ? preg_split('/\s+/', $newCustomClasses, -1, PREG_SPLIT_NO_EMPTY) : [];
         }
+        if ($newTemplate === null && $newCustomClasses === []) {
+            throw new \RuntimeException(t('No conversion will be applied'));
+        }
+        $this->templateRemappings[$sourceTemplate] = [
+            'newTemplate' => $newTemplate,
+            'newCustomClasses' => $newCustomClasses,
+        ];
 
         return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getTemplateRemappings()
+    {
+        return $this->templateRemappings;
     }
 
     /**
@@ -117,6 +146,14 @@ class BlockType implements JsonSerializable
     }
 
     /**
+     * @return array
+     */
+    public function getAddRecordFields()
+    {
+        return $this->addRecordFields;
+    }
+
+    /**
      * @param string $tableName
      * @param string[] $fieldNames
      *
@@ -131,6 +168,14 @@ class BlockType implements JsonSerializable
         $this->ensureIntegerFields[$tableName] = array_values(array_map('strval', $fieldNames));
 
         return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getEnsureIntegerFields()
+    {
+        return $this->ensureIntegerFields;
     }
 
     /**
@@ -151,20 +196,11 @@ class BlockType implements JsonSerializable
     }
 
     /**
-     * @param string $newName
-     * @param string $newName
-     *
-     * @return $this
+     * @return array
      */
-    public function renameDataTable($oldName, $newName)
+    public function getRemoveRecordFields()
     {
-        $oldName = (string) $oldName;
-        if (isset($this->renameDataTables[$oldName])) {
-            throw new \RuntimeException(t('Duplicated table name: %s', $oldName));
-        }
-        $this->renameDataTables[$oldName] = (string) $newName;
-
-        return $this;
+        return $this->removeRecordFields;
     }
 
     /**
@@ -185,36 +221,55 @@ class BlockType implements JsonSerializable
     }
 
     /**
-     * {@inheritdoc}
-     *
-     * @see \JsonSerializable::jsonSerialize()
+     * @return array
      */
-    #[\ReturnTypeWillChange]
-    public function jsonSerialize()
+    public function getFontAwesome4to5Fields()
     {
-        $result = [];
-        if ($this->newBlockTypeHandle !== '') {
-            $result['newBlockTypeHandle'] = $this->newBlockTypeHandle;
-        }
-        if ($this->templateRemapping !== []) {
-            $result['templateRemapping'] = $this->templateRemapping;
-        }
-        if ($this->addRecordFields !== []) {
-            $result['addRecordFields'] = $this->addRecordFields;
-        }
-        if ($this->ensureIntegerFields !== []) {
-            $result['ensureIntegerFields'] = $this->ensureIntegerFields;
-        }
-        if ($this->removeRecordFields !== []) {
-            $result['removeRecordFields'] = $this->removeRecordFields;
-        }
-        if ($this->fontAwesome4to5Fields !== []) {
-            $result['fontAwesome4to5Fields'] = $this->fontAwesome4to5Fields;
-        }
-        if ($this->renameDataTables !== []) {
-            $result['renameDataTables'] = $this->renameDataTables;
-        }
+        return $this->fontAwesome4to5Fields;
+    }
 
-        return $result;
+    /**
+     * @param string $newName
+     * @param string $newName
+     *
+     * @return $this
+     */
+    public function renameDataTable($oldName, $newName)
+    {
+        $oldName = (string) $oldName;
+        if (isset($this->renameDataTables[$oldName])) {
+            throw new \RuntimeException(t('Duplicated table name: %s', $oldName));
+        }
+        $this->renameDataTables[$oldName] = (string) $newName;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getRenameDataTables()
+    {
+        return $this->renameDataTables;
+    }
+
+    /**
+     * @param \Closure|null $closure
+     *
+     * @return $this
+     */
+    public function setCustomConversion($closure)
+    {
+        $this->customConversion = $closure instanceof Closure ? $closure : null;
+
+        return $this;
+    }
+
+    /**
+     * @return \Closure|null
+     */
+    public function getCustomConversion()
+    {
+        return $this->customConversion;
     }
 }

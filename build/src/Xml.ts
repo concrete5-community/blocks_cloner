@@ -22,9 +22,19 @@ function parse(xml: string, wrap?: boolean): XMLDocument {
   }
   return doc;
 }
-function normalizeXml(xml: string, wrap?: boolean): string {
-  const doc = parse(xml, wrap);
-  return normalizeDoc(doc, wrap);
+function normalizeXml(xml: string): string {
+  const doc = parse(xml, true);
+  stripUsepessCDATASections(doc.documentElement);
+  useCDATASections(doc.documentElement);
+  return (xmlFormatter as any)(doc.documentElement.innerHTML, {
+    indentation: '   ',
+    collapseContent: true,
+    lineSeparator: '\n',
+    whiteSpaceAtEndOfSelfclosingTag: true,
+    throwOnFailure: true,
+    strictMode: true,
+    forceSelfClosingEmptyTag: true,
+  });
 }
 
 function stripUsepessCDATASections(node: Node): void {
@@ -66,25 +76,7 @@ function useCDATASections(node: Node): void {
   node.parentNode!.replaceChild(fragment, node);
 }
 
-function normalizeDoc(doc: XMLDocument, isWrapped?: boolean): string {
-  doc = doc.cloneNode(true) as XMLDocument;
-  stripUsepessCDATASections(doc.documentElement);
-  useCDATASections(doc.documentElement);
-  const xml = isWrapped ? doc.documentElement.innerHTML : xmlSerializer.serializeToString(doc.documentElement);
-
-  return (xmlFormatter as any)(xml, {
-    indentation: '   ',
-    collapseContent: true,
-    lineSeparator: '\n',
-    whiteSpaceAtEndOfSelfclosingTag: true,
-    throwOnFailure: true,
-    strictMode: true,
-    forceSelfClosingEmptyTag: true,
-  });
-}
-
 export default {
-  parse,
+  parse: (xml: string): XMLDocument => parse(xml, false),
   normalizeXml,
-  normalizeDoc,
 };

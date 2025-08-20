@@ -2,7 +2,7 @@
 
 namespace Concrete\Package\BlocksCloner\Plugins;
 
-use Concrete\Package\BlocksCloner\Converter\ApplicableTo;
+use Concrete\Package\BlocksCloner\Converter\Environment;
 use Concrete\Package\BlocksCloner\Converter\Import;
 use Concrete\Package\BlocksCloner\Converter\Import\BlockType;
 use Concrete\Package\BlocksCloner\Plugin\ConvertImport;
@@ -19,8 +19,11 @@ class Core8To9 implements ConvertImport
     public function getImportConverters()
     {
         $import = new Import(
+            'from_core8',
             t('From concrete5 v8'),
-            new ApplicableTo\Core('^8', '>=9')
+            static function (Environment $sourceEnvironment, Environment $destinationEnvironment) {
+                return preg_match('/^8(\.|$)/', $sourceEnvironment->getCoreVersion()) && preg_match('/^(9|([1-9]\d+))(\.|$)/', $destinationEnvironment->getCoreVersion());
+            }
         );
 
         $import
