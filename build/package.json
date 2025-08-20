@@ -19,6 +19,7 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "xml-formatter": "^3.6.5"
+    "diff": "^8.0.2",
+    "xml-formatter": "^3.6.6"
   }
 }

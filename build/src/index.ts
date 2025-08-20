@@ -3,6 +3,7 @@ import {hook as hookMenus} from './menu';
 import {findParentArea, getPageStructure, getPageStructureStartingAt} from './page-structure';
 import Conversion from './Conversion';
 import Xml from './Xml';
+import diff from './diff';
 
 if ((window as any).ccmBlocksCloner === undefined) {
   (window as any).ccmBlocksCloner = {
@@ -12,6 +13,7 @@ if ((window as any).ccmBlocksCloner === undefined) {
     setElementHighlighted,
     conversion: Conversion,
     xml: Xml,
+    diff,
   };
   hookMenus();
 }

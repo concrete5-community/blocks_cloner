@@ -11,10 +11,11 @@ defined('C5_EXECUTE') or die('Access Denied.');
  */
 
 $view->element('vue/references_viewer', null, 'blocks_cloner');
+$view->element('vue/diff_viewer', null, 'blocks_cloner');
 
 ?>
 <div class="ccm-blockscloker-dialog-content" id="ccm-blockscloker-import" style="display: flex; height: 100%; width: 100%" v-cloak>
-    <div v-if="step === STEPS.INPUT" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
+    <div v-if="page === PAGE.INPUT" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
         <div style="flex-grow: 1; display: flex; flex-direction: row">
             <div style="display: flex; flex-direction: column; height: 100%; flex: 1; padding-right: 10px;">
                 <div>
@@ -87,7 +88,7 @@ $view->element('vue/references_viewer', null, 'blocks_cloner');
             <button v-on:click.prevent="analyzeXml()" v-bind:disabled="busy || !inputXml || !!xmlInputError" class="btn btn-primary"><?= t('Analyze') ?></button>
         </div>
     </div>
-    <div v-else-if="step === STEPS.CHECK" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
+    <div v-else-if="page === PAGE.CHECK" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
         <blocks-cloner-references-viewer
             v-bind:cid="<?= $cID ?>"
             v-bind:references="references"
@@ -97,10 +98,22 @@ $view->element('vue/references_viewer', null, 'blocks_cloner');
             v-on:change="analyzeXml()"
             v-bind:busy="busy"
         ></blocks-cloner-references-viewer>
-        <div class="text-right text-end">
-            <button v-on:click.prevent="step = STEPS.INPUT" v-bind:disabled="busy" class="btn btn-secondary btn-default"><?= t('Back') ?></button>
-            <button v-on:click.prevent="analyzeXml()" v-bind:disabled="busy" class="btn btn-secondary btn-default"><?= t('Reanalyze') ?></button>
-            <button v-on:click.prevent="importXml()" v-bind:disabled="!canImport" class="btn btn-primary"><?= t('Import') ?></button>
+        <div class="text-left text-start">
+            <button v-on:click.prevent="page = PAGE.DIFF" v-bind:disabled="busy || !inputXmlHasBeenConverted" class="btn btn-secondary btn-default"><?= t('View Conversion') ?></button>
+            <span class="text-right text-end" style="float: right">
+                <button v-on:click.prevent="page = PAGE.INPUT" v-bind:disabled="busy" class="btn btn-secondary btn-default"><?= t('Back') ?></button>
+                <button v-on:click.prevent="analyzeXml()" v-bind:disabled="busy" class="btn btn-secondary btn-default"><?= t('Reanalyze') ?></button>
+                <button v-on:click.prevent="importXml()" v-bind:disabled="!canImport" class="btn btn-primary"><?= t('Import') ?></button>
+            </span>
+        </div>
+    </div>
+    <div v-else-if="page === PAGE.DIFF" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
+        <blocks-cloner-diff-viewer
+            v-bind:left="inputXml"
+            v-bind:right="processedXml"
+        ></blocks-cloner-diff-viewer>
+        <div class="text-left text-start">
+            <button v-on:click.prevent="page = PAGE.CHECK" class="btn btn-primary"><?= t('Back') ?></button>
         </div>
     </div>
 </div>
@@ -134,9 +147,10 @@ function getExistingBlocksInArea()
 new Vue({
     el: '#ccm-blockscloker-import',
     data() {
-        const STEPS = {
+        const PAGE = {
             INPUT: 1,
             CHECK: 2,
+            DIFF: 3,
         };
         const CONVERSION_MODE = {
             NONE: 'none',
@@ -144,14 +158,14 @@ new Vue({
             MANUAL: 'manual',
         }
         return {
-            STEPS,
+            PAGE,
             ICON: {
                 // HEAVY CHECK MARK
                 GOOD: '\u2705',
                 // CROSS MARK
                 BAD: '\u274c',
             },
-            step: STEPS.INPUT,
+            page: PAGE.INPUT,
             existingBlocksInArea: getExistingBlocksInArea(),
             busy: false,
             inputXml: '',
@@ -206,6 +220,9 @@ new Vue({
         },
         allConverters() {
             return window.ccmBlocksCloner.conversion.getConverters();
+        },
+        inputXmlHasBeenConverted() {
+            return this.inputXml && !this.xmlInputError && this.processedXml && this.processedXml !== this.inputXml;
         },
         canImport() {
             if (this.busy || !this.processedXml) {
@@ -276,7 +293,7 @@ new Vue({
             } finally {
                 this.busy = false;
             }
-            this.step = this.STEPS.CHECK;
+            this.page = this.PAGE.CHECK;
         },
         filesUploadCompleted(withSuccess) {
             this.busy = false;
