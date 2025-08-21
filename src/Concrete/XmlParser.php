@@ -52,6 +52,11 @@ final class XmlParser
     private $config;
 
     /**
+     * @var \Concrete\Package\BlocksCloner\Xml
+     */
+    private $xmlService;
+
+    /**
      * @var \Concrete\Core\Entity\Block\BlockType\BlockType[]|null
      */
     private $installedBlockTypes = null;
@@ -64,11 +69,13 @@ final class XmlParser
     public function __construct(
         EntityManagerInterface $entityManager,
         Application $valueInspectorProvider,
-        Repository $config
+        Repository $config,
+        Xml $xmlService
     ) {
         $this->entityManager = $entityManager;
         $this->valueInspector = $valueInspectorProvider->make('import/value_inspector');
         $this->config = $config;
+        $this->xmlService = $xmlService;
     }
 
     /**
@@ -80,7 +87,7 @@ final class XmlParser
      */
     public function extractReferences($xml)
     {
-        $xml = $this->ensureSimpleXMLElement($xml);
+        $xml = $this->xmlService->getSimpleXMLElement($xml);
         $result = [];
         foreach ($this->extractStrings($xml) as $content) {
             $inspectionResult = $this->valueInspector->inspect($content);

@@ -8,6 +8,7 @@ use Concrete\Core\Http\Request;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Permission\Checker;
 use Concrete\Core\Validation\CSRF\Token;
+use Concrete\Package\BlocksCloner\Xml;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -16,8 +17,6 @@ defined('C5_EXECUTE') or die('Access Denied.');
  */
 class Enviro
 {
-    use LoadXmlTrait;
-
     /**
      * @var \SimpleXMLElement
      */
@@ -38,10 +37,13 @@ class Enviro
      *
      * @throws \Concrete\Core\Error\UserMessageException
      */
-    public function __construct(Page $page, $importType, Request $request, Token $token)
+    public function __construct(Page $page, $importType, Request $request, Token $token, Xml $xmlService)
     {
         $xml = $request->request->get('xml');
-        $this->sx = $this->loadXml($xml);
+        if (!is_string($xml) || ($xml  = trim($xml)) === '') {
+            throw new UserMessageException(t('Please specify the XML to be imported'));
+        }
+        $this->sx = $xmlService->getSimpleXMLElement($xml);
         $areaHandle = (string) $request->request->get('areaHandle');
         if ($areaHandle === '') {
             throw new UserMessageException(t('Access Denied'));
