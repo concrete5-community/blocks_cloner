@@ -152,7 +152,7 @@ class Area extends Export
         $sx = simplexml_load_string($xml);
 
         return [
-            'xml' => $this->formatXml($sx),
+            'xml' => $this->formatXml($sx, true),
             'references' => $this->serializeReferences($parser->extractReferences($sx)),
         ];
     }

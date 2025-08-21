@@ -61,7 +61,7 @@ class Block extends Export
             throw new UserMessageException(t('Unable to detect the structure of the exported area'));
         }
         $this->app->make(ExportFixer::class)->fix($blockElement);
-        $this->set('xml', $this->formatXml($blockElement));
+        $this->set('xml', $this->formatXml($blockElement, true));
         $parser = $this->app->make(XmlParser::class);
         $this->set('references', $this->serializeReferences($parser->extractReferences($blockElement)));
         $this->set('resolverManager', $this->app->make(ResolverManagerInterface::class));

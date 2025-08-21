@@ -2,8 +2,7 @@
 
 namespace Concrete\Package\BlocksCloner\Converter;
 
-defined('C5_EXECUTE') or die('Access Denied.');
-
+use Closure;
 use JsonSerializable;
 
 defined('C5_EXECUTE') or die('Access Denied.');
@@ -13,12 +12,17 @@ class Import implements JsonSerializable
     /**
      * @var string
      */
+    private $handle;
+
+    /**
+     * @var string
+     */
     private $name;
 
     /**
-     * @var \Concrete\Package\BlocksCloner\Converter\ApplicableTo
+     * @var \Closure
      */
-    private $applicableTo;
+    private $canBeAppliedTo;
 
     /**
      * @var \Concrete\Package\BlocksCloner\Converter\Import\BlockType[]|array
@@ -26,16 +30,26 @@ class Import implements JsonSerializable
     private $blockTypes = [];
 
     /**
+     * @param string $handle
      * @param string $name
      */
-    public function __construct($name, ApplicableTo $applicableTo)
+    public function __construct($handle, $name, Closure $canBeAppliedTo)
     {
+        $this->handle = (string) $handle;
         $this->name = (string) $name;
-        $this->applicableTo = $applicableTo;
+        $this->canBeAppliedTo = $canBeAppliedTo;
     }
 
     /**
-     * @return \Concrete\Package\BlocksCloner\Converter\ApplicableTo
+     * @return string
+     */
+    public function getHandle()
+    {
+        return $this->handle;
+    }
+
+    /**
+     * @return string
      */
     public function getName()
     {
@@ -43,11 +57,13 @@ class Import implements JsonSerializable
     }
 
     /**
-     * @return \Concrete\Package\BlocksCloner\Converter\ApplicableTo
+     * @return bool
      */
-    public function getApplicableTo()
+    public function canBeAppliedTo(Environment $sourceEnvironment, Environment $destinationEnvironment)
     {
-        return $this->applicableTo;
+        $closure = $this->canBeAppliedTo;
+
+        return $closure($sourceEnvironment, $destinationEnvironment);
     }
 
     /**
@@ -82,14 +98,9 @@ class Import implements JsonSerializable
     #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
-        $result = [
+        return [
+            'handle' => $this->getHandle(),
             'name' => $this->getName(),
-            'applicableTo' => $this->getApplicableTo(),
         ];
-        if (($blockTypes = $this->getBlockTypes()) !== null) {
-            $result['blockTypes'] = $blockTypes;
-        }
-
-        return $result;
     }
 }

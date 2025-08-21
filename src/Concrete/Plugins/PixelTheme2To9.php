@@ -2,7 +2,7 @@
 
 namespace Concrete\Package\BlocksCloner\Plugins;
 
-use Concrete\Package\BlocksCloner\Converter\ApplicableTo;
+use Concrete\Package\BlocksCloner\Converter\Environment;
 use Concrete\Package\BlocksCloner\Converter\Export;
 use Concrete\Package\BlocksCloner\Converter\Import;
 use Concrete\Package\BlocksCloner\Plugin\ConvertExport;
@@ -44,8 +44,11 @@ class PixelTheme2To9 implements ConvertExport, ConvertImport
     public function getImportConverters()
     {
         $converter = new Import(
+            'pixel2to9',
             t('Theme Pixel v2 to v9'),
-            new ApplicableTo\Packages('theme_pixel', '^2', 'theme_pixel9', '^9')
+            static function (Environment $sourceEnvironment, Environment $destinationEnvironment) {
+                return preg_match('/^2(\.|$)/', $sourceEnvironment->getPackageVersion('theme_pixel')) && preg_match('/^9(\.|$)/', $destinationEnvironment->getPackageVersion('theme_pixel9'));
+            }
         );
         $converter
             ->addBlockType(
@@ -272,7 +275,7 @@ class PixelTheme2To9 implements ConvertExport, ConvertImport
                     ->setNewBlockTypeHandle('pixel_cta')
                     ->renameDataTable('btWhaleCta', 'btPixelCta')
                     ->fontAwesome4to5Fields('btWhaleCta', ['icon'])
-                    ->addRecordFields('btPixelCta', [
+                    ->addRecordFields('btWhaleCta', [
                         'color' => '',
                     ])
                     ->addTemplateRemapping('pixel_btn', 'pixel_button')

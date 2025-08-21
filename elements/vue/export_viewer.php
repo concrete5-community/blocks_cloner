@@ -29,7 +29,7 @@ ob_start();
                 spellcheck="false"
                 class="form-control"
                 style="flex-grow: 1; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 0.9em; resize: none"
-                v-bind:value="outputXml"
+                v-bind:value="xml"
             ></textarea>
             <div class="text-end text-right" style="padding-top: 1rem">
                 <button
@@ -93,24 +93,12 @@ Vue.component('blocks-cloner-export-viewer', {
             }
             return result;
         },
-        outputXml() {
-            if (typeof this.xml !== 'string' || this.xml === '') {
-                return '';
-            }
-            let xml = window.ccmBlocksCloner.environment.addCurrentToXml(this.xml);
-            try {
-                xml = window.ccmBlocksCloner.xml.normalizeXml(xml, true);
-            } catch (e) {
-                console.warn(e);
-            }
-            return xml;
-        },
     },
     methods: {
         copy(andClose) {
             try {
                 if (window.navigator && window.navigator.clipboard && window.navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(this.outputXml)
+                    navigator.clipboard.writeText(this.xml)
                         .then(() => this.reportCopyResult(null, andClose))
                         .catch((e) => this.reportCopyResult(e || <?= json_encode(t('Unknown error')) ?>))
                     ;

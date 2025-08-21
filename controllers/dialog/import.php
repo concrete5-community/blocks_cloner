@@ -20,9 +20,12 @@ use Concrete\Core\Permission\Checker;
 use Concrete\Core\StyleCustomizer\Inline\StyleSet;
 use Concrete\Core\User\User;
 use Concrete\Core\Validation\CSRF\Token;
+use Concrete\Package\BlocksCloner\Converter;
 use Concrete\Package\BlocksCloner\Edit\Context;
 use Concrete\Package\BlocksCloner\Import\Enviro;
 use Concrete\Package\BlocksCloner\Import\LoadXmlTrait;
+use Concrete\Package\BlocksCloner\Plugin\ConvertImport;
+use Concrete\Package\BlocksCloner\PluginManager;
 use Concrete\Package\BlocksCloner\UI\Controller\Dialog;
 use Concrete\Package\BlocksCloner\XmlParser;
 use Doctrine\ORM\EntityManagerInterface;
@@ -36,6 +39,12 @@ defined('C5_EXECUTE') or die('Access Denied.');
 class Import extends Dialog
 {
     use LoadXmlTrait;
+
+    const CONVERSIONMODE_NONE = 'none';
+
+    const CONVERSIONMODE_AUTO = 'auto';
+
+    const CONVERSIONMODE_MANUAL = 'manual';
 
     /**
      * {@inheritdoc}
@@ -86,12 +95,17 @@ class Import extends Dialog
             if (!$area || $area->isError() || $area->getAreaID() != $aID) {
                 throw new UserMessageException(t('Access Denied'));
             }
+            $conversionMode = $this->request->request->get('conversionMode');
+            if (!in_array($conversionMode, [self::CONVERSIONMODE_NONE, self::CONVERSIONMODE_AUTO, self::CONVERSIONMODE_MANUAL], true)) {
+                throw new UserMessageException(t('Access Denied'));
+            }
             $xml = $this->request->request->get('xml');
             $sx = $this->loadXml($xml);
+            $converters = $this->findConverters($sx, $conversionMode, preg_split('/\s+/', (string) $this->request->request->get('selectedConverters', ''), -1, PREG_SPLIT_NO_EMPTY));
+            $this->app->make(Converter\Import\Converter::class)->apply($sx, $converters);
             $importType = $this->extractImportType($sx);
             $result = [
                 'importType' => $importType,
-                'importToken' => $this->app->make(Token::class)->generate("blocks_cloner:import:{$importType}:{$this->cID}:{$areaHandle}:" . sha1($xml)),
             ];
             $parser = $this->app->make(XmlParser::class);
             $references = $parser->extractReferences($sx);
@@ -113,7 +127,10 @@ class Import extends Dialog
                     }
                 }
             }
+            $processedXml = $sx->asXML();
             $result['references'] = $this->serializeReferences($references);
+            $result['processedXml'] = $processedXml;
+            $result['importToken'] = $this->app->make(Token::class)->generate("blocks_cloner:import:{$importType}:{$this->cID}:{$areaHandle}:" . sha1($processedXml));
 
             return $this->app->make(ResponseFactoryInterface::class)->json($result);
         } catch (Exception $x) {
@@ -655,5 +672,82 @@ class Import extends Dialog
     private function canStoreZipFilesInFileManager()
     {
         return in_array('zip', $this->app->make('helper/concrete/file')->getAllowedFileExtensions(), true);
+    }
+
+    /**
+     * @param string $conversionMode
+     * @param string[] $manualConverterHandles
+     *
+     * @return \Concrete\Package\BlocksCloner\Converter\Import[]
+     */
+    private function findConverters(SimpleXMLElement $sx, $conversionMode, array $manualConverterHandles)
+    {
+        switch ($conversionMode) {
+            case self::CONVERSIONMODE_NONE:
+                return [];
+            case self::CONVERSIONMODE_AUTO:
+                return $this->findAutomaticConverters($sx);
+            case self::CONVERSIONMODE_MANUAL:
+                return $this->findManualConverters($manualConverterHandles);
+        }
+    }
+
+    /**
+     * @return \Concrete\Package\BlocksCloner\Converter\Import[]
+     */
+    private function findAutomaticConverters(SimpleXMLElement $sx)
+    {
+        $service = Converter\Environment\Service::getInstance();
+        try {
+            $xmlEnvironment = $service->extractEnvironmentFromXml($sx);
+            if ($xmlEnvironment === null) {
+                throw new UserMessageException(t('The XML lacks the comment describing the environment'));
+            }
+        } catch (UserMessageException $x) {
+            throw new UserMessageException(t('Unable to automatically determine which converters to use: %s', $x->getMessage()));
+        }
+        $currentEnvironment = $service->getCurrentEnvironment();
+        $result = [];
+        $plugins = $this->app->make(PluginManager::class)->getPlugins(ConvertImport::class);
+        foreach ($plugins as $plugin) {
+            foreach ($plugin->getImportConverters() as $converter) {
+                if ($converter->canBeAppliedTo($xmlEnvironment, $currentEnvironment)) {
+                    $result[] = $converter;
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return \Concrete\Package\BlocksCloner\Converter\Import[]
+     */
+    private function findManualConverters(array $wantedConverterHandles)
+    {
+        if ($wantedConverterHandles === []) {
+            return [];
+        }
+        $wantedConverterHandles = array_unique($wantedConverterHandles);
+        $plugins = $this->app->make(PluginManager::class)->getPlugins(ConvertImport::class);
+        $result = [];
+        foreach ($plugins as $plugin) {
+            foreach ($plugin->getImportConverters() as $converter) {
+                $handle = $converter->getHandle();
+                if (!in_array($handle, $wantedConverterHandles, true)) {
+                    continue;
+                }
+                if (isset($result[$handle])) {
+                    throw new UserMessageException("More than one import converter found with the handle '%s'", $handle);
+                }
+                $result[$handle] = $converter;
+            }
+        }
+        $missingConverters = array_diff($wantedConverterHandles, array_keys($result));
+        if ($missingConverters !== []) {
+            throw new UserMessageException('Unable to find the import converters with these handles: %s', "'" . implode("', '", $missingConverters) . "'");
+        }
+
+        return array_values($result);
     }
 }
