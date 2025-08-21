@@ -5,11 +5,10 @@ namespace Concrete\Package\BlocksCloner\Converter\Environment;
 use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\Package\PackageService;
 use Concrete\Package\BlocksCloner\Converter\Environment;
+use Concrete\Package\BlocksCloner\Xml;
 use DOMComment;
 use DOMDocument;
 use DOMXPath;
-use RuntimeException;
-use SimpleXMLElement;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -20,22 +19,24 @@ final class Service
     const UNICODE_SOFT_HYPHEN_UTF8 = "\xC2\xAD";
 
     /**
-     * @var \Concrete\Package\BlocksCloner\Converter\Environment\Service|null
+     * @var \Concrete\Core\Package\PackageService
      */
-    private static $instance = null;
+    private $packageService;
+
+    /**
+     * @var \Concrete\Package\BlocksCloner\Xml
+     */
+    private $xmlService;
 
     /**
      * @var \Concrete\Package\BlocksCloner\Converter\Environment|null
      */
     private $currentEnvironment = null;
 
-    public static function getInstance()
+    public function __construct(PackageService $packageService, Xml $xmlService)
     {
-        if (self::$instance === null) {
-            self::$instance = new self();
-        }
-
-        return self::$instance;
+        $this->packageService = $packageService;
+        $this->xmlService = $xmlService;
     }
 
     /**
@@ -44,9 +45,8 @@ final class Service
     public function getCurrentEnvironment()
     {
         if ($this->currentEnvironment === null) {
-            $packageService = app(PackageService::class);
             $packagesAndVersions = [];
-            foreach ($packageService->getInstalledList() as $package) {
+            foreach ($this->packageService->getInstalledList() as $package) {
                 $packagesAndVersions[$package->getPackageHandle()] = $package->getPackageVersion();
             }
             $this->currentEnvironment = new Environment(APP_VERSION, $packagesAndVersions);
@@ -67,13 +67,26 @@ final class Service
     }
 
     /**
+     * @param string $xml
+     *
+     * @return string
+     */
+    public function addCurrentEnvironmentToXml($xml)
+    {
+        $data = json_encode($this->getCurrentEnvironment(), JSON_UNESCAPED_SLASHES);
+        $comment = '<!-- ' . self::XML_ENVIRONMENT_PREFIX . ' ' . str_replace('--', '-' . self::UNICODE_SOFT_HYPHEN_UTF8 . '-', $data) . ' -->';
+
+        return rtrim($xml) . "\n" . $comment;
+    }
+
+    /**
      * @param string|\SimpleXMLElement|\DOMDocument $xml
      *
      * @return \Concrete\Package\BlocksCloner\Converter\Environment|null
      */
     public function extractEnvironmentFromXml($xml)
     {
-        $doc = $this->ensureDOMDocument($xml);
+        $doc = $this->xmlService->getDOMDocument($xml);
         $xpath = new DOMXPath($doc);
         $comments = $xpath->query('//comment()');
         $result = null;
@@ -89,32 +102,6 @@ final class Service
         }
 
         return $result;
-    }
-
-    /**
-     * @param string|\SimpleXMLElement|\DOMDocument $xml
-     *
-     * @return \DOMDocument
-     */
-    private function ensureDOMDocument($xml)
-    {
-        if ($xml instanceof DOMDocument) {
-            return $xml;
-        }
-        if ($xml instanceof SimpleXMLElement) {
-            $el = dom_import_simplexml($xml);
-
-            return $el->ownerDocument ?: $el;
-        }
-        if (!is_string($xml)) {
-            throw new RuntimeException(t('Invalid type of parameter %1$s of function %2$s', '$xml', __METHOD__));
-        }
-        $doc = new DOMDocument();
-        if (!$doc->loadXML($xml, LIBXML_NOERROR | LIBXML_NOWARNING)) {
-            throw new UserMessageException(t('Invalid XML received'));
-        }
-
-        return $doc;
     }
 
     /**

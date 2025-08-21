@@ -24,7 +24,6 @@ $view->element('vue/diff_viewer', null, 'blocks_cloner');
                 <textarea
                     class="form-control"
                     v-model.trim="inputXml"
-                    v-on:blur="normalizeInputXml()"
                     ref="inputXml"
                     nowrap
                     spellcheck="false"
@@ -109,8 +108,8 @@ $view->element('vue/diff_viewer', null, 'blocks_cloner');
     </div>
     <div v-else-if="page === PAGE.DIFF" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
         <blocks-cloner-diff-viewer
-            v-bind:left="inputXml"
-            v-bind:right="processedXmlNormalized"
+            v-bind:left="inputXmlNormalized"
+            v-bind:right="processedXml"
         ></blocks-cloner-diff-viewer>
         <div class="text-left text-start">
             <button v-on:click.prevent="page = PAGE.CHECK" class="btn btn-primary"><?= t('Back') ?></button>
@@ -169,6 +168,7 @@ new Vue({
             existingBlocksInArea: getExistingBlocksInArea(),
             busy: false,
             inputXml: '',
+            inputXmlNormalized: '',
             CONVERSION_MODE,
             conversionMode: CONVERSION_MODE.AUTO,
             selectedConverters: [],
@@ -198,6 +198,7 @@ new Vue({
     watch: {
         inputXml() {
             this.analyzeError = '';
+            this.inputXmlNormalized = '';
             this.processedXml = '';
         },
     },
@@ -210,7 +211,7 @@ new Vue({
                 const doc = window.ccmBlocksCloner.xml.parse(this.inputXml);
                 if (doc.documentElement.tagName !== 'block' || !doc.documentElement.getAttribute('type')) {
                     if (doc.documentElement.tagName !== 'area') {
-                        throw new Error(<?= json_encode(t('The XML does not represent a block in ConcreteCMS CIF Format')) ?>);
+                        throw new Error(<?= json_encode(t('The XML does not represent neither a block nor an area in ConcreteCMS CIF Format')) ?>);
                     }
                 }
             } catch (e) {
@@ -221,18 +222,8 @@ new Vue({
         allConverters() {
             return window.ccmBlocksCloner.conversion.getConverters();
         },
-        processedXmlNormalized() {
-            if (!this.processedXml) {
-                return '';
-            }
-            try {
-                return window.ccmBlocksCloner.xml.normalizeXml(this.processedXml);
-            } catch {
-                return this.processedXml;
-            }
-        },
         inputXmlHasBeenConverted() {
-            return this.inputXml && this.processedXmlNormalized && this.processedXmlNormalized !== this.inputXml;
+            return this.inputXmlNormalized && this.processedXml && this.inputXmlNormalized !== this.processedXml;
         },
         canImport() {
             if (this.busy || !this.processedXml) {
@@ -247,14 +238,6 @@ new Vue({
         },
     },
     methods: {
-        normalizeInputXml() {
-            if (this.inputXml && !this.xmlInputError) {
-                try {
-                    this.inputXml = window.ccmBlocksCloner.xml.normalizeXml(this.inputXml);
-                } catch (e) {
-                }
-            }
-        },
         async analyzeXml() {
             if (this.busy) {
                 return false;
@@ -295,6 +278,7 @@ new Vue({
                 this.importToken = responseData.importToken;
                 this.importType = responseData.importType;
                 this.references = responseData.references;
+                this.inputXmlNormalized = responseData.xmlNormalized;
                 this.processedXml = responseData.processedXml;
             } catch (e) {
                 this.analyzeError = e?.message || e?.toString() || <?= json_encode(t('Unknown error')) ?>;

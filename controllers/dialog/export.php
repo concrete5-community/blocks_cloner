@@ -4,29 +4,25 @@ namespace Concrete\Package\BlocksCloner\Controller\Dialog;
 
 use Concrete\Package\BlocksCloner\Converter\Environment\Service;
 use Concrete\Package\BlocksCloner\UI\Controller\Dialog;
-use DOMDocument;
-use SimpleXMLElement;
+use Concrete\Package\BlocksCloner\Xml;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
 abstract class Export extends Dialog
 {
     /**
+     * @param string|\SimpleXMLElement|\DOMDocument $xml
      * @param bool $addCurrentEnvironment
      *
      * @return string
      */
-    protected function formatXml(SimpleXMLElement $sx, $addCurrentEnvironment = false)
+    protected function formatXml($xml, $addCurrentEnvironment = false)
     {
-        $doc = new DOMDocument('1.0');
-        $doc->preserveWhiteSpace = false;
-        $doc->formatOutput = true;
-        $doc->loadXML($sx->asXML());
+        $xmlNormalized = $this->app->make(Xml::class)->normalize($xml);
         if ($addCurrentEnvironment) {
-            $this->app->make(Service::class)->addCurrentEnvironmentToDoc($doc);
+            $xmlNormalized = $this->app->make(Service::class)->addCurrentEnvironmentToXml($xmlNormalized);
         }
-        $xml = $doc->saveXML();
 
-        return preg_replace('{^<\?xml[^>]*>\s}i', '', $xml);
+        return $xmlNormalized;
     }
 }

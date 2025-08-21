@@ -23,10 +23,10 @@ use Concrete\Core\Validation\CSRF\Token;
 use Concrete\Package\BlocksCloner\Converter;
 use Concrete\Package\BlocksCloner\Edit\Context;
 use Concrete\Package\BlocksCloner\Import\Enviro;
-use Concrete\Package\BlocksCloner\Import\LoadXmlTrait;
 use Concrete\Package\BlocksCloner\Plugin\ConvertImport;
 use Concrete\Package\BlocksCloner\PluginManager;
 use Concrete\Package\BlocksCloner\UI\Controller\Dialog;
+use Concrete\Package\BlocksCloner\Xml;
 use Concrete\Package\BlocksCloner\XmlParser;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
@@ -38,8 +38,6 @@ defined('C5_EXECUTE') or die('Access Denied.');
 
 class Import extends Dialog
 {
-    use LoadXmlTrait;
-
     const CONVERSIONMODE_NONE = 'none';
 
     const CONVERSIONMODE_AUTO = 'auto';
@@ -100,7 +98,12 @@ class Import extends Dialog
                 throw new UserMessageException(t('Access Denied'));
             }
             $xml = $this->request->request->get('xml');
-            $sx = $this->loadXml($xml);
+            if (!is_string($xml) || ($xml = trim($xml)) === '') {
+                throw new UserMessageException(t('Please specify the XML to be imported'));
+            }
+            $xmlService = $this->app->make(Xml::class);
+            $sx = $xmlService->getSimpleXMLElement($xml);
+            $xmlNormalized = $xmlService->normalize($sx);
             $converters = $this->findConverters($sx, $conversionMode, preg_split('/\s+/', (string) $this->request->request->get('selectedConverters', ''), -1, PREG_SPLIT_NO_EMPTY));
             $this->app->make(Converter\Import\Converter::class)->apply($sx, $converters);
             $importType = $this->extractImportType($sx);
@@ -127,8 +130,9 @@ class Import extends Dialog
                     }
                 }
             }
-            $processedXml = $sx->asXML();
+            $processedXml = $xmlService->normalize($sx);
             $result['references'] = $this->serializeReferences($references);
+            $result['xmlNormalized'] = $xmlNormalized;
             $result['processedXml'] = $processedXml;
             $result['importToken'] = $this->app->make(Token::class)->generate("blocks_cloner:import:{$importType}:{$this->cID}:{$areaHandle}:" . sha1($processedXml));
 
@@ -697,7 +701,7 @@ class Import extends Dialog
      */
     private function findAutomaticConverters(SimpleXMLElement $sx)
     {
-        $service = Converter\Environment\Service::getInstance();
+        $service = $this->app->make(Converter\Environment\Service::class);
         try {
             $xmlEnvironment = $service->extractEnvironmentFromXml($sx);
             if ($xmlEnvironment === null) {

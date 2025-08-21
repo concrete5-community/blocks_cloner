@@ -149,11 +149,10 @@ class Area extends Export
             $xml .= '</blocks>';
         }
         $xml .= '</area>';
-        $sx = simplexml_load_string($xml);
 
         return [
-            'xml' => $this->formatXml($sx, true),
-            'references' => $this->serializeReferences($parser->extractReferences($sx)),
+            'xml' => $this->formatXml($xml, true),
+            'references' => $this->serializeReferences($parser->extractReferences($xml)),
         ];
     }
 }

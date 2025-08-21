@@ -1,7 +1,4 @@
-import * as xmlFormatter from 'xml-formatter';
-
 const parser = new DOMParser();
-const xmlSerializer = new XMLSerializer();
 
 /**
  * Builds an XML document (from an XML which may have more than one root element is wrap is true).
@@ -9,12 +6,8 @@ const xmlSerializer = new XMLSerializer();
  *
  * @throws Error if the input XML is invalid (if so, the error message is in HTML format)
  */
-function parse(xml: string, wrap?: boolean): XMLDocument {
-  if (wrap) {
-    xml = `<root>${xml.trim().replace(/^<\?xml[^>]*>\s*/i, '')}</root>`;
-  } else {
-    xml = xml.trim();
-  }
+function parse(xml: string): XMLDocument {
+  xml = xml.trim();
   const doc = parser.parseFromString(xml, 'application/xml');
   const errorNode = doc.querySelector('parsererror');
   if (errorNode) {
@@ -22,61 +15,7 @@ function parse(xml: string, wrap?: boolean): XMLDocument {
   }
   return doc;
 }
-function normalizeXml(xml: string): string {
-  const doc = parse(xml, true);
-  stripUsepessCDATASections(doc.documentElement);
-  useCDATASections(doc.documentElement);
-  return (xmlFormatter as any)(doc.documentElement.innerHTML, {
-    indentation: '   ',
-    collapseContent: true,
-    lineSeparator: '\n',
-    whiteSpaceAtEndOfSelfclosingTag: true,
-    throwOnFailure: true,
-    strictMode: true,
-    forceSelfClosingEmptyTag: true,
-  });
-}
-
-function stripUsepessCDATASections(node: Node): void {
-  if (node.nodeType !== Node.CDATA_SECTION_NODE) {
-    node.childNodes.forEach(stripUsepessCDATASections);
-    return;
-  }
-  const text = node.nodeValue || '';
-  if (/[<>&]/.test(text)) {
-    return;
-  }
-  node.parentNode!.replaceChild(node.ownerDocument!.createTextNode(text), node);
-}
-
-function useCDATASections(node: Node): void {
-  if (node.nodeType !== Node.TEXT_NODE) {
-    node.childNodes.forEach(useCDATASections);
-    return;
-  }
-  const text = node.nodeValue || '';
-  if (!/[<>&]/.test(text)) {
-    return;
-  }
-  const doc = node.ownerDocument!;
-  if (!text.includes(']]>')) {
-    const cdata = doc.createCDATASection(text);
-    node.parentNode!.replaceChild(cdata, node);
-    return;
-  }
-  const fragment = doc.createDocumentFragment();
-  text.split(']]>').forEach((part, index) => {
-    if (index > 0) {
-      fragment.appendChild(doc.createTextNode(']]>'));
-    }
-    if (part !== '') {
-      fragment.appendChild(doc.createCDATASection(part));
-    }
-  });
-  node.parentNode!.replaceChild(fragment, node);
-}
 
 export default {
-  parse: (xml: string): XMLDocument => parse(xml, false),
-  normalizeXml,
+  parse,
 };
