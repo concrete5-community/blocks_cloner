@@ -140,7 +140,7 @@ class BlockType
         if (isset($this->addRecordFields[$tableName])) {
             throw new \RuntimeException(t('Duplicated table name: %s', $tableName));
         }
-        $this->addRecordFields[$tableName] = (object) array_map('strval', $namesAndValues);
+        $this->addRecordFields[$tableName] = array_map('strval', $namesAndValues);
 
         return $this;
     }

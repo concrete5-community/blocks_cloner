@@ -275,7 +275,7 @@ class PixelTheme2To9 implements ConvertExport, ConvertImport
                     ->setNewBlockTypeHandle('pixel_cta')
                     ->renameDataTable('btWhaleCta', 'btPixelCta')
                     ->fontAwesome4to5Fields('btWhaleCta', ['icon'])
-                    ->addRecordFields('btPixelCta', [
+                    ->addRecordFields('btWhaleCta', [
                         'color' => '',
                     ])
                     ->addTemplateRemapping('pixel_btn', 'pixel_button')

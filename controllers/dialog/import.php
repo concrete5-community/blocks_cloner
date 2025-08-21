@@ -106,7 +106,6 @@ class Import extends Dialog
             $importType = $this->extractImportType($sx);
             $result = [
                 'importType' => $importType,
-                'importToken' => $this->app->make(Token::class)->generate("blocks_cloner:import:{$importType}:{$this->cID}:{$areaHandle}:" . sha1($xml)),
             ];
             $parser = $this->app->make(XmlParser::class);
             $references = $parser->extractReferences($sx);
@@ -128,8 +127,10 @@ class Import extends Dialog
                     }
                 }
             }
+            $processedXml = $sx->asXML();
             $result['references'] = $this->serializeReferences($references);
-            $result['processedXml'] = $sx->asXML();
+            $result['processedXml'] = $processedXml;
+            $result['importToken'] = $this->app->make(Token::class)->generate("blocks_cloner:import:{$importType}:{$this->cID}:{$areaHandle}:" . sha1($processedXml));
 
             return $this->app->make(ResponseFactoryInterface::class)->json($result);
         } catch (Exception $x) {

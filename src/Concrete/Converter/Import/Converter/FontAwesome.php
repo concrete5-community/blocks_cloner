@@ -827,10 +827,20 @@ class FontAwesome
      */
     private function extractV4Suffix($icon)
     {
-        $icon = preg_replace('/\s+/', ' ', $icon);
-        $icon = trim($icon);
-        $icon = preg_replace('/^fa | fa$/', '', $icon);
-
-        return preg_replace('/^fa-$', '', $icon);
+        return preg_replace(
+            '/^fa-$/',
+            '',
+            preg_replace(
+                '/^fa | fa$/',
+                '',
+                trim(
+                    preg_replace(
+                        '/\s+/',
+                        ' ',
+                        $icon
+                    )
+                )
+            )
+        );
     }
 }

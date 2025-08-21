@@ -110,7 +110,7 @@ $view->element('vue/diff_viewer', null, 'blocks_cloner');
     <div v-else-if="page === PAGE.DIFF" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
         <blocks-cloner-diff-viewer
             v-bind:left="inputXml"
-            v-bind:right="processedXml"
+            v-bind:right="processedXmlNormalized"
         ></blocks-cloner-diff-viewer>
         <div class="text-left text-start">
             <button v-on:click.prevent="page = PAGE.CHECK" class="btn btn-primary"><?= t('Back') ?></button>
@@ -221,8 +221,18 @@ new Vue({
         allConverters() {
             return window.ccmBlocksCloner.conversion.getConverters();
         },
+        processedXmlNormalized() {
+            if (!this.processedXml) {
+                return '';
+            }
+            try {
+                return window.ccmBlocksCloner.xml.normalizeXml(this.processedXml);
+            } catch {
+                return this.processedXml;
+            }
+        },
         inputXmlHasBeenConverted() {
-            return this.inputXml && !this.xmlInputError && this.processedXml && this.processedXml !== this.inputXml;
+            return this.inputXml && this.processedXmlNormalized && this.processedXmlNormalized !== this.inputXml;
         },
         canImport() {
             if (this.busy || !this.processedXml) {
@@ -282,11 +292,10 @@ new Vue({
                 if (responseData.error) {
                     throw new Error(responseData.error);
                 }
-                const processedXml = window.ccmBlocksCloner.xml.normalizeXml(responseData.processedXml);
                 this.importToken = responseData.importToken;
                 this.importType = responseData.importType;
                 this.references = responseData.references;
-                this.processedXml = processedXml;
+                this.processedXml = responseData.processedXml;
             } catch (e) {
                 this.analyzeError = e?.message || e?.toString() || <?= json_encode(t('Unknown error')) ?>;
                 return;

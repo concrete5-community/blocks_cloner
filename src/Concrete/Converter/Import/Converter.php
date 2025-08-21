@@ -95,7 +95,7 @@ class Converter
         $result = [];
         foreach ($el->children() as $child) {
             if ($child->getName() === $name) {
-                $result[] = $el;
+                $result[] = $child;
             }
         }
 
@@ -119,7 +119,6 @@ class Converter
      */
     private function convertBlock(SimpleXMLElement $xBlock, Import\BlockType $converter)
     {
-        /** @var \Concrete\Package\BlocksCloner\Converter\Import\BlockType $converter */
         if (($newBlockTypeHandle = $converter->getNewBlockTypeHandle()) !== '') {
             $xBlock['type'] = $newBlockTypeHandle;
         }
@@ -151,7 +150,7 @@ class Converter
      */
     private function applyBlockTemplateRemappings(SimpleXMLElement $xBlock, array $templateRemappings)
     {
-        $currentTemplateHandle = preg_replace('\.php$/', '', (string) $xBlock['custom-template']);
+        $currentTemplateHandle = preg_replace('/\.php$/', '', (string) $xBlock['custom-template']);
         if (isset($templateRemappings[$currentTemplateHandle])) {
             $remapTo = $templateRemappings[$currentTemplateHandle];
         } elseif (isset($templateRemappings["{$currentTemplateHandle}.php"])) {
@@ -162,7 +161,7 @@ class Converter
         if ($remapTo['newTemplate'] === '') {
             unset($xBlock['custom-template']);
         } elseif ($remapTo['newTemplate'] !== null) {
-            $xBlock['custom-template'] = preg_replace('\.php$/', '', $remapTo['newTemplate']) . '.php';
+            $xBlock['custom-template'] = preg_replace('/\.php$/', '', $remapTo['newTemplate']) . '.php';
         }
         if ($remapTo['newCustomClasses'] !== []) {
             $xStyle = $this->getFirstChildElement($xBlock, 'style') ?: $xBlock->addChild('style');

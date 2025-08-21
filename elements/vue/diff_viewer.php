@@ -7,10 +7,10 @@ ob_start();
 <div style="display: flex; flex-direction: column; overflow-y: auto; flex-grow: 1">
     <div>
         <select class="form-control" v-model="type">
-            <option v-for="t in TYPE" v-bind:value="t">{{ getTypeName(t) }}</option>
+            <option v-for="t in TYPES" v-bind:value="t">{{ t.name }}</option>
         </select>
     </div>
-    <div v-html="diffHtml" style="white-space: pre; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 0.9em"></div>
+    <div v-html="diffHtml" style="white-space: pre; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 0.9em; border: inset 2px #ddd; height: 100%; overflow: auto"></div>
 </div>
 <?php
 $template = ob_get_contents();
@@ -34,23 +34,47 @@ Vue.component('blocks-cloner-diff-viewer', {
         },
     },
     data() {
-        const TYPE = window.ccmBlocksCloner.diff.TYPE;
+        const TYPES = [];
+        const RAW_TYPE = window.ccmBlocksCloner.diff.TYPE;
+        const typeKeys = Object.keys(RAW_TYPE);
+        [
+            {key: 'PATCH', name: <?= json_encode(t('View differences in Diff format')) ?>},
+            {key: 'CHARS', name: <?= json_encode(t('View character-by-character differences')) ?>},
+            {key: 'WORDS', name: <?= json_encode(t('View word-by-word differences')) ?>},
+            {key: 'WORDS_WITH_SPACE', name: <?= json_encode(t('View word-by-word differences (with spaces)')) ?>},
+            {key: 'LINES', name: <?= json_encode(t('View line-by-line differences')) ?>},
+        ].forEach((entry) => {
+            const index = typeKeys.indexOf(entry.key);
+            if (index < 0) {
+                return;
+            }
+            typeKeys.splice(index, 1);
+            TYPES.push({name: entry.name, key: entry.key, value: RAW_TYPE[entry.key]});
+        });
+        typeKeys.forEach((key) => {
+            TYPES.push({name: key, key: key, value: RAW_TYPE[key]});
+        });
         return {
-            TYPE,
-            type: TYPE.LINES,
+            TYPES,
+            type: TYPES[0],
             idPrefix: '',
         };
     },
     watch: {
         type() {
-            window.localStorage.setItem('ccmBlocksCloner-diffviewer-type', this.type);
+            window.localStorage.setItem('ccmBlocksCloner-diffviewer-type', this.type.key);
         },
     },
     mounted() {
         this.idPrefix = 'ccm-blockscloner-diffviewer-' + mountCount++;
-        const type = window.localStorage.getItem('ccmBlocksCloner-diffviewer-type');
-        if (type && Object.values(this.TYPE).includes(type)) {
-            this.type = type;
+        const typeKey = window.localStorage.getItem('ccmBlocksCloner-diffviewer-type');
+        if (typeKey) {
+            this.TYPES.some((type) => {
+                if (type.key === typeKey) {
+                    this.type = type;
+                    return true;
+                }
+            });
         }
     },
     computed: {
@@ -58,7 +82,7 @@ Vue.component('blocks-cloner-diff-viewer', {
             if (typeof this.left !== 'string' || typeof this.right !== 'string') {
                 return '';
             }
-            const diffs = window.ccmBlocksCloner.diff.create(this.type, this.left, this.right);
+            const diffs = window.ccmBlocksCloner.diff.create(this.type.value, this.left, this.right);
             const chunks = diffs.map((diff) => {
                 const a = document.createElement('span');
                 a.textContent = diff.value;
@@ -72,23 +96,6 @@ Vue.component('blocks-cloner-diff-viewer', {
                 return a.outerHTML;
             });
             return chunks.join('');
-        },
-    },
-    methods: {
-        getTypeName(type) {
-            switch (type) {
-                case this.TYPE.PATCH:
-                    return <?= json_encode(t(/* i18n: this is the format of patch files */ 'Diff format')) ?>;
-                case this.TYPE.CHARS:
-                    return <?= json_encode(t('Break at characters')) ?>;
-                case this.TYPE.WORDS:
-                    return <?= json_encode(t('Break at words')) ?>;
-                case this.TYPE.WORDS_WITH_SPACE:
-                    return <?= json_encode(t('Break at words (with space)')) ?>;
-                case this.TYPE.LINES:
-                    return <?= json_encode(t('Break at lines')) ?>;
-            }
-            return type;
         },
     },
 });
