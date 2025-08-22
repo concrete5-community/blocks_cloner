@@ -12,6 +12,7 @@ if (is_link('/app/packages/blocks_cloner') && readlink('/app/packages/blocks_clo
 }
 
 require_once DIR_BASE . '/concrete/dispatcher.php';
+@stream_wrapper_restore('phar');
 
 if (!app()->isInstalled()) {
     fwrite(STDERR, "Concrete must be installed in order to perform tests.\n");

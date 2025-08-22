@@ -147,10 +147,12 @@ jobs:
             ccm-version: "9.0"
             php-version: "7.4"
             phpunit-version: 8
+            phpunit-options: --do-not-cache-result
           -
             ccm-version: "9.1"
             php-version: "7.4"
             phpunit-version: 8
+            phpunit-options: --do-not-cache-result
           -
             ccm-version: "9.2"
             php-version: "8.1"
