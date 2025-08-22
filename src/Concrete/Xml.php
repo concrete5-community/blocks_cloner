@@ -130,7 +130,7 @@ final class Xml
             libxml_clear_errors();
             $sx = simplexml_load_string($xml);
             $errors = libxml_get_errors();
-            if ($sx && empty($errors)) {
+            if ($sx instanceof SimpleXMLElement && empty($errors)) {
                 return $sx;
             }
         } finally {
