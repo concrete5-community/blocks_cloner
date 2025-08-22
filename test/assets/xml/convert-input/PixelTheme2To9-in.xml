@@ -1,0 +1,88 @@
+<!-- Environment: {"core":"8.5.20","packages":{"theme_pixel": "2.0"}} -->
+<blocks>
+  <!-- CUSTOM TEMPLATE CONVERSIONS -->
+  <!-- No conversion should occur here -->
+  <block type="autonav"/>
+  <block type="autonav" custom-template="keep_me.php"/>
+  <block type="unrecognized_block_type" custom-template="pixel_list.php"/>
+  <!-- Original: pixel_breadcrumb -->
+  <block type="autonav" custom-template="pixel_breadcrumb.php"/>
+  <!-- Original: pixel_breadcrumb -->
+  <block type="autonav" custom-template="pixel_breadcrumb"/>
+  <!-- Original: pixel_tree -->
+  <block type="autonav" custom-template="pixel_tree.php"/>
+  <!-- Original: pixel_fancy_title -->
+  <block type="content" custom-template="pixel_fancy_title.php"/>
+  <!-- Original: pixel_fancy_title_bottom_border -->
+  <block type="content" custom-template="pixel_fancy_title_bottom_border.php"/>
+  <block type="content" custom-template="pixel_fancy_title_bottom_border.php">
+    <style/>
+  </block>
+  <block type="content" custom-template="pixel_fancy_title_bottom_border.php">
+    <style>
+      <customClass></customClass>
+    </style>
+  </block>
+  <block type="content" custom-template="pixel_fancy_title_bottom_border.php">
+    <style>
+      <customClass>keep-me</customClass>
+    </style>
+  </block>
+  <block type="content" custom-template="pixel_fancy_title_bottom_border.php">
+    <style>
+      <customClass><![CDATA[ special &lt; chars]]></customClass>
+    </style>
+  </block>
+  <block type="content" custom-template="pixel_fancy_title_bottom_border.php">
+    <style>
+      <customClass>title:bottom-border</customClass>
+    </style>
+  </block>
+  <block type="content" custom-template="pixel_fancy_title_bottom_border.php">
+    <style>
+      <customClass>before title:bottom-border after</customClass>
+    </style>
+  </block>
+  <!-- OTHER CONVERSIONS -->
+  <!-- Rename type -->
+  <block type="whale_chart">
+    <!-- Rename table -->
+    <data table="btWhaleChart">
+      <record>
+        <!-- Fields to be removed -->
+        <lineCap/>
+        <scaleColor/>
+        <!-- FontAwesome icon to be converted from v4 to v5 -->
+        <icon>500px</icon>
+      </record>
+    </data>
+  </block>
+  <!-- Rename type -->
+  <block type="whale_gallery">
+    <!-- Rename table -->
+    <data table="btWhaleGallery">
+      <record>
+        <existingField/>
+        <columnsLg>0</columnsLg>
+        <columnsXl/>
+        <!-- Below we'll have new fields -->
+      </record>
+    </data>
+  </block>
+  <!-- More than one table -->
+  <block type="whale_image_slider">
+    <data table="btWhaleImageSlider">
+      <record>
+        <heightXss/>
+        <heightXl/>
+      </record>
+      <record>
+        <scroller/>
+      </record>
+    </data>
+    <data table="btWhaleImageSliderEntries">
+      <record/>
+      <record/>
+    </data>
+  </block>
+</blocks>
