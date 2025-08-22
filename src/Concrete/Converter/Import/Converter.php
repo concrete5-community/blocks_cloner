@@ -236,8 +236,8 @@ class Converter
             }
             foreach ($this->listChildElements($xData, 'record') as $xRecord) {
                 foreach ($fields as $field) {
-                    foreach ($xRecord->{$field} as $xField) {
-                        unset($xField[0]);
+                    while (isset($xRecord->{$field})) {
+                        unset($xRecord->{$field}[0]);
                     }
                 }
             }

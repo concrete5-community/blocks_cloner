@@ -52,6 +52,7 @@
         <!-- Fields to be removed -->
         <lineCap/>
         <scaleColor/>
+        <lineCap/>
         <!-- FontAwesome icon to be converted from v4 to v5 -->
         <icon>500px</icon>
       </record>
