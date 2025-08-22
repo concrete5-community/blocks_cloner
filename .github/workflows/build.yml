@@ -123,8 +123,8 @@ jobs:
             echo "No development leftovers found."
           fi
 
-  check-install:
-    name: Install on Concrete ${{ matrix.ccm-version }}
+  phpunit:
+    name: PHPUnit with Concrete ${{ matrix.ccm-version }}
     runs-on: ubuntu-latest
     container: ghcr.io/concrete5-community/docker5:${{ matrix.ccm-version }}
     needs:
@@ -132,26 +132,68 @@ jobs:
       - check-php-coding-style
       - check-development-leftovers
     strategy:
+      fail-fast: false
       matrix:
-        ccm-version:
-          - 8.5.4
-          - "8.5"
-          - "9.0"
-          - "9.1"
-          - "9.2"
-          - "9.3"
-          - "9.4"
-          - latest
+        include:
+          -
+            ccm-version: 8.5.4
+            php-version: "5.6"
+            phpunit-version: 4
+          -
+            ccm-version: "8.5"
+            php-version: "5.6"
+            phpunit-version: 4
+          -
+            ccm-version: "9.0"
+            php-version: "7.4"
+            phpunit-version: 8
+            phpunit-options: --do-not-cache-result
+          -
+            ccm-version: "9.1"
+            php-version: "7.4"
+            phpunit-version: 8
+            phpunit-options: --do-not-cache-result
+          -
+            ccm-version: "9.2"
+            php-version: "8.1"
+            phpunit-version: 8
+            phpunit-options: --do-not-cache-result
+          -
+            ccm-version: "9.3"
+            php-version: "8.1"
+            phpunit-version: 10
+            phpunit-options: --do-not-cache-result
+          -
+            ccm-version: "9.4"
+            php-version: "8.2"
+            phpunit-version: 10
+            phpunit-options: --do-not-cache-result
+          -
+            ccm-version: latest
+            php-version: "8.2"
+            phpunit-version: 10
+            phpunit-options: --do-not-cache-result
     steps:
       -
         name: Checkout
         uses: actions/checkout@v4
+      -
+        name: Mark the repo as safe
+        run: git config --global --add safe.directory "$(pwd)" || true
       -
         name: Check composer.json
         run: sudo -u www-data composer --ansi --no-interaction validate --strict -- "$GITHUB_WORKSPACE/composer.json"
       -
         name: Start services
         run: ccm-service start db
+      -
+        name: Use PHP ${{ matrix.php-version }}
+        if: matrix.php-version
+        run: switch-php "${{ matrix.php-version }}" && php --version
+      -
+        name: Use PHPUnit ${{ matrix.phpunit-version }}
+        if: matrix.phpunit-version
+        run: switch-phpunit "${{ matrix.phpunit-version }}" && phpunit --version
       -
         name: Core info
         run: sudo -u www-data /app/concrete/bin/concrete5 --ansi --no-interaction c5:info
@@ -161,3 +203,7 @@ jobs:
       -
         name: Install package
         run: sudo -u www-data /app/concrete/bin/concrete5 --ansi --no-interaction c5:package:install blocks_cloner
+      -
+        name: Run PHPUnit
+        working-directory: /app/packages/blocks_cloner
+        run: sudo -u www-data phpunit ${{ matrix.phpunit-options }}

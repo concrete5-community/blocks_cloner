@@ -1,0 +1,8 @@
+{
+    "targetEnvironment": {
+        "core": "9.0",
+        "packages": {
+            "theme_pixel9": "9.0"
+        }
+    }
+}

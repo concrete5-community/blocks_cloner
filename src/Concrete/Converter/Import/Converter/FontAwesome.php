@@ -828,7 +828,7 @@ class FontAwesome
     private function extractV4Suffix($icon)
     {
         return preg_replace(
-            '/^fa-$/',
+            '/^fa-/',
             '',
             preg_replace(
                 '/^fa | fa$/',

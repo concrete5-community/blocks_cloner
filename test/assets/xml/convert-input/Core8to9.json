@@ -1,0 +1,7 @@
+{
+    "targetEnvironment": {
+        "core": "9.0",
+        "packages": {
+        }
+    }
+}

@@ -1,0 +1,104 @@
+<!-- Environment: {"core":"8.5.20","packages":{"theme_pixel": "2.0"}} -->
+<blocks>
+  <!-- CUSTOM TEMPLATE CONVERSIONS -->
+  <!-- No conversion should occur here -->
+  <block type="autonav"/>
+  <block type="autonav" custom-template="keep_me.php"/>
+  <block type="unrecognized_block_type" custom-template="pixel_list.php"/>
+  <!-- Original: pixel_breadcrumb -->
+  <block type="autonav"/>
+  <!-- Original: pixel_breadcrumb -->
+  <block type="autonav"/>
+  <!-- Original: pixel_tree -->
+  <block type="autonav"/>
+  <!-- Original: pixel_fancy_title -->
+  <block type="content" custom-template="pixel_page_title.php"/>
+  <!-- Original: pixel_fancy_title_bottom_border -->
+  <block type="content" custom-template="pixel_page_title.php">
+    <style>
+      <customClass>title:bottom-border</customClass>
+    </style>
+  </block>
+  <block type="content" custom-template="pixel_page_title.php">
+    <style>
+      <customClass>title:bottom-border</customClass>
+    </style>
+  </block>
+  <block type="content" custom-template="pixel_page_title.php">
+    <style>
+      <customClass>title:bottom-border</customClass>
+    </style>
+  </block>
+  <block type="content" custom-template="pixel_page_title.php">
+    <style>
+      <customClass>keep-me title:bottom-border</customClass>
+    </style>
+  </block>
+  <block type="content" custom-template="pixel_page_title.php">
+    <style>
+      <customClass><![CDATA[special &lt; chars title:bottom-border]]></customClass>
+    </style>
+  </block>
+  <block type="content" custom-template="pixel_page_title.php">
+    <style>
+      <customClass>title:bottom-border</customClass>
+    </style>
+  </block>
+  <block type="content" custom-template="pixel_page_title.php">
+    <style>
+      <customClass>before title:bottom-border after</customClass>
+    </style>
+  </block>
+  <!-- OTHER CONVERSIONS -->
+  <!-- Rename type -->
+  <block type="pixel_pie_chart">
+    <!-- Rename table -->
+    <data table="btPixelPieChart">
+      <record>
+        <!-- Fields to be removed -->
+        <!-- FontAwesome icon to be converted from v4 to v5 -->
+        <icon>fab fa-500px</icon>
+      </record>
+    </data>
+  </block>
+  <!-- Rename type -->
+  <block type="pixel_gallery">
+    <!-- Rename table -->
+    <data table="btPixelGallery">
+      <record>
+        <existingField/>
+        <columnsLg>0</columnsLg>
+        <columnsXl/>
+        <!-- Below we'll have new fields -->
+        <columnsSm>0</columnsSm>
+        <columnsMd>0</columnsMd>
+        <columnsXxl>0</columnsXxl>
+        <gutter>0</gutter>
+        <cropImage>0</cropImage>
+        <maxWidth>0</maxWidth>
+        <maxHeight>0</maxHeight>
+      </record>
+    </data>
+  </block>
+  <!-- More than one table -->
+  <block type="pixel_slider">
+    <data table="btPixelSlider">
+      <record>
+        <heightXl/>
+        <slideNumbers>0</slideNumbers>
+        <autoplayOnce>0</autoplayOnce>
+        <disableParallax>0</disableParallax>
+      </record>
+      <record>
+        <heightXl>0</heightXl>
+        <slideNumbers>0</slideNumbers>
+        <autoplayOnce>0</autoplayOnce>
+        <disableParallax>0</disableParallax>
+      </record>
+    </data>
+    <data table="btPixelSliderEntries">
+      <record/>
+      <record/>
+    </data>
+  </block>
+</blocks>

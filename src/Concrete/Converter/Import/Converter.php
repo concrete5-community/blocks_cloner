@@ -105,13 +105,13 @@ class Converter
     /**
      * @param string $name
      *
-     * @return \SimpleXMLElement|null
+     * @return \SimpleXMLElement
      */
-    private function getFirstChildElement(SimpleXMLElement $el, $name)
+    private function getOrCreateFirstChildElement(SimpleXMLElement $el, $name)
     {
         $all = $this->listChildElements($el, $name);
 
-        return $all === [] ? null : $all[0];
+        return $all === [] ? $el->addChild($name) : $all[0];
     }
 
     /**
@@ -164,8 +164,8 @@ class Converter
             $xBlock['custom-template'] = preg_replace('/\.php$/', '', $remapTo['newTemplate']) . '.php';
         }
         if ($remapTo['newCustomClasses'] !== []) {
-            $xStyle = $this->getFirstChildElement($xBlock, 'style') ?: $xBlock->addChild('style');
-            $xCustomClass = $this->getFirstChildElement($xStyle, 'customClass') ?: $xStyle->addChild('customClass');
+            $xStyle = $this->getOrCreateFirstChildElement($xBlock, 'style');
+            $xCustomClass = $this->getOrCreateFirstChildElement($xStyle, 'customClass');
             $oldCustomClasses = preg_split('/\s+/', (string) $xCustomClass, -1, PREG_SPLIT_NO_EMPTY);
             $customClassesToBeAdded = array_diff($remapTo['newCustomClasses'], $oldCustomClasses);
             if ($customClassesToBeAdded !== []) {
@@ -186,12 +186,8 @@ class Converter
                 continue;
             }
             foreach ($this->listChildElements($xData, 'record') as $xRecord) {
-                $existingFields = [];
-                foreach ($xRecord->children() as $child) {
-                    $existingFields[] = $child->getName();
-                }
                 foreach ($fields as $fieldName => $fieldValue) {
-                    if (in_array($fieldName, $existingFields, true)) {
+                    if (isset($xRecord->{$fieldName})) {
                         continue;
                     }
                     $xField = $xRecord->addChild($fieldName);
@@ -240,8 +236,8 @@ class Converter
             }
             foreach ($this->listChildElements($xData, 'record') as $xRecord) {
                 foreach ($fields as $field) {
-                    foreach ($xRecord->{$field} as $xField) {
-                        unset($xField[0]);
+                    while (isset($xRecord->{$field})) {
+                        unset($xRecord->{$field}[0]);
                     }
                 }
             }
