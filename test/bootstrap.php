@@ -26,10 +26,10 @@ if (!in_array('blocks_cloner', app(PackageService::class)->getInstalledHandles()
 
 spl_autoload_register(
     static function ($className) {
-        if (strpos($className, 'BlocksCloner\Tests\\') !== 0) {
+        if (strpos($className, 'BlocksCloner\Test\\') !== 0) {
             return;
         }
-        $relPath = str_replace('\\', '/', substr($className, strlen('BlocksCloner\Tests\\'))) . '.php';
+        $relPath = str_replace('\\', '/', substr($className, strlen('BlocksCloner\Test\\'))) . '.php';
         $absPath = BC_ROOT_DIR . '/test/src/' . $relPath;
         if (is_file($absPath)) {
             require_once $absPath;

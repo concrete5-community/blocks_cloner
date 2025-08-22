@@ -1,6 +1,6 @@
 <?php
 
-namespace BlocksCloner;
+namespace BlocksCloner\Test;
 
 use Concrete\Package\BlocksCloner\Xml;
 use DOMDocument;
