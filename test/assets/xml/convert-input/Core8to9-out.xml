@@ -1,0 +1,75 @@
+<blocks>
+  <block type="event_list">
+    <data table="btEventList">
+      <record>
+        <!-- titleFormat already present and untouched -->
+        <titleFormat>h1</titleFormat>
+      </record>
+    </data>
+  </block>
+  <block type="event_list">
+    <data table="btEventList">
+      <record>
+        <!-- titleFormat added below -->
+        <titleFormat>h5</titleFormat>
+      </record>
+    </data>
+  </block>
+  <block type="express_entry_list">
+    <data table="btExpressEntryList">
+      <record>
+        <!-- titleFormat added below -->
+        <titleFormat>h2</titleFormat>
+      </record>
+    </data>
+  </block>
+  <block type="feature">
+    <data table="btFeature">
+      <record>
+        <!-- titleFormat added below -->
+        <titleFormat>h4</titleFormat>
+      </record>
+    </data>
+  </block>
+  <block type="google_map">
+    <data table="btGoogleMap">
+      <record>
+        <!-- titleFormat added below -->
+        <titleFormat>h3</titleFormat>
+      </record>
+    </data>
+  </block>
+  <block type="page_list">
+    <data table="btPageList">
+      <record>
+        <!-- titleFormat added below -->
+        <titleFormat>h5</titleFormat>
+      </record>
+    </data>
+  </block>
+  <block type="rss_displayer">
+    <data table="btRssDisplay">
+      <record>
+        <!-- titleFormat added below -->
+        <titleFormat>h5</titleFormat>
+      </record>
+    </data>
+  </block>
+  <block type="tags">
+    <data table="btTags">
+      <record>
+        <!-- titleFormat added below -->
+        <titleFormat>h5</titleFormat>
+      </record>
+    </data>
+  </block>
+  <block type="topic_list">
+    <data table="btTopicList">
+      <record>
+        <!-- titleFormat added below -->
+        <titleFormat>h5</titleFormat>
+      </record>
+    </data>
+  </block>
+</blocks>
+<!-- Environment: {"core":"8.5.20","packages":{}} -->
