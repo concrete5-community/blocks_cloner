@@ -3,6 +3,7 @@
 namespace Concrete\Package\BlocksCloner\UI;
 
 use Concrete\Core\Controller\Controller as CoreController;
+use Concrete\Core\Entity\Attribute\Key\PageKey;
 use Concrete\Core\Entity\Block\BlockType\BlockType;
 use Concrete\Core\Entity\File\Version as FileVersion;
 use Concrete\Core\Entity\Package;
@@ -65,7 +66,7 @@ abstract class Controller extends CoreController
     protected function getPage()
     {
         if ($this->page === null) {
-            $this->page = Page::getByID($this->cID);
+            $this->page = Page::getByID($this->cID, 'RECENT');
         }
 
         return $this->page;
@@ -146,6 +147,8 @@ abstract class Controller extends CoreController
         switch ($referenceType) {
             case XmlParser::KEY_BLOCKTYPES:
                 return is_string($reference) ? ['error' => $reference] : $this->serializeBlockType($reference);
+            case XmlParser::KEY_PAGEATTRIBUTES:
+                return is_string($reference) ? ['error' => $reference] : $this->serializePageAttribute($reference);
             case XmlParser::KEY_FILES:
                 return is_string($reference) ? ['error' => $reference] : $this->serializeFileVersionReference($reference);
             case XmlParser::KEY_PAGES:
@@ -185,6 +188,30 @@ abstract class Controller extends CoreController
             'package' => $package === null ? null : [
                 'name' => t($package->getPackageName()),
                 'handle' => $package->getPackageHandle(),
+            ],
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    private function serializePageAttribute(PageKey $pageAttributeKey)
+    {
+        $type = $pageAttributeKey->getAttributeType();
+        /** @var \Concrete\Core\Entity\Attribute\Type $type */
+        $package = $type->getPackage();
+
+        return [
+            'id' => (int) $pageAttributeKey->getAttributeKeyID(),
+            'handle' => $pageAttributeKey->getAttributeKeyHandle(),
+            'name' => $pageAttributeKey->getAttributeKeyDisplayName('text'),
+            'type' => [
+                'handle' => $type->getAttributeTypeHandle(),
+                'name' => $type->getAttributeTypeDisplayName('text'),
+                'package' => $package === null ? null : [
+                    'name' => t($package->getPackageName()),
+                    'handle' => $package->getPackageHandle(),
+                ],
             ],
         ];
     }

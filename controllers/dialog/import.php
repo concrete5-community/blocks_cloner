@@ -4,9 +4,11 @@ namespace Concrete\Package\BlocksCloner\Controller\Dialog;
 
 use Concrete\Core\Area\Area;
 use Concrete\Core\Area\CustomStyle as AreaCustomStyle;
+use Concrete\Core\Attribute\Category\PageCategory;
 use Concrete\Core\Block\Block;
 use Concrete\Core\Block\CustomStyle as BlockCustomStyle;
 use Concrete\Core\Database\Connection\Connection;
+use Concrete\Core\Entity\Attribute\Key\PageKey;
 use Concrete\Core\Entity\Block\BlockType\BlockType;
 use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\File\Filesystem;
@@ -16,7 +18,9 @@ use Concrete\Core\File\Import\ImportOptions;
 use Concrete\Core\File\Service\VolatileDirectory;
 use Concrete\Core\File\Service\Zip;
 use Concrete\Core\Http\ResponseFactoryInterface;
+use Concrete\Core\Page\Stack\Stack;
 use Concrete\Core\Permission\Checker;
+use Concrete\Core\Permission\Key\Key as PermissionKey;
 use Concrete\Core\StyleCustomizer\Inline\StyleSet;
 use Concrete\Core\User\User;
 use Concrete\Core\Validation\CSRF\Token;
@@ -25,6 +29,7 @@ use Concrete\Package\BlocksCloner\Edit\Context;
 use Concrete\Package\BlocksCloner\Import\Enviro;
 use Concrete\Package\BlocksCloner\Plugin\ConvertImport;
 use Concrete\Package\BlocksCloner\PluginManager;
+use Concrete\Package\BlocksCloner\Subject;
 use Concrete\Package\BlocksCloner\UI\Controller\Dialog;
 use Concrete\Package\BlocksCloner\Xml;
 use Concrete\Package\BlocksCloner\XmlParser;
@@ -59,19 +64,25 @@ class Import extends Dialog
     public function view()
     {
         parent::view();
-        $aID = $this->request->query->getInt('aID');
-        if (!$aID) {
-            throw new UserMessageException(t('Access Denied'));
-        }
-        $areaHandle = (string) $this->request->query->get('aHandle');
-        if ($areaHandle === '') {
-            throw new UserMessageException(t('Access Denied'));
-        }
-        $area = Area::get($this->getPage(), $areaHandle);
-        if (!$area || $area->isError() || $area->getAreaID() != $aID) {
-            throw new UserMessageException(t('Access Denied'));
+        $query = $this->request->query;
+        if ($query->has('aID') || $query->has('aHandle')) {
+            $aID = $query->getInt('aID');
+            if (!$aID) {
+                throw new UserMessageException(t('Access Denied'));
+            }
+            $areaHandle = (string) $query->get('aHandle');
+            if ($areaHandle === '') {
+                throw new UserMessageException(t('Access Denied'));
+            }
+            $area = Area::get($this->getPage(), $areaHandle);
+            if (!$area || $area->isError() || $area->getAreaID() != $aID) {
+                throw new UserMessageException(t('Access Denied'));
+            }
+        } else {
+            $area = null;
         }
         $this->set('area', $area);
+        $this->set('isImportingIntoStack', $this->isImportingIntoStack());
         $this->set('token', $this->app->make(Token::class));
     }
 
@@ -81,37 +92,51 @@ class Import extends Dialog
     public function analyze()
     {
         try {
-            $aID = $this->request->request->getInt('aID');
-            if (!$aID) {
-                throw new UserMessageException(t('Access Denied'));
+            $post = $this->request->request;
+            if ($post->has('aID') || $post->has('aHandle')) {
+                $aID = $post->getInt('aID');
+                if (!$aID) {
+                    throw new UserMessageException(t('Access Denied'));
+                }
+                $areaHandle = (string) $post->get('aHandle');
+                if ($areaHandle === '') {
+                    throw new UserMessageException(t('Access Denied'));
+                }
+                $area = Area::get($this->getPage(), $areaHandle);
+                if (!$area || $area->isError() || $area->getAreaID() != $aID) {
+                    throw new UserMessageException(t('Access Denied'));
+                }
+            } else {
+                $area = null;
+                $areaHandle = '';
             }
-            $areaHandle = (string) $this->request->request->get('aHandle');
-            if ($areaHandle === '') {
-                throw new UserMessageException(t('Access Denied'));
-            }
-            $area = Area::get($this->getPage(), $areaHandle);
-            if (!$area || $area->isError() || $area->getAreaID() != $aID) {
-                throw new UserMessageException(t('Access Denied'));
-            }
-            $conversionMode = $this->request->request->get('conversionMode');
+            $conversionMode = $post->get('conversionMode');
             if (!in_array($conversionMode, [self::CONVERSIONMODE_NONE, self::CONVERSIONMODE_AUTO, self::CONVERSIONMODE_MANUAL], true)) {
                 throw new UserMessageException(t('Access Denied'));
             }
-            $xml = $this->request->request->get('xml');
+            $xml = $post->get('xml');
             if (!is_string($xml) || ($xml = trim($xml)) === '') {
                 throw new UserMessageException(t('Please specify the XML to be imported'));
             }
+            $result = [];
             $xmlService = $this->app->make(Xml::class);
             $sx = $xmlService->getSimpleXMLElement($xml);
-            $xmlNormalized = $xmlService->normalize($sx);
-            $converters = $this->findConverters($sx, $conversionMode, preg_split('/\s+/', (string) $this->request->request->get('selectedConverters', ''), -1, PREG_SPLIT_NO_EMPTY));
+            $result['xmlNormalized'] = $xmlService->normalize($sx);
+            $converters = $this->findConverters($sx, $conversionMode, preg_split('/\s+/', (string) $post->get('selectedConverters', ''), -1, PREG_SPLIT_NO_EMPTY));
             $this->app->make(Converter\Import\Converter::class)->apply($sx, $converters);
-            $importType = $this->extractImportType($sx);
-            $result = [
-                'importType' => $importType,
-            ];
+            $result['processedXml'] = $xmlService->normalize($sx);
+            $result['importSubject'] = $this->detectImportSubject($sx, $area, $this->isImportingIntoStack());
+            switch ($result['importSubject']) {
+                case Subject::ATTRIBUTE:
+                case Subject::ATTRIBUTES:
+                    $result['importToken'] = $this->app->make(Token::class)->generate("blocks_cloner:import:{$result['importSubject']}:{$this->cID}::" . sha1($result['processedXml']));
+                    break;
+                default:
+                    $result['importToken'] = $this->app->make(Token::class)->generate("blocks_cloner:import:{$result['importSubject']}:{$this->cID}:{$areaHandle}:" . sha1($result['processedXml']));
+                    break;
+            }
             $parser = $this->app->make(XmlParser::class);
-            $references = $parser->extractReferences($sx);
+            $references = $parser->extractReferences($sx, $result['importSubject']);
             if (isset($references[XmlParser::KEY_BLOCKTYPES])) {
                 $checker = new Checker($this->getPage());
                 $references[XmlParser::KEY_BLOCKTYPES] = array_map(
@@ -130,18 +155,44 @@ class Import extends Dialog
                     }
                 }
             }
-            $processedXml = $xmlService->normalize($sx);
-            $result['references'] = $this->serializeReferences($references);
-            $result['xmlNormalized'] = $xmlNormalized;
-            $result['processedXml'] = $processedXml;
-            $result['importToken'] = $this->app->make(Token::class)->generate("blocks_cloner:import:{$importType}:{$this->cID}:{$areaHandle}:" . sha1($processedXml));
+            if (isset($references[XmlParser::KEY_PAGEATTRIBUTES])) {
+                $permissionKey = PermissionKey::getByHandle('edit_page_properties');
+                $permissionKey->setPermissionObject($this->getPage());
+                $allowedPageAttributeIDs = array_filter(
+                    array_map(
+                        static function ($raw) {
+                            $int = (int) $raw;
+                            $string = (string) $raw;
 
-            return $this->app->make(ResponseFactoryInterface::class)->json($result);
+                            return $int > 0 && $string === (string) $int ? $int : 0;
+                        },
+                        $permissionKey->getMyAssignment()->getAttributesAllowedArray()
+                    )
+                );
+                $references[XmlParser::KEY_PAGEATTRIBUTES] = array_map(
+                    static function ($pageKey) use ($allowedPageAttributeIDs) {
+                        if ($pageKey instanceof PageKey && !in_array((int) $pageKey->getAttributeKeyID(), $allowedPageAttributeIDs, true)) {
+                            return t('You can\'t add the attribute with name "%s" to this page.', $pageKey->getAttributeKeyDisplayName('text'));
+                        }
+
+                        return $pageKey;
+                    },
+                    $references[XmlParser::KEY_PAGEATTRIBUTES]
+                );
+                foreach ($references[XmlParser::KEY_PAGEATTRIBUTES] as $pageAttribute) {
+                    if (!$pageAttribute instanceof PageKey) {
+                        $result['importToken'] = '';
+                    }
+                }
+            }
+            $result['references'] = $this->serializeReferences($references);
         } catch (Exception $x) {
             return $this->buildErrorResponse($x);
         } catch (Throwable $x) {
             return $this->buildErrorResponse($x);
         }
+
+        return $this->app->make(ResponseFactoryInterface::class)->json($result);
     }
 
     /**
@@ -205,14 +256,17 @@ class Import extends Dialog
     public function importBlock()
     {
         try {
-            $enviro = $this->app->make(Enviro::class, ['page' => $this->getPage(), 'importType' => 'block']);
+            $enviro = $this->app->make(Enviro::class, ['page' => $this->getPage(), 'importSubject' => Subject::BLOCK]);
             $cn = $this->app->make(Connection::class);
             $rollBack = true;
             $cn->beginTransaction();
             try {
                 $context = Context::forWriting($this->getPage(), $enviro->area);
                 $newBlock = $this->importXBlock($enviro->sx, $context, $enviro);
-                $response = $this->app->make(ResponseFactoryInterface::class)->json(['newBlockIDs' => [(int) $newBlock->getBlockID()]]);
+                $response = $this->buildImportResponse(
+                    t2('%s block has been imported', '%s blocks have been imported', 1),
+                    ['newBlockIDs' => [(int) $newBlock->getBlockID()]],
+                );
                 $cn->commit();
                 $rollBack = false;
             } finally {
@@ -220,13 +274,14 @@ class Import extends Dialog
                     $cn->rollBack();
                 }
             }
-
-            return $response;
         } catch (Exception $x) {
             return $this->buildErrorResponse($x);
         } catch (Throwable $x) {
             return $this->buildErrorResponse($x);
         }
+
+
+        return $response;
     }
 
     /**
@@ -235,7 +290,7 @@ class Import extends Dialog
     public function importArea()
     {
         try {
-            $enviro = $this->app->make(Enviro::class, ['page' => $this->getPage(), 'importType' => 'area']);
+            $enviro = $this->app->make(Enviro::class, ['page' => $this->getPage(), 'importSubject' => Subject::AREA]);
             $cn = $this->app->make(Connection::class);
             $rollBack = true;
             $cn->beginTransaction();
@@ -273,10 +328,9 @@ class Import extends Dialog
                     $newBlockIDs[] = $newBlockID;
                     $enviro->beforeBlockID = $newBlockID;
                 }
-                $response = $this->app->make(ResponseFactoryInterface::class)->json(
-                    $areaStyleData + [
-                        'newBlockIDs' => $newBlockIDs,
-                    ]
+                $response = $this->buildImportResponse(
+                    t2('%s block has been imported', '%s blocks have been imported', count($newBlockIDs)),
+                    ['newBlockIDs' => $newBlockIDs] + $areaStyleData
                 );
                 $cn->commit();
                 $rollBack = false;
@@ -285,8 +339,54 @@ class Import extends Dialog
                     $cn->rollBack();
                 }
             }
+        } catch (Exception $x) {
+            return $this->buildErrorResponse($x);
+        } catch (Throwable $x) {
+            return $this->buildErrorResponse($x);
+        }
 
-            return $response;
+        return $response;
+    }
+
+    /**
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function importAttribute()
+    {
+        try {
+            $xml = $this->request->request->get('xml');
+            if (!is_string($xml) || ($xml  = trim($xml)) === '') {
+                throw new UserMessageException(t('Please specify the XML to be imported'));
+            }
+            $token = $this->app->make(Token::class);
+            if (!$token->validate('blocks_cloner:import:' . Subject::ATTRIBUTE . ":{$this->cID}::" . sha1($xml))) {
+                throw new UserMessageException($token->getErrorMessage());
+            }
+
+            return $this->importAttributesDo("<attributes>{$xml}</attributes>");
+        } catch (Exception $x) {
+            return $this->buildErrorResponse($x);
+        } catch (Throwable $x) {
+            return $this->buildErrorResponse($x);
+        }
+    }
+
+    /**
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     */
+    public function importAttributes()
+    {
+        try {
+            $xml = $this->request->request->get('xml');
+            if (!is_string($xml) || ($xml  = trim($xml)) === '') {
+                throw new UserMessageException(t('Please specify the XML to be imported'));
+            }
+            $token = $this->app->make(Token::class);
+            if (!$token->validate('blocks_cloner:import:' . Subject::ATTRIBUTES . ":{$this->cID}::" . sha1($xml))) {
+                throw new UserMessageException($token->getErrorMessage());
+            }
+
+            return $this->importAttributesDo($xml);
         } catch (Exception $x) {
             return $this->buildErrorResponse($x);
         } catch (Throwable $x) {
@@ -380,14 +480,13 @@ class Import extends Dialog
                     'containerClass' => $style->getContainerClass(),
                 ];
             }
-            $response = $this->app->make(ResponseFactoryInterface::class)->json($result);
+
+            return $this->app->make(ResponseFactoryInterface::class)->json($result);
         } catch (Exception $x) {
             return $this->buildErrorResponse($x);
         } catch (Throwable $x) {
             return $this->buildErrorResponse($x);
         }
-
-        return $response;
     }
 
     /**
@@ -404,14 +503,13 @@ class Import extends Dialog
                 'name' => (string) $folder->getTreeNodeDisplayName('text'),
                 'path' => $folder->getTreeNodeDisplayPath(),
             ];
-            $response = $this->app->make(ResponseFactoryInterface::class)->json($result);
+
+            return $this->app->make(ResponseFactoryInterface::class)->json($result);
         } catch (Exception $x) {
             return $this->buildErrorResponse($x);
         } catch (Throwable $x) {
             return $this->buildErrorResponse($x);
         }
-
-        return $response;
     }
 
     /**
@@ -546,14 +644,26 @@ class Import extends Dialog
     }
 
     /**
+     * @param \Concrete\Core\Area\Area|null $area
+     * @param bool $isImportingIntoStack
+     *
      * @return string
      */
-    private function extractImportType(SimpleXMLElement $doc)
+    private function detectImportSubject(SimpleXMLElement $doc, $area, $isImportingIntoStack)
     {
         switch ($doc->getName()) {
+
             case 'block':
-                return 'block';
+                if ($area === null) {
+                    throw new UserMessageException(t('In order to import area contents you have to specify the target area'));
+                }
+
+                return Subject::BLOCK;
+
             case 'area':
+                if ($area === null) {
+                    throw new UserMessageException(t('In order to import area contents you have to specify the target area'));
+                }
                 $structure = $this->extractChildElements($doc, ['style', 'blocks']);
                 if ($structure === null || count($structure['style']) > 1 && count($structure['blocks']) > 1) {
                     break;
@@ -573,7 +683,28 @@ class Import extends Dialog
                     throw new UserMessageException(t('The XML is empty'));
                 }
 
-                return 'area';
+                return Subject::AREA;
+
+            case 'attributes':
+                if ($isImportingIntoStack) {
+                    throw new UserMessageException(t("It's not possible to import stack attributes"));
+                }
+                $structure = $this->extractChildElements($doc, ['attributekey']);
+                if ($structure === null) {
+                    break;
+                }
+                if ($structure['attributekey'] === []) {
+                    throw new UserMessageException(t('The XML is empty'));
+                }
+
+                return Subject::ATTRIBUTES;
+
+            case 'attributekey':
+                if ($isImportingIntoStack) {
+                    throw new UserMessageException(t("It's not possible to import stack attributes"));
+                }
+
+                return Subject::ATTRIBUTE;
         }
 
         throw new UserMessageException(t('The XML is not valid'));
@@ -753,5 +884,65 @@ class Import extends Dialog
         }
 
         return array_values($result);
+    }
+
+    /**
+     * @param string $xml
+     *
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     */
+    private function importAttributesDo($xml)
+    {
+        $numAttributes = 0;
+        $pageVersion = $this->getPage()->getVersionObject();
+        $pageAttributeCategory = $this->app->make(PageCategory::class);
+        $xmlService = $this->app->make(Xml::class);
+        $sx = $xmlService->getSimpleXMLElement($xml);
+
+        $cn = $this->app->make(Connection::class);
+        $rollBack = true;
+        $cn->beginTransaction();
+        try {
+            foreach ($sx->attributekey as $xAttribute) {
+                $attributeKeyHandle = (string) $xAttribute['handle'];
+                $attributeKey = $pageAttributeCategory->getAttributeKeyByHandle($attributeKeyHandle);
+                $attributeValue = $attributeKey->getController()->importValue($xAttribute);
+                $pageVersion->setAttribute($attributeKeyHandle, $attributeValue);
+                $numAttributes++;
+            }
+            $response = $this->buildImportResponse(
+                t2('%s attribute has been imported', '%s attributes have been imported', $numAttributes),
+            );
+            $cn->commit();
+            $rollBack = false;
+        } finally {
+            if ($rollBack) {
+                $cn->rollBack();
+            }
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param string $message
+     *
+     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     */
+    private function buildImportResponse($message, array $additionalData = [])
+    {
+        return $this->app->make(ResponseFactoryInterface::class)->json(
+            ['message' => $message] + $additionalData
+        );
+    }
+
+    /**
+     * @return bool
+     */
+    private function isImportingIntoStack()
+    {
+        $stack = Stack::getByID($this->cID);
+
+        return $stack && !$stack->isError();
     }
 }

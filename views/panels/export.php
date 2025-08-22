@@ -28,6 +28,17 @@ $view->markHeaderAssetPosition();
 </style>
 <section id="blocks_cloner-export" v-cloak>
     <header><?= t('Export as XML') ?></header>
+    <div style="margin-top: 10px" class="text-center">
+        <a
+            class="dialog-launch text-nowap"
+            href="#"
+            dialog-title="<?= h(t('Export page attributes as XML')) ?>"
+            dialog-width="90%"
+            dialog-height="80%"
+            v-bind:href="`${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export/attributes?cID=<?= $cID ?>`"
+        ><?= t('Export page attributes') ?></a>
+    </div>
+    <header><?= t('Export content of') ?></header>
     <div v-if="items.length === 0" class="alert alert-info">
         <?= t('No blocks found in the page') ?>
     </div>
@@ -62,9 +73,9 @@ $view->markHeaderAssetPosition();
         </li>
     </menu>
     <div style="margin-top: 10px" class="text-center">
-        <a class="small" href="#" v-on:click="setAllExpanded(true)"><?= t('Expand All') ?></a>
+        <a class="small" href="#" v-on:click.prevent="setAllExpanded(true)"><?= t('Expand All') ?></a>
         |
-        <a class="small" href="#" v-on:click="setAllExpanded(false)"><?= t('Collapse All') ?></a>
+        <a class="small" href="#" v-on:click.prevent="setAllExpanded(false)"><?= t('Collapse All') ?></a>
     </div>
 </section>
 <?php
@@ -85,6 +96,9 @@ new Vue({
             items,
         };
     },
+    mounted() {
+        this.$nextTick(() => setTimeout(() => this.setupLaunchDialogElements(), 100));
+    },
     computed: {
         flatItems() {
             const result = [];
@@ -95,14 +109,14 @@ new Vue({
                 }
             };
             this.items.forEach((item) => walk(item));
-            this.$nextTick(() => setTimeout(
-                () => $('#blocks_cloner-export').find('.dialog-launch').dialog(),
-                10
-            ));
+            this.$nextTick(() => setTimeout(() => this.setupLaunchDialogElements(), 10));
             return result;
         },
     },
     methods: {
+        setupLaunchDialogElements() {
+            $('#blocks_cloner-export').find('.dialog-launch').dialog();
+        },
         highlight(item, highlight) {
             window.ccmBlocksCloner.setElementHighlighted(item.element, highlight, highlight);
         },

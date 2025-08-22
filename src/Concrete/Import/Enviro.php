@@ -33,11 +33,11 @@ class Enviro
     public $beforeBlockID;
 
     /**
-     * @param string $importType
+     * @param string $importSubject
      *
      * @throws \Concrete\Core\Error\UserMessageException
      */
-    public function __construct(Page $page, $importType, Request $request, Token $token, Xml $xmlService)
+    public function __construct(Page $page, $importSubject, Request $request, Token $token, Xml $xmlService)
     {
         $xml = $request->request->get('xml');
         if (!is_string($xml) || ($xml  = trim($xml)) === '') {
@@ -48,7 +48,7 @@ class Enviro
         if ($areaHandle === '') {
             throw new UserMessageException(t('Access Denied'));
         }
-        if (!$token->validate("blocks_cloner:import:{$importType}:{$page->getCollectionID()}:{$areaHandle}:" . sha1($xml))) {
+        if (!$token->validate("blocks_cloner:import:{$importSubject}:{$page->getCollectionID()}:{$areaHandle}:" . sha1($xml))) {
             throw new UserMessageException($token->getErrorMessage());
         }
         $area = Area::get($page, $areaHandle);

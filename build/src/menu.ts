@@ -45,12 +45,12 @@ function setupAreaMenu(menu: Menu, menuElement: JQuery, area: Area): void {
   $after
     .after(
       $('<a data-ccm-blocks-cloner />')
-        .attr('dialog-title', localize('importFromXmlIntoAreaName', 'Import from XML into %s').replace('%s', area.displayName))
+        .attr('dialog-title', localize('importFromXmlIntoAreaName', 'Import content from XML into %s').replace('%s', area.displayName))
         .attr('class', 'dialog-launch dropdown-item')
         .attr('dialog-width', '90%')
         .attr('dialog-height', '80%')
         .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import?cID=${getEditingCollectionID()}&aID=${area.id}&aHandle=${encodeURIComponent(area.handle)}`)
-        .text(localize('importFromXml', 'Import from XML'))
+        .text(localize('importFromXml', 'Import content from XML'))
         .dialog(),
     )
     .after(
@@ -60,7 +60,7 @@ function setupAreaMenu(menu: Menu, menuElement: JQuery, area: Area): void {
         .attr('dialog-width', '90%')
         .attr('dialog-height', '80%')
         .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export/area?cID=${getEditingCollectionID()}&aID=${area.id}&aHandle=${encodeURIComponent(area.handle)}`)
-        .text(localize('exportAreaAsXml', 'Export Area as XML'))
+        .text(localize('exportAreaAsXml', 'Export area as XML'))
         .dialog(),
     );
 }
@@ -84,7 +84,7 @@ function setupBlockMenu(menu: Menu, menuElement: JQuery, block: Block): void {
       .attr('dialog-width', '90%')
       .attr('dialog-height', '80%')
       .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export/block?cID=${getEditingCollectionID()}&aHandle=${encodeURIComponent(area.handle)}&bID=${block.id}`)
-      .text(localize('exportBlockAsXml', 'Export Block as XML'))
+      .text(localize('exportBlockAsXml', 'Export block as XML'))
       .dialog(),
   );
 }
@@ -111,24 +111,24 @@ function injectStackMenuItems(stackID: number): void {
     .append(
       $(`<li${version >= 9 ? ' class="nav-item"' : ''} />`).append(
         $('<a data-ccm-blocks-cloner />')
-          .attr('dialog-title', localize('importFromXml', 'Import from XML'))
+          .attr('dialog-title', localize('importFromXml', 'Import content from XML'))
           .attr('class', `dialog-launch${version >= 9 ? ' nav-link' : ''}`)
           .attr('dialog-width', '90%')
           .attr('dialog-height', '80%')
           .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import?cID=${stackID}&aID=${area.id}&aHandle=${encodeURIComponent(area.handle)}`)
-          .text(localize('importFromXml', 'Import from XML'))
+          .text(localize('importFromXml', 'Import content from XML'))
           .dialog(),
       ),
     )
     .append(
       $(`<li${version >= 9 ? ' class="nav-item"' : ''} />`).append(
         $('<a data-ccm-blocks-cloner />')
-          .attr('dialog-title', localize('exportStackAsXml', 'Export Stack as XML'))
+          .attr('dialog-title', localize('exportStackAsXml', 'Export stack as XML'))
           .attr('class', `dialog-launch${version >= 9 ? ' nav-link' : ''}`)
           .attr('dialog-width', '90%')
           .attr('dialog-height', '80%')
           .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export/area?cID=${stackID}&aID=${area.id}&aHandle=${encodeURIComponent(area.handle)}`)
-          .text(localize('exportStackAsXml', 'Export Stack as XML'))
+          .text(localize('exportStackAsXml', 'Export stack as XML'))
           .dialog(),
       ),
     );

@@ -6,7 +6,8 @@ defined('C5_EXECUTE') or die('Access Denied.');
  * @var Concrete\Package\BlocksCloner\Controller\Dialog\Import $controller
  * @var Concrete\Core\View\View $view
  * @var int $cID
- * @var Concrete\Core\Area\Area $area
+ * @var Concrete\Core\Area\Area|null $area
+ * @var bool $isImportingIntoStack
  * @var Concrete\Core\Validation\CSRF\Token $token
  */
 
@@ -19,7 +20,7 @@ $view->element('vue/diff_viewer', null, 'blocks_cloner');
         <div style="flex-grow: 1; display: flex; flex-direction: row">
             <div style="display: flex; flex-direction: column; height: 100%; flex: 1; padding-right: 10px;">
                 <div>
-                    <?= t('Paste here the XML of the data to be added to the area') ?>
+                    <?= $area === null ? t('Paste here the XML of the data to be added to the page') : t('Paste here the XML of the data to be added to the area') ?>
                 </div>
                 <textarea
                     class="form-control"
@@ -34,19 +35,25 @@ $view->element('vue/diff_viewer', null, 'blocks_cloner');
                 <div v-else-if="analyzeError" class="alert alert-danger" style="white-space: pre-wrap">{{ analyzeError }}</div>
             </div>
             <div style="display: flex; flex-direction: column">
-                <div>
-                    <?= t('Insert blocks') ?>
-                </div>
-                <select
-                    class="form-control"
-                    v-model="addBefore"
-                    size="2"
-                    v-bind:disabled="busy"
-                    style="flex-grow: 1; width: 100%"
-                >
-                    <option v-for="b in existingBlocksInArea" v-bind:value="b"><?= t('Before the %s block', '{{ b.displayName }}') ?></option>
-                    <option v-bind:value="null"><?= t('At the end of the area') ?></option>
-                </select>
+                <?php
+                if ($area !== null) {
+                    ?>
+                    <div>
+                        <?= t('Insert blocks') ?>
+                    </div>
+                    <select
+                        class="form-control"
+                        v-model="addBefore"
+                        size="2"
+                        v-bind:disabled="busy"
+                        style="flex-grow: 1; width: 100%"
+                    >
+                        <option v-for="b in existingBlocksInArea" v-bind:value="b"><?= t('Before the %s block', '{{ b.displayName }}') ?></option>
+                        <option v-bind:value="null"><?= t('At the end of the area') ?></option>
+                    </select>
+                    <?php
+                }
+                ?>
                 <div>
                     <?= t('Conversion') ?>
                 </div>
@@ -118,31 +125,36 @@ $view->element('vue/diff_viewer', null, 'blocks_cloner');
 </div>
 <script>$(document).ready(function() {
 
-function getExistingBlocksInArea()
-{
-    let area = null;
-    function walk(item) {
-        if (item.type === 'area' && item.id === <?= (int) $area->getAreaID() ?>) {
-            area = item;
-            return true;
+<?php
+if ($area !== null) {
+    ?>
+    function getExistingBlocksInArea()
+    {
+        let area = null;
+        function walk(item) {
+            if (item.type === 'area' && item.id === <?= (int) $area->getAreaID() ?>) {
+                area = item;
+                return true;
+            }
+            return item.children.some(walk);
         }
-        return item.children.some(walk);
-    }
-    window.ccmBlocksCloner.getPageStructure().some(walk);
-    const blocks = [];
-    area?.children.forEach((child) => {
-        if (child.type === 'block') {
-            blocks.push({
-                id: child.id,
-                handle: child.handle,
-                displayName: child.displayName,
-            });
-        }
-    });
+        window.ccmBlocksCloner.getPageStructure().some(walk);
+        const blocks = [];
+        area?.children.forEach((child) => {
+            if (child.type === 'block') {
+                blocks.push({
+                    id: child.id,
+                    handle: child.handle,
+                    displayName: child.displayName,
+                });
+            }
+        });
 
-    return blocks;
-};
-
+        return blocks;
+    };
+    <?php
+}
+?>
 new Vue({
     el: '#ccm-blockscloker-import',
     data() {
@@ -165,17 +177,23 @@ new Vue({
                 BAD: '\u274c',
             },
             page: PAGE.INPUT,
-            existingBlocksInArea: getExistingBlocksInArea(),
+            <?php
+            if ($area !== null) {
+                ?>
+                existingBlocksInArea: getExistingBlocksInArea(),
+                addBefore: null,
+                <?php
+            }
+            ?>
             busy: false,
             inputXml: '',
             inputXmlNormalized: '',
             CONVERSION_MODE,
             conversionMode: CONVERSION_MODE.AUTO,
             selectedConverters: [],
-            addBefore: null,
             processedXml: '',
             analyzeError: '',
-            importType: '',
+            importSubject: '',
             importToken: '',
             references: {},
         };
@@ -209,10 +227,63 @@ new Vue({
             }
             try {
                 const doc = window.ccmBlocksCloner.xml.parse(this.inputXml);
-                if (doc.documentElement.tagName !== 'block' || !doc.documentElement.getAttribute('type')) {
-                    if (doc.documentElement.tagName !== 'area') {
-                        throw new Error(<?= json_encode(t('The XML does not represent neither a block nor an area in ConcreteCMS CIF Format')) ?>);
-                    }
+                switch (doc.documentElement.tagName) {
+                    case 'block':
+                        <?php
+                        if ($area === null) {
+                            ?>
+                            throw new Error(<?= json_encode(t('In order to import area contents you have to specify the target area')) ?>);
+                            <?php
+                        } else {
+                            ?>
+                            if (!doc.documentElement.getAttribute('type')) {
+                                throw new Error(<?= json_encode(t("The XML is invalid (it doesn't specify the block type")) ?>);
+                            }
+                            break;
+                            <?php
+                        }
+                        ?>
+                    case 'area':
+                        <?php
+                        if ($area === null) {
+                            ?>
+                            throw new Error(<?= json_encode(t('In order to import area contents you have to specify the target area')) ?>);
+                            <?php
+                        } else {
+                            ?>
+                            break;
+                            <?php
+                        }
+                        ?>
+                    case 'attributes':
+                        <?php
+                        if ($isImportingIntoStack) {
+                            ?>
+                            throw new Error(<?= json_encode(t("It's not possible to import stack attributes")) ?>);
+                            <?php
+                        } else {
+                            ?>
+                            break;
+                            <?php
+                        }
+                        ?>
+                    case 'attributekey':
+                        <?php
+                        if ($isImportingIntoStack) {
+                            ?>
+                            throw new Error(<?= json_encode(t("It's not possible to import stack attributes")) ?>);
+                            <?php
+                        } else {
+                            ?>
+                            if (!doc.documentElement.getAttribute('handle')) {
+                                throw new Error(<?= json_encode(t("The XML is invalid (it doesn't specify the attribute handle")) ?>);
+                            }
+                            break;
+                            <?php
+                        }
+                        ?>
+                    default:
+                        throw new Error(<?= json_encode(t('The XML does not represent neither an area content nor page attributes in ConcreteCMS CIF Format')) ?>);
                 }
             } catch (e) {
                 return e?.message || e?.toString() || <?= json_encode(t('Unknown error')) ?>;
@@ -231,6 +302,11 @@ new Vue({
             }
             if (this.references.blockTypes) {
                 if (Object.values(this.references.blockTypes).some((blockType) => blockType.error)) {
+                    return false;
+                }
+            }
+            if (this.references.pageAttributes) {
+                if (Object.values(this.references.pageAttributes).some((pageAttribute) => pageAttribute.error)) {
                     return false;
                 }
             }
@@ -257,8 +333,14 @@ new Vue({
                     },
                     body: new URLSearchParams([
                         ['__ccm_consider_request_as_xhr', '1'],
-                        ['aID', <?= $area->getAreaID() ?>],
-                        ['aHandle', <?= json_encode($area->getAreaHandle()) ?>],
+                        <?php
+                        if ($area !== null) {
+                            ?>
+                            ['aID', <?= $area->getAreaID() ?>],
+                            ['aHandle', <?= json_encode($area->getAreaHandle()) ?>],
+                            <?php
+                        }
+                        ?>
                         ['conversionMode', this.conversionMode],
                         ['selectedConverters', this.selectedConverters.map((c) => c.handle).join(' ')],
                         ['xml', this.inputXml],
@@ -268,15 +350,9 @@ new Vue({
                     `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/analyze?cID=<?= $cID ?>`,
                     request
                 );
-                if (!response.ok) {
-                    throw new Error(await response.text());
-                }
-                const responseData = await response.json();
-                if (responseData.error) {
-                    throw new Error(responseData.error);
-                }
+                const responseData = await window.ccmBlocksCloner.service.parseJsonResponse(response);
                 this.importToken = responseData.importToken;
-                this.importType = responseData.importType;
+                this.importSubject = responseData.importSubject;
                 this.references = responseData.references;
                 this.inputXmlNormalized = responseData.xmlNormalized;
                 this.processedXml = responseData.processedXml;
@@ -300,18 +376,25 @@ new Vue({
             }
             this.busy = true;
             let imported = false;
+            let ccmBlockBefore = null;
             try {
                 const ccmEditMode = window.Concrete.getEditMode();
-                const ccmArea = ccmEditMode.getAreaByID(<?= $area->getAreaID() ?>);
-                if (!ccmArea) {
-                    throw new Error(<?= json_encode(t('Unable to find the requested area')) ?>);
+                <?php
+                if ($area !== null) {
+                    ?>
+                    const ccmArea = ccmEditMode.getAreaByID(<?= $area->getAreaID() ?>);
+                    if (!ccmArea) {
+                        throw new Error(<?= json_encode(t('Unable to find the requested area')) ?>);
+                    }
+                    ccmBlockBefore = this.addBefore ? ccmEditMode.getBlockByID(this.addBefore.id) : null;
+                    if (this.addBefore !== null && !ccmBlockBefore) {
+                        throw new Error(<?= json_encode(t('Unable to find the requested block')) ?>);
+                    }
+                    <?php
                 }
-                let ccmBlockBefore = this.addBefore ? ccmEditMode.getBlockByID(this.addBefore.id) : null;
-                if (this.addBefore !== null && !ccmBlockBefore) {
-                    throw new Error(<?= json_encode(t('Unable to find the requested block')) ?>);
-                }
+                ?>
                 const importResponse = await window.fetch(
-                    `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/${this.importType}?cID=<?= $cID ?>`,
+                    `${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/${this.importSubject}?cID=<?= $cID ?>`,
                     {
                         method: 'POST',
                         headers: {
@@ -321,19 +404,19 @@ new Vue({
                         body: new URLSearchParams([
                             [<?= json_encode($token::DEFAULT_TOKEN_NAME) ?>, this.importToken],
                             ['xml', this.processedXml],
-                            ['areaHandle', <?= json_encode($area->arHandle) ?>],
-                            ['beforeBlockID', this.addBefore?.id || ''],
+                            <?php
+                            if ($area !== null) {
+                                ?>
+                                ['areaHandle', <?= json_encode($area->arHandle) ?>],
+                                ['beforeBlockID', this.addBefore?.id || ''],
+                                <?php
+                            }
+                            ?>
                             ['__ccm_consider_request_as_xhr', '1'],
                         ]),
                     }
                 );
-                if (!importResponse.ok) {
-                    throw new Error(await importResponse.text());
-                }
-                const importResult = await importResponse.json();
-                if (importResult.error) {
-                    throw new Error(importResult.error);
-                }
+                const importResult = await window.ccmBlocksCloner.service.parseJsonResponse(importResponse);
                 imported = true;
                 if (importResult.oldAreaStyleInlineStylesetID) {
                     document.querySelector(`head style[data-style-set="${importResult.oldAreaStyleInlineStylesetID}"]`)?.remove();
@@ -344,13 +427,20 @@ new Vue({
                 if (importResult.newAreaContainerClass) {
                     ccmArea.getElem().addClass(importResult.newAreaContainerClass);
                 }
-                const newBlockIDs = importResult.newBlockIDs;
-                const newBlocksHtml = await Promise.all(newBlockIDs.map((newBlockID) => this.loadNewBlockHtml(ccmArea, newBlockID)));
-                for (let intex = 0; intex < newBlocksHtml.length; intex++) {
-                    const newCCMBlock = await this.renderNewBlockHtml(ccmArea, newBlocksHtml[intex].blockID, newBlocksHtml[intex].html, ccmBlockBefore);
-                    ccmBlockBefore = newCCMBlock;
+                if (importResult.newBlockIDs) {
+                    const newBlockIDs = importResult.newBlockIDs;
+                    const newBlocksHtml = await Promise.all(newBlockIDs.map((newBlockID) => this.loadNewBlockHtml(ccmArea, newBlockID)));
+                    for (let intex = 0; intex < newBlocksHtml.length; intex++) {
+                        const newCCMBlock = await this.renderNewBlockHtml(ccmArea, newBlocksHtml[intex].blockID, newBlocksHtml[intex].html, ccmBlockBefore);
+                        ccmBlockBefore = newCCMBlock;
+                    }
+                    await this.refreshDesigns(ccmArea, newBlockIDs, false);
                 }
-                await this.refreshDesigns(ccmArea, newBlockIDs, false);
+                if (importResult.message) {
+                    window.ConcreteAlert.info({
+                        message: importResult.message,
+                    });
+                }
             } catch (e) {
                 window.ConcreteAlert.error({
                     message: e?.message || e?.toString() || <?= json_encode(t('Unknown error')) ?>,
@@ -372,9 +462,6 @@ new Vue({
             } finally {
                 this.busy = false;
             }
-            window.ConcreteAlert.info({
-                message: <?= json_encode(t('The block has been imported')) ?>,
-            });
             $.fn.dialog.closeTop();
             window.ConcretePanelManager.getByIdentifier('blocks_cloner-import')?.hide()
             window.ConcretePanelManager.getByIdentifier('blocks_cloner-export')?.hide()
@@ -389,13 +476,13 @@ new Vue({
                     },
                 }
             );
-            if (!renderResponse.ok) {
-                renderResponse.text().then((text) => {
-                    console.error(text);
-                });
+            let newBlockHtml;
+            try {
+                newBlockHtml = await window.ccmBlocksCloner.service.parseTextResponse(renderResponse);
+            } catch (e) {
+                console.error(e);
                 throw new Error(<?= json_encode(t('Unable to render the block')) ?>);
             }
-            const newBlockHtml = await renderResponse.text();
             return {
                 blockID: newBlockID,
                 html: newBlockHtml,
@@ -460,13 +547,7 @@ new Vue({
                     ]),
                 }
             );
-            if (!response.ok) {
-                throw new Error(await response.text());
-            }
-            const responseData = await response.json();
-            if (responseData?.error || typeof responseData?.length !== 'number') {
-                throw new Error(responseData.error || <?= json_encode(t('Unknown error')) ?>);
-            }
+            const responseData = await window.ccmBlocksCloner.service.parseJsonResponse(response);
             const head = document.querySelector('head');
             responseData.forEach((item) => {
                 document.head.insertAdjacentHTML('beforeend', item.htmlStyleElement);

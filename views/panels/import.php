@@ -28,7 +28,18 @@ $view->markHeaderAssetPosition();
 }
 </style>
 <section id="blocks_cloner-import" v-cloak>
-    <header><?= t('Import from XML into') ?></header>
+    <header><?= t('Import from XML') ?></header>
+    <div style="margin-top: 10px" class="text-center">
+        <a
+            class="dialog-launch text-nowap"
+            href="#"
+            dialog-title="<?= h(t('Import page attributes from XML')) ?>"
+            dialog-width="90%"
+            dialog-height="80%"
+            v-bind:href="`${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import?cID=<?= $cID ?>`"
+        ><?= t('Import page attributes') ?></a>
+    </div>
+    <header><?= t('Import content into') ?></header>
     <div v-if="items.length === 0" class="alert alert-info">
         <?= t('No areas found in the page') ?>
     </div>
@@ -58,7 +69,7 @@ $view->markHeaderAssetPosition();
             <a
                 v-if="item.type === 'area'"
                 style="text-decoration: none; display: inline"
-                v-bind:dialog-title="`<?= t('Import from XML into %s', '${item.displayName}') ?>`"
+                v-bind:dialog-title="`<?= t('Import content from XML into %s', '${item.displayName}') ?>`"
                 class="dialog-launch"
                 dialog-width="90%"
                 dialog-height="80%"
@@ -74,9 +85,9 @@ $view->markHeaderAssetPosition();
         </li>
     </menu>
     <div style="margin-top: 10px" class="text-center">
-        <a class="small" href="#" v-on:click="setAllExpanded(true)"><?= t('Expand All') ?></a>
+        <a class="small" href="#" v-on:click.prevent="setAllExpanded(true)"><?= t('Expand All') ?></a>
         |
-        <a class="small" href="#" v-on:click="setAllExpanded(false)"><?= t('Collapse All') ?></a>
+        <a class="small" href="#" v-on:click.prevent="setAllExpanded(false)"><?= t('Collapse All') ?></a>
     </div>
 </section>
 <?php
@@ -100,6 +111,9 @@ new Vue({
             items,
         };
     },
+    mounted() {
+        this.$nextTick(() => setTimeout(() => this.setupLaunchDialogElements(), 100));
+    },
     computed: {
         flatItems() {
             const result = [];
@@ -110,14 +124,14 @@ new Vue({
                 }
             };
             this.items.forEach((item) => walk(item));
-            this.$nextTick(() => setTimeout(
-                () => $('#blocks_cloner-import').find('.dialog-launch').dialog(),
-                10
-            ));
+            this.$nextTick(() => setTimeout(() => this.setupLaunchDialogElements(), 10));
             return result;
         },
     },
     methods: {
+        setupLaunchDialogElements() {
+            $('#blocks_cloner-import').find('.dialog-launch').dialog();
+        },
         highlight(item, highlight) {
             window.ccmBlocksCloner.setElementHighlighted(item.element, highlight, highlight);
         },

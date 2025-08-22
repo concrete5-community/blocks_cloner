@@ -17,5 +17,7 @@ $router->post('dialogs/import/analyze', 'Dialog\Import::analyze');
 $router->post('dialogs/import/upload-file', 'Dialog\Import::uploadFile');
 $router->post('dialogs/import/block', 'Dialog\Import::importBlock');
 $router->post('dialogs/import/area', 'Dialog\Import::importArea');
+$router->post('dialogs/import/attribute', 'Dialog\Import::importAttribute');
+$router->post('dialogs/import/attributes', 'Dialog\Import::importAttributes');
 $router->post('dialogs/import/get-designs', 'Dialog\Import::getDesigns');
 $router->get('dialogs/import/check-upload-folder', 'Dialog\Import::checkUploadFolder');

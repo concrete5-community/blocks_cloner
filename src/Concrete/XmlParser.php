@@ -3,6 +3,7 @@
 namespace Concrete\Package\BlocksCloner;
 
 use Concrete\Core\Application\Application;
+use Concrete\Core\Attribute\Category\PageCategory;
 use Concrete\Core\Backup\ContentImporter\ValueInspector\Item;
 use Concrete\Core\Config\Repository\Repository;
 use Concrete\Core\Entity\Block\BlockType\BlockType;
@@ -21,6 +22,8 @@ defined('C5_EXECUTE') or die('Access Denied.');
 final class XmlParser
 {
     const KEY_BLOCKTYPES = 'blockTypes';
+
+    const KEY_PAGEATTRIBUTES = 'pageAttributes';
 
     const KEY_FILES = 'files';
 
@@ -57,9 +60,19 @@ final class XmlParser
     private $xmlService;
 
     /**
+     * @var \Concrete\Core\Attribute\Category\PageCategory
+     */
+    private $pageAttributeCategory;
+
+    /**
      * @var \Concrete\Core\Entity\Block\BlockType\BlockType[]|null
      */
     private $installedBlockTypes = null;
+
+    /**
+     * @var unknown|null
+     */
+    private $definedPageAttributeKeys = null;
 
     /**
      * @var bool|null
@@ -70,22 +83,25 @@ final class XmlParser
         EntityManagerInterface $entityManager,
         Application $valueInspectorProvider,
         Repository $config,
-        Xml $xmlService
+        Xml $xmlService,
+        PageCategory $pageAttributeCategory
     ) {
         $this->entityManager = $entityManager;
         $this->valueInspector = $valueInspectorProvider->make('import/value_inspector');
         $this->config = $config;
         $this->xmlService = $xmlService;
+        $this->pageAttributeCategory = $pageAttributeCategory;
     }
 
     /**
      * @param \SimpleXMLElement|\DOMDocument|\DOMElement|string $xml
+     * @param string $subject
      *
      * @throws \Concrete\Core\Error\UserMessageException
      *
      * @return array
      */
-    public function extractReferences($xml)
+    public function extractReferences($xml, $subject)
     {
         $xml = $this->xmlService->getSimpleXMLElement($xml);
         $result = [];
@@ -95,8 +111,19 @@ final class XmlParser
                 $this->parseFoundItem($item, $result);
             }
         }
-        foreach ($this->listBlockElements($xml) as $blockElement) {
-            $this->inspectBlockElement($blockElement, $result);
+        switch ($subject) {
+            case Subject::AREA:
+            case Subject::BLOCK:
+                foreach ($this->listBlockElements($xml) as $blockElement) {
+                    $this->inspectBlockElement($blockElement, $result);
+                }
+                break;
+            case Subject::ATTRIBUTES:
+            case Subject::ATTRIBUTE:
+                foreach ($this->listAttributeElements($xml) as $attributeElement) {
+                    $this->inspectAttributeElement($attributeElement, $result);
+                }
+                break;
         }
         if (isset($result[self::KEY_FILES])) {
             $this->filterAccessibleFileVersions($result[self::KEY_FILES]);
@@ -158,6 +185,24 @@ final class XmlParser
             }
             foreach ($this->listBlockElements($child) as $blockElement) {
                 yield $blockElement;
+            }
+        }
+    }
+
+    /**
+     * @return \SimpleXMLElement[]|\Generator
+     */
+    private function listAttributeElements(SimpleXMLElement $sx)
+    {
+        switch ($sx->getName()) {
+            case 'attributekey':
+                yield $sx;
+
+                return;
+        }
+        foreach ($sx->children() as $child) {
+            foreach ($this->listAttributeElements($child) as $attributeElement) {
+                yield $attributeElement;
             }
         }
     }
@@ -457,6 +502,34 @@ final class XmlParser
             $result[self::KEY_CONTAINERS][$handle] = t('Unable to find a container with handle %s', $handle);
         } else {
             $result[self::KEY_CONTAINERS][$handle] = $container;
+        }
+    }
+
+    /**
+     * @return \Concrete\Core\Entity\Block\BlockType\BlockType[]
+     */
+    private function getDefinedPageAttributeKeys()
+    {
+        if ($this->definedPageAttributeKeys === null) {
+            $definedPageAttributeKeys = [];
+            foreach ($this->pageAttributeCategory->getAttributeKeyRepository()->findAll() as $pageAttributeKey) {
+                $definedPageAttributeKeys[$pageAttributeKey->getAttributeKeyHandle()] = $pageAttributeKey;
+            }
+            $this->definedPageAttributeKeys = $definedPageAttributeKeys;
+        }
+
+        return $this->definedPageAttributeKeys;
+    }
+
+    private function inspectAttributeElement(SimpleXMLElement $attributeElement, array &$result)
+    {
+        $handle = isset($attributeElement['handle']) ? (string) $attributeElement['handle'] : '';
+        if (!isset($result[self::KEY_PAGEATTRIBUTES])) {
+            $result[self::KEY_PAGEATTRIBUTES] = [];
+        }
+        if (!isset($result[self::KEY_PAGEATTRIBUTES][$handle])) {
+            $definedPageAttributeKeys = $this->getDefinedPageAttributeKeys();
+            $result[self::KEY_PAGEATTRIBUTES][$handle] = isset($definedPageAttributeKeys[$handle]) ? $definedPageAttributeKeys[$handle] : t('The XML references to a page attribute with handle %s which is not currently defined.', $handle);
         }
     }
 }

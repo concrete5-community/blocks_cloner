@@ -15,3 +15,5 @@ $router->all('panels/export', 'Panel\Export::view');
 $router->get('dialogs/export/area', 'Dialog\Export\Area::view');
 $router->get('dialogs/export/block', 'Dialog\Export\Block::view');
 $router->get('dialogs/export/files', 'Dialog\Export\Files::view');
+$router->get('dialogs/export/attributes', 'Dialog\Export\Attributes::view');
+$router->post('dialogs/export/attributes/export', 'Dialog\Export\Attributes::export');
