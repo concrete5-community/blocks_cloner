@@ -2,4 +2,5 @@
 /.* export-ignore
 /*.md export-ignore
 /build export-ignore
+/phpunit.xml export-ignore
 /test export-ignore
