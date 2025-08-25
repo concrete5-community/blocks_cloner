@@ -6,7 +6,6 @@ use Concrete\Core\Area\Area as ConcreteArea;
 use Concrete\Core\Error\UserMessageException;
 use Concrete\Package\BlocksCloner\Controller\Dialog\Export;
 use Concrete\Package\BlocksCloner\Edit\Context;
-use Concrete\Package\BlocksCloner\ExportFixer;
 use Concrete\Package\BlocksCloner\Subject;
 use Concrete\Package\BlocksCloner\XmlParser;
 use SimpleXMLElement;
@@ -52,7 +51,7 @@ class Area extends Export
                 }
             }
         }
-        $this->app->make(ExportFixer::class)->fix($temporaryDocument);
+        $this->convert($temporaryDocument);
         $components = $this->extractComponents($temporaryDocument);
         if ($components === null) {
             throw new UserMessageException(t('Unable to detect the structure of the exported area'));

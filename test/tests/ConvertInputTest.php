@@ -2,9 +2,8 @@
 
 namespace BlocksCloner\Test;
 
-use Concrete\Package\BlocksCloner\Converter;
-use Concrete\Package\BlocksCloner\Plugin\ConvertImport;
-use Concrete\Package\BlocksCloner\PluginManager;
+use Concrete\Package\BlocksCloner\Conversion\Environment;
+use Concrete\Package\BlocksCloner\Plugin;
 use Concrete\Package\BlocksCloner\Xml;
 use PHPUnit\Framework\TestCase;
 
@@ -18,7 +17,7 @@ class ConvertInputTest extends TestCase
     private static $xmlService = null;
 
     /**
-     * @var \Concrete\Package\BlocksCloner\Converter\Environment\Service|null
+     * @var \Concrete\Package\BlocksCloner\Conversion\Environment\Service|null
      */
     private static $environmentService = null;
 
@@ -34,8 +33,13 @@ class ConvertInputTest extends TestCase
         $sourceEnvironment = self::getEnvironmentService()->extractEnvironmentFromXml($sx);
         $this->assertNotNull($sourceEnvironment, "The file {$baseName}-in.xml doesn't contain the source environment");
         $expectedXml = $this->readXml("{$baseName}-out.xml");
-        $converters = $this->listImportConverters($sourceEnvironment, $targetEnvironment);
-        app(Converter\Import\Converter::class)->apply($sx, $converters);
+        $pluginManager = app(Plugin\Manager::class);
+        array_map(
+            static function (Plugin\ConvertImport $plugin) use ($sx, $sourceEnvironment, $targetEnvironment) {
+                $plugin->applyImportConvertersByEnvironment($sx, $sourceEnvironment, $targetEnvironment);
+            },
+            $pluginManager->getConvertImportPlugins()
+        );
         $xmlService = self::getXmlService();
         $this->assertSame($expectedXml, $xmlService->normalize($sx));
     }
@@ -88,12 +92,12 @@ class ConvertInputTest extends TestCase
     }
 
     /**
-     * @return \Concrete\Package\BlocksCloner\Converter\Environment\Service
+     * @return \Concrete\Package\BlocksCloner\Conversion\Environment\Service
      */
     private static function getEnvironmentService()
     {
         if (self::$environmentService === null) {
-            self::$environmentService = app(Converter\Environment\Service::class);
+            self::$environmentService = app(Environment\Service::class);
         }
 
         return self::$environmentService;
@@ -102,7 +106,7 @@ class ConvertInputTest extends TestCase
     /**
      * @param string $fileRelative
      *
-     * @return \Concrete\Package\BlocksCloner\Converter\Environment
+     * @return \Concrete\Package\BlocksCloner\Conversion\Environment
      */
     private function readTargetEnvironment($fileRelative)
     {
@@ -120,7 +124,7 @@ class ConvertInputTest extends TestCase
             "The file {$fileRelative} is missing the targetEnvironment.core packages (or it's not an array)"
         );
 
-        return new Converter\Environment($data['targetEnvironment']['core'], $data['targetEnvironment']['packages']);
+        return new Environment($data['targetEnvironment']['core'], $data['targetEnvironment']['packages']);
     }
 
     /**
@@ -145,23 +149,5 @@ class ConvertInputTest extends TestCase
     private function readSimpleXml($fileRelative)
     {
         return self::getXmlService()->getSimpleXMLElement($this->readXml($fileRelative));
-    }
-
-    /**
-     * @return \Concrete\Package\BlocksCloner\Converter\Import[]
-     */
-    private function listImportConverters(Converter\Environment $sourceEnvironment, Converter\Environment $targetEnvironment)
-    {
-        $result = [];
-        $plugins = app(PluginManager::class)->getPlugins(ConvertImport::class);
-        foreach ($plugins as $plugin) {
-            foreach ($plugin->getImportConverters() as $converter) {
-                if ($converter->canBeAppliedTo($sourceEnvironment, $targetEnvironment)) {
-                    $result[] = $converter;
-                }
-            }
-        }
-
-        return $result;
     }
 }

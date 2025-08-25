@@ -7,8 +7,7 @@ use Concrete\Core\Entity\Block\BlockType\BlockType;
 use Concrete\Core\Http\ResponseFactoryInterface;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Permission\Checker;
-use Concrete\Package\BlocksCloner\Plugin\ConvertImport;
-use Concrete\Package\BlocksCloner\PluginManager;
+use Concrete\Package\BlocksCloner\Plugin;
 use Doctrine\ORM\EntityManagerInterface;
 
 defined('C5_EXECUTE') or die('Access Denied.');
@@ -92,8 +91,7 @@ EOT
     private function buildConverterRegistration()
     {
         $converters = [];
-        $plugins = $this->app->make(PluginManager::class)->getPlugins(ConvertImport::class);
-        /** @var \Concrete\Package\BlocksCloner\Plugin\ConvertImport[] $plugins */
+        $plugins = $this->app->make(Plugin\Manager::class)->getConvertImportPlugins();
         foreach ($plugins as $plugin) {
             $converters = array_merge($converters, $plugin->getImportConverters());
         }

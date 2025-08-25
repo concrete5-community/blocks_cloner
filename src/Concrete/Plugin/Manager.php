@@ -1,14 +1,15 @@
 <?php
 
-namespace Concrete\Package\BlocksCloner;
+namespace Concrete\Package\BlocksCloner\Plugin;
 
 use Concrete\Core\Application\Application;
 use Concrete\Core\File\Service\File;
+use Concrete\Package\BlocksCloner\Plugin;
 use ReflectionClass;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
-class PluginManager
+class Manager
 {
     /**
      * @var \Concrete\Core\File\Service\File
@@ -42,17 +43,38 @@ class PluginManager
     }
 
     /**
-     * @param string $withInterface
-     *
      * @return \Concrete\Package\BlocksCloner\Plugin[]
      */
-    public function getPlugins($withInterface = '')
+    public function getPlugins()
+    {
+        return $this->plugins;
+    }
+
+    /**
+     * @return \Concrete\Package\BlocksCloner\Plugin\ConvertExport[]
+     */
+    public function getConvertExportPlugins()
     {
         return array_values(
             array_filter(
-                $this->plugins,
-                static function (Plugin $plugin) use ($withInterface) {
-                    return !$withInterface || is_a($plugin, $withInterface);
+                $this->getPlugins(),
+                static function (Plugin $plugin) {
+                    return $plugin instanceof ConvertExport;
+                }
+            )
+        );
+    }
+
+    /**
+     * @return \Concrete\Package\BlocksCloner\Plugin\ConvertImport[]
+     */
+    public function getConvertImportPlugins()
+    {
+        return array_values(
+            array_filter(
+                $this->getPlugins(),
+                static function (Plugin $plugin) {
+                    return $plugin instanceof ConvertImport;
                 }
             )
         );
@@ -63,8 +85,11 @@ class PluginManager
      */
     public function registerDefaultPlugins()
     {
-        $dirPrefix = rtrim(str_replace(DIRECTORY_SEPARATOR, '/', __DIR__), '/') . '/Plugins/';
-        $namespacePrefix = __NAMESPACE__ . '\Plugins\\';
+        $dirPrefix = rtrim(str_replace(DIRECTORY_SEPARATOR, '/', dirname(__DIR__)), '/') . '/Plugins/';
+        $namespaceChunks = preg_split('{\\\}', __NAMESPACE__);
+        array_pop($namespaceChunks);
+        $namespaceChunks[] = 'Plugins';
+        $namespacePrefix = implode('\\', $namespaceChunks) . '\\';
         foreach ($this->fileService->getDirectoryContents($dirPrefix, [], true) as $item) {
             $item = str_replace(DIRECTORY_SEPARATOR, '/', $item);
             if (stripos($item, $dirPrefix) !== 0 || substr($item, -4) !== '.php') {

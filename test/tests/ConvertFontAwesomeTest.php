@@ -2,13 +2,13 @@
 
 namespace BlocksCloner\Test;
 
-use Concrete\Package\BlocksCloner\Converter\Import\Converter\FontAwesome;
+use Concrete\Package\BlocksCloner\Conversion\FontAwesome;
 use PHPUnit\Framework\TestCase;
 
 class ConvertFontAwesomeTest extends TestCase
 {
     /**
-     * @var \Concrete\Package\BlocksCloner\Converter\Import\Converter\FontAwesome|null
+     * @var \Concrete\Package\BlocksCloner\Conversion\FontAwesome|null
      */
     private static $fontAwesome = null;
 
@@ -43,7 +43,7 @@ class ConvertFontAwesomeTest extends TestCase
     }
 
     /**
-     * @return \Concrete\Package\BlocksCloner\Converter\Import\Converter\FontAwesome
+     * @return \Concrete\Package\BlocksCloner\Conversion\FontAwesome
      */
     private static function getFontAwesome()
     {

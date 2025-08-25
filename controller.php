@@ -62,8 +62,8 @@ class Controller extends Package implements ProviderInterface
     public function on_start()
     {
         $this->app->extend(
-            PluginManager::class,
-            static function (PluginManager $pluginManager, Application $app) {
+            Plugin\Manager::class,
+            static function (Plugin\Manager $pluginManager, Application $app) {
                 $pluginManager->registerDefaultPlugins();
 
                 return $pluginManager;

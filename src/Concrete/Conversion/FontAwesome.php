@@ -1,6 +1,6 @@
 <?php
 
-namespace Concrete\Package\BlocksCloner\Converter\Import\Converter;
+namespace Concrete\Package\BlocksCloner\Conversion;
 
 class FontAwesome
 {
@@ -806,7 +806,7 @@ class FontAwesome
      *
      * @param string $icon
      *
-     * @return string
+     * @return string empty string if not recognized
      *
      * @example 'fa fa-cc-stripe' => 'fab fa-cc-stripe'
      * @example 'fa-cc-stripe' => 'fab fa-cc-stripe'
