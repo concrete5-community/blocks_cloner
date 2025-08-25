@@ -1,6 +1,6 @@
 {
     "name": "concrete5-community/blocks_cloner",
-    "description": "A ConcreteCMS package to copy blocks between websites",
+    "description": "A ConcreteCMS package to copy blocks and page attributes between websites",
     "type": "concrete5-package",
     "keywords": [
         "concretecms",
@@ -15,7 +15,9 @@
         "export",
         "import",
         "xml",
-        "cif"
+        "cif",
+        "page",
+        "attribute"
     ],
     "homepage": "https://github.com/concrete5-community/blocks_cloner",
     "license": "MIT",

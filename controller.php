@@ -46,7 +46,7 @@ class Controller extends Package implements ProviderInterface
      */
     public function getPackageDescription()
     {
-        return t('Copy blocks between Concrete websites.');
+        return t('Copy blocks and page attributes between Concrete websites.');
     }
 
     /**
