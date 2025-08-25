@@ -1,10 +1,10 @@
 <?php
 
-namespace Concrete\Package\BlocksCloner\Converter\Environment;
+namespace Concrete\Package\BlocksCloner\Conversion\Environment;
 
 use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\Package\PackageService;
-use Concrete\Package\BlocksCloner\Converter\Environment;
+use Concrete\Package\BlocksCloner\Conversion\Environment;
 use Concrete\Package\BlocksCloner\Xml;
 use DOMComment;
 use DOMDocument;
@@ -29,7 +29,7 @@ final class Service
     private $xmlService;
 
     /**
-     * @var \Concrete\Package\BlocksCloner\Converter\Environment|null
+     * @var \Concrete\Package\BlocksCloner\Conversion\Environment|null
      */
     private $currentEnvironment = null;
 
@@ -40,7 +40,7 @@ final class Service
     }
 
     /**
-     * @return \Concrete\Package\BlocksCloner\Converter\Environment
+     * @return \Concrete\Package\BlocksCloner\Conversion\Environment
      */
     public function getCurrentEnvironment()
     {
@@ -82,7 +82,7 @@ final class Service
     /**
      * @param string|\SimpleXMLElement|\DOMDocument $xml
      *
-     * @return \Concrete\Package\BlocksCloner\Converter\Environment|null
+     * @return \Concrete\Package\BlocksCloner\Conversion\Environment|null
      */
     public function extractEnvironmentFromXml($xml)
     {
@@ -105,7 +105,7 @@ final class Service
     }
 
     /**
-     * @return \Concrete\Package\BlocksCloner\Converter\Environment|null
+     * @return \Concrete\Package\BlocksCloner\Conversion\Environment|null
      */
     private function extractEnvironmentFromComment(DOMComment $comment)
     {

@@ -70,7 +70,7 @@ final class XmlParser
     private $installedBlockTypes = null;
 
     /**
-     * @var unknown|null
+     * @var \Concrete\Core\Entity\Attribute\Key\PageKey[]|null
      */
     private $definedPageAttributeKeys = null;
 
@@ -506,7 +506,7 @@ final class XmlParser
     }
 
     /**
-     * @return \Concrete\Core\Entity\Block\BlockType\BlockType[]
+     * @return \Concrete\Core\Entity\Attribute\Key\PageKey[]
      */
     private function getDefinedPageAttributeKeys()
     {

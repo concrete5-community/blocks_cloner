@@ -8,7 +8,6 @@ use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface;
 use Concrete\Package\BlocksCloner\Controller\Dialog\Export;
 use Concrete\Package\BlocksCloner\Edit\Context;
-use Concrete\Package\BlocksCloner\ExportFixer;
 use Concrete\Package\BlocksCloner\Subject;
 use Concrete\Package\BlocksCloner\XmlParser;
 
@@ -61,7 +60,7 @@ class Block extends Export
         if ($blockElement === null) {
             throw new UserMessageException(t('Unable to detect the structure of the exported area'));
         }
-        $this->app->make(ExportFixer::class)->fix($blockElement);
+        $this->convert($blockElement);
         $this->set('xml', $this->formatXml($blockElement, true));
         $parser = $this->app->make(XmlParser::class);
         $this->set('references', $this->serializeReferences($parser->extractReferences($blockElement, Subject::BLOCK)));

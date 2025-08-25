@@ -2,10 +2,10 @@
 
 namespace Concrete\Package\BlocksCloner\Plugins;
 
-use Concrete\Package\BlocksCloner\Converter\Environment;
-use Concrete\Package\BlocksCloner\Converter\Import;
-use Concrete\Package\BlocksCloner\Converter\Import\BlockType;
+use Concrete\Package\BlocksCloner\Conversion\Environment;
+use Concrete\Package\BlocksCloner\Converter;
 use Concrete\Package\BlocksCloner\Plugin\ConvertImport;
+use SimpleXMLElement;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -18,58 +18,89 @@ class Core8To9 implements ConvertImport
      */
     public function getImportConverters()
     {
-        $import = new Import(
-            'from_core8',
-            t('From concrete5 v8'),
-            static function (Environment $sourceEnvironment, Environment $destinationEnvironment) {
-                return preg_match('/^8(\.|$)/', $sourceEnvironment->getCoreVersion()) && preg_match('/^(9|([1-9]\d+))(\.|$)/', $destinationEnvironment->getCoreVersion());
-            }
-        );
+        return [
+            new Converter\Description('from_core8', t('From concrete5 v8')),
+        ];
+    }
 
-        $import
-            ->addBlockType(
-                'event_list',
-                BlockType::create()
-                    ->addRecordFields('btEventList', ['titleFormat' => 'h5'])
-            )
-            ->addBlockType(
-                'express_entry_list',
-                BlockType::create()
-                    ->addRecordFields('btExpressEntryList', ['titleFormat' => 'h2'])
-            )
-            ->addBlockType(
-                'feature',
-                BlockType::create()
-                    ->addRecordFields('btFeature', ['titleFormat' => 'h4'])
-                    ->fontAwesome4to5Fields('btFeature', ['icon'])
-            )
-            ->addBlockType(
-                'google_map',
-                BlockType::create()
-                    ->addRecordFields('btGoogleMap', ['titleFormat' => 'h3'])
-            )
-            ->addBlockType(
-                'page_list',
-                BlockType::create()
-                    ->addRecordFields('btPageList', ['titleFormat' => 'h5'])
-            )
-            ->addBlockType(
-                'rss_displayer',
-                BlockType::create()
-                    ->addRecordFields('btRssDisplay', ['titleFormat' => 'h5'])
-            )
-            ->addBlockType(
-                'tags',
-                BlockType::create()
-                    ->addRecordFields('btTags', ['titleFormat' => 'h5'])
-            )
-            ->addBlockType(
-                'topic_list',
-                BlockType::create()
-                    ->addRecordFields('btTopicList', ['titleFormat' => 'h5'])
-            )
+    /**
+     * {@inheritdoc}
+     *
+     * @see \Concrete\Package\BlocksCloner\Plugin\ConvertImport::applyImportConverterByHandle()
+     */
+    public function applyImportConverterByHandle(SimpleXMLElement $xDocument, $handle)
+    {
+        if ($handle !== 'from_core8') {
+            return false;
+        }
+        $this->convertFrom8($xDocument);
+
+        return true;
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @see \Concrete\Package\BlocksCloner\Plugin\ConvertImport::applyImportConvertersByEnvironment()
+     */
+    public function applyImportConvertersByEnvironment(SimpleXMLElement $xDocument, Environment $sourceEnvironment, Environment $targetEnvironment)
+    {
+        if (!preg_match('/^8(\.|$)/', $sourceEnvironment->getCoreVersion()) || !preg_match('/^(9|([1-9]\d+))(\.|$)/', $targetEnvironment->getCoreVersion())) {
+            return;
+        }
+        $this->convertFrom8($xDocument);
+    }
+
+    private function convertFrom8(SimpleXMLElement $xDocument)
+    {
+        $converter = new Converter($xDocument);
+        $converter
+            ->blocks('event_list')
+                ->table('btEventList')
+                    ->addField('titleFormat', 'h5')
+                ->done()
+            ->done()
+            ->blocks('event_list')
+                ->table('btEventList')
+                    ->addField('titleFormat', 'h5')
+                ->done()
+            ->done()
+            ->blocks('express_entry_list')
+                ->table('btExpressEntryList')
+                    ->addField('titleFormat', 'h2')
+                ->done()
+            ->done()
+            ->blocks('feature')
+                ->table('btFeature')
+                    ->addField('titleFormat', 'h4')
+                    ->convertFontAwesome4to5Field('icon')
+                ->done()
+            ->done()
+            ->blocks('google_map')
+                ->table('btGoogleMap')
+                    ->addField('titleFormat', 'h3')
+                ->done()
+            ->done()
+            ->blocks('page_list')
+                ->table('btPageList')
+                    ->addField('titleFormat', 'h5')
+                ->done()
+            ->done()
+            ->blocks('rss_displayer')
+                ->table('btRssDisplay')
+                    ->addField('titleFormat', 'h5')
+                ->done()
+            ->done()
+            ->blocks('tags')
+                ->table('btTags')
+                    ->addField('titleFormat', 'h5')
+                ->done()
+            ->done()
+            ->blocks('topic_list')
+                ->table('btTopicList')
+                    ->addField('titleFormat', 'h5')
+                ->done()
+            ->done()
         ;
-
-        return [$import];
     }
 }

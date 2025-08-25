@@ -7,7 +7,6 @@ use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\Http\ResponseFactoryInterface;
 use Concrete\Core\Validation\CSRF\Token;
 use Concrete\Package\BlocksCloner\Controller\Dialog\Export;
-use Concrete\Package\BlocksCloner\ExportFixer;
 use Concrete\Package\BlocksCloner\Subject;
 use Concrete\Package\BlocksCloner\XmlParser;
 use Exception;
@@ -124,7 +123,7 @@ EOT
         foreach ($selectedAttributeValues as $selectedAttributeValue) {
             $this->exportAttributeValue($selectedAttributeValue, $sx);
         }
-        $this->app->make(ExportFixer::class)->fix($sx);
+        $this->convert($sx);
         $parser = $this->app->make(XmlParser::class);
 
         return $this->app->make(ResponseFactoryInterface::class)->json([

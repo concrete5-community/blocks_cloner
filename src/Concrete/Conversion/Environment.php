@@ -1,6 +1,6 @@
 <?php
 
-namespace Concrete\Package\BlocksCloner\Converter;
+namespace Concrete\Package\BlocksCloner\Conversion;
 
 use JsonSerializable;
 use stdClass;
@@ -10,7 +10,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
 final class Environment implements JsonSerializable
 {
     /**
-     * @var \Concrete\Package\BlocksCloner\Converter\Environment|null
+     * @var \Concrete\Package\BlocksCloner\Conversion\Environment|null
      */
     private static $current = null;
 
@@ -59,6 +59,11 @@ final class Environment implements JsonSerializable
         return $this->hasPackage($handle) ? $this->packagesAndVersions[$handle] : '';
     }
 
+    /**
+     * {@inheritdoc}
+     *
+     * @see \JsonSerializable::jsonSerialize()
+     */
     #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {

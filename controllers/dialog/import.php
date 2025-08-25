@@ -24,11 +24,10 @@ use Concrete\Core\Permission\Key\Key as PermissionKey;
 use Concrete\Core\StyleCustomizer\Inline\StyleSet;
 use Concrete\Core\User\User;
 use Concrete\Core\Validation\CSRF\Token;
-use Concrete\Package\BlocksCloner\Converter;
+use Concrete\Package\BlocksCloner\Conversion\Environment;
 use Concrete\Package\BlocksCloner\Edit\Context;
 use Concrete\Package\BlocksCloner\Import\Enviro;
-use Concrete\Package\BlocksCloner\Plugin\ConvertImport;
-use Concrete\Package\BlocksCloner\PluginManager;
+use Concrete\Package\BlocksCloner\Plugin;
 use Concrete\Package\BlocksCloner\Subject;
 use Concrete\Package\BlocksCloner\UI\Controller\Dialog;
 use Concrete\Package\BlocksCloner\Xml;
@@ -110,10 +109,7 @@ class Import extends Dialog
                 $area = null;
                 $areaHandle = '';
             }
-            $conversionMode = $post->get('conversionMode');
-            if (!in_array($conversionMode, [self::CONVERSIONMODE_NONE, self::CONVERSIONMODE_AUTO, self::CONVERSIONMODE_MANUAL], true)) {
-                throw new UserMessageException(t('Access Denied'));
-            }
+            $conversionMode = (string) $post->get('conversionMode', '');
             $xml = $post->get('xml');
             if (!is_string($xml) || ($xml = trim($xml)) === '') {
                 throw new UserMessageException(t('Please specify the XML to be imported'));
@@ -122,8 +118,7 @@ class Import extends Dialog
             $xmlService = $this->app->make(Xml::class);
             $sx = $xmlService->getSimpleXMLElement($xml);
             $result['xmlNormalized'] = $xmlService->normalize($sx);
-            $converters = $this->findConverters($sx, $conversionMode, preg_split('/\s+/', (string) $post->get('selectedConverters', ''), -1, PREG_SPLIT_NO_EMPTY));
-            $this->app->make(Converter\Import\Converter::class)->apply($sx, $converters);
+            $this->convert($sx, $conversionMode, preg_split('/\s+/', (string) $post->get('selectedConverters', ''), -1, PREG_SPLIT_NO_EMPTY));
             $result['processedXml'] = $xmlService->normalize($sx);
             $result['importSubject'] = $this->detectImportSubject($sx, $area, $this->isImportingIntoStack());
             switch ($result['importSubject']) {
@@ -813,26 +808,30 @@ class Import extends Dialog
      * @param string $conversionMode
      * @param string[] $manualConverterHandles
      *
-     * @return \Concrete\Package\BlocksCloner\Converter\Import[]
+     * @return void
      */
-    private function findConverters(SimpleXMLElement $sx, $conversionMode, array $manualConverterHandles)
+    private function convert(SimpleXMLElement $sx, $conversionMode, array $manualConverterHandles)
     {
         switch ($conversionMode) {
             case self::CONVERSIONMODE_NONE:
-                return [];
+                break;
             case self::CONVERSIONMODE_AUTO:
-                return $this->findAutomaticConverters($sx);
+                $this->convertByEnvironment($sx);
+                break;
             case self::CONVERSIONMODE_MANUAL:
-                return $this->findManualConverters($manualConverterHandles);
+                $this->convertByHandles($sx, $manualConverterHandles);
+                break;
+            default:
+                throw new UserMessageException(t('Access Denied'));
         }
     }
 
     /**
-     * @return \Concrete\Package\BlocksCloner\Converter\Import[]
+     * @return void
      */
-    private function findAutomaticConverters(SimpleXMLElement $sx)
+    private function convertByEnvironment(SimpleXMLElement $sx)
     {
-        $service = $this->app->make(Converter\Environment\Service::class);
+        $service = $this->app->make(Environment\Service::class);
         try {
             $xmlEnvironment = $service->extractEnvironmentFromXml($sx);
             if ($xmlEnvironment === null) {
@@ -842,48 +841,37 @@ class Import extends Dialog
             throw new UserMessageException(t('Unable to automatically determine which converters to use: %s', $x->getMessage()));
         }
         $currentEnvironment = $service->getCurrentEnvironment();
-        $result = [];
-        $plugins = $this->app->make(PluginManager::class)->getPlugins(ConvertImport::class);
+        $plugins = $this->app->make(Plugin\Manager::class)->getConvertImportPlugins();
         foreach ($plugins as $plugin) {
-            foreach ($plugin->getImportConverters() as $converter) {
-                if ($converter->canBeAppliedTo($xmlEnvironment, $currentEnvironment)) {
-                    $result[] = $converter;
-                }
-            }
+            $plugin->applyImportConvertersByEnvironment($sx, $xmlEnvironment, $currentEnvironment);
         }
-
-        return $result;
     }
 
     /**
-     * @return \Concrete\Package\BlocksCloner\Converter\Import[]
+     * @return void
      */
-    private function findManualConverters(array $wantedConverterHandles)
+    private function convertByHandles(SimpleXMLElement $sx, array $wantedConverterHandles)
     {
         if ($wantedConverterHandles === []) {
             return [];
         }
         $wantedConverterHandles = array_unique($wantedConverterHandles);
-        $plugins = $this->app->make(PluginManager::class)->getPlugins(ConvertImport::class);
-        $result = [];
+        $plugins = $this->app->make(Plugin\Manager::class)->getConvertImportPlugins();
+        $appliedHandles = [];
         foreach ($plugins as $plugin) {
-            foreach ($plugin->getImportConverters() as $converter) {
-                $handle = $converter->getHandle();
-                if (!in_array($handle, $wantedConverterHandles, true)) {
-                    continue;
+            foreach ($wantedConverterHandles as $handle) {
+                if ($plugin->applyImportConverterByHandle($sx, $handle)) {
+                    if (in_array($handle, $appliedHandles, true)) {
+                        throw new UserMessageException("More than one import converter found with the handle '%s'", $handle);
+                    }
+                    $appliedHandles[] = $handle;
                 }
-                if (isset($result[$handle])) {
-                    throw new UserMessageException("More than one import converter found with the handle '%s'", $handle);
-                }
-                $result[$handle] = $converter;
             }
         }
-        $missingConverters = array_diff($wantedConverterHandles, array_keys($result));
+        $missingConverters = array_diff($wantedConverterHandles, $appliedHandles);
         if ($missingConverters !== []) {
             throw new UserMessageException('Unable to find the import converters with these handles: %s', "'" . implode("', '", $missingConverters) . "'");
         }
-
-        return array_values($result);
     }
 
     /**
