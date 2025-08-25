@@ -1,9 +1,10 @@
 import {setElementHighlighted} from './highlighter';
 import {hook as hookMenus} from './menu';
 import {findParentArea, getPageStructure, getPageStructureStartingAt} from './page-structure';
-import Conversion from './Conversion';
+import conversion from './Conversion';
 import Xml from './Xml';
 import diff from './diff';
+import * as service from './service';
 
 if ((window as any).ccmBlocksCloner === undefined) {
   (window as any).ccmBlocksCloner = {
@@ -11,9 +12,10 @@ if ((window as any).ccmBlocksCloner === undefined) {
     getPageStructureStartingAt,
     findParentArea,
     setElementHighlighted,
-    conversion: Conversion,
+    conversion,
     xml: Xml,
     diff,
+    service,
   };
   hookMenus();
 }

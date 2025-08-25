@@ -9,6 +9,7 @@ use Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface;
 use Concrete\Package\BlocksCloner\Controller\Dialog\Export;
 use Concrete\Package\BlocksCloner\Edit\Context;
 use Concrete\Package\BlocksCloner\ExportFixer;
+use Concrete\Package\BlocksCloner\Subject;
 use Concrete\Package\BlocksCloner\XmlParser;
 
 defined('C5_EXECUTE') or die('Access Denied.');
@@ -63,7 +64,7 @@ class Block extends Export
         $this->app->make(ExportFixer::class)->fix($blockElement);
         $this->set('xml', $this->formatXml($blockElement, true));
         $parser = $this->app->make(XmlParser::class);
-        $this->set('references', $this->serializeReferences($parser->extractReferences($blockElement)));
+        $this->set('references', $this->serializeReferences($parser->extractReferences($blockElement, Subject::BLOCK)));
         $this->set('resolverManager', $this->app->make(ResolverManagerInterface::class));
     }
 }

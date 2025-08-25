@@ -7,6 +7,7 @@ use Concrete\Core\Error\UserMessageException;
 use Concrete\Package\BlocksCloner\Controller\Dialog\Export;
 use Concrete\Package\BlocksCloner\Edit\Context;
 use Concrete\Package\BlocksCloner\ExportFixer;
+use Concrete\Package\BlocksCloner\Subject;
 use Concrete\Package\BlocksCloner\XmlParser;
 use SimpleXMLElement;
 
@@ -152,7 +153,7 @@ class Area extends Export
 
         return [
             'xml' => $this->formatXml($xml, true),
-            'references' => $this->serializeReferences($parser->extractReferences($xml)),
+            'references' => $this->serializeReferences($parser->extractReferences($xml, Subject::AREA)),
         ];
     }
 }

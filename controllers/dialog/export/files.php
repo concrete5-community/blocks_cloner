@@ -16,6 +16,11 @@ defined('C5_EXECUTE') or die('Access Denied.');
 
 class Files extends Export
 {
+    /**
+     * {@inheritdoc}
+     *
+     * @see \Concrete\Package\BlocksCloner\UI\Controller::view()
+     */
     public function view()
     {
         parent::view();

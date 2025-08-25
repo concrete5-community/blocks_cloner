@@ -89,6 +89,42 @@ ob_start();
             </tbody>
         </table>
     </div>
+    <div v-if="references?.pageAttributes">
+        <table class="table table-striped table-sm table-condensed caption-top">
+            <caption>
+                <span v-if="operation === 'import'">{{ someErrors('pageAttributes') ? ICON.BAD : ICON.GOOD }}</span>
+                <strong><?= t('Referenced Page Attribute Keys') ?></strong>
+            </caption>
+            <colgroup>
+                <col width="1" />
+                <col width="1" />
+            </colgroup>
+            <tbody>
+                <tr v-for="(pageAttribute, key) in references.pageAttributes">
+                    <td class="text-nowrap">
+                        <code>{{ key }}</code>
+                    </td>
+                    <td class="text-nowrap">
+                        <span v-if="pageAttribute.error" class="text-danger">{{ pageAttribute.error }}</span>
+                        <span v-else>{{ pageAttribute.name }}</span>
+                    </td>
+                    <td>
+                        <span v-if="!pageAttribute.error">
+                            <?= t('Attribute type: %s', '{{ pageAttribute.type.name }}') ?>
+                            <span class="small text-muted">
+                                <br />
+                                <?= t('Handle: %s', '<code>{{ pageAttribute.type.handle }}</code>') ?><br />
+                                <i v-if="!pageAttribute.type.package"><?= t('Provided by %s', 'Concrete') ?></i>
+                                <span v-else v-bind:title="pageAttribute.type.package.handle">
+                                    <?= t('Provided by %s', '{{ pageAttribute.type.package.name }}') ?>
+                                </span>
+                            </span>
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
     <div v-if="references?.files">
         <table class="table table-striped table-sm table-condensed caption-top">
             <caption>
@@ -277,6 +313,7 @@ ob_end_clean();
 
 const RECOGNIZED_REFERENCE_TYPES = [
     'blockTypes',
+    'pageAttributes',
     'files',
     'pages',
     'pageTypes',
@@ -387,14 +424,7 @@ Vue.component('blocks-cloner-references-viewer', {
                     },
                 }
             );
-            if (!response.ok) {
-                throw new Error(await response.text());
-            }
-            const responseData = await response.json();
-            if (responseData.error) {
-                throw new Error(responseData.error);
-            }
-            this.uploadToFolder = responseData;
+            this.uploadToFolder = await window.ccmBlocksCloner.service.parseJsonResponse(response);
         },
         async retrieveInizialUploadFolder() {
             try {
@@ -482,13 +512,7 @@ Vue.component('blocks-cloner-references-viewer', {
                         `${this.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import/upload-file?cID=${this.cid}`,
                         request
                     );
-                    if (!response.ok) {
-                        throw new Error(await response.text());
-                    }
-                    const responseData = await response.json();
-                    if (responseData.error) {
-                        throw new Error(responseData.error);
-                    }
+                    await window.ccmBlocksCloner.service.parseJsonResponse(response);
                     emitCompleted = true;
                 } finally {
                     this.uploadingFile = false;

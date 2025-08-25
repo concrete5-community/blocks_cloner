@@ -2,11 +2,11 @@
 
 # Blocks Cloner
 
-This repository contains a package for [ConcreteCMS](https://www.concretecms.org/) that lets you copy blocks between two instances of Concrete.
+This repository contains a package for [ConcreteCMS](https://www.concretecms.org/) that lets you copy blocks, custom styles, and page attributes between two instances of Concrete.
 
 This works by copying and pasting XML text in the so-called [CIF format](https://documentation.concretecms.org/9-x/developers/security/concrete-interchange-format).
 
-This is also useful for package developers: they can test if new blocks correctly support exporting and importing their data.
+This is also useful for package developers: they can test if new blocks and attributes correctly support exporting and importing their data.
 
 ## Installation Methods
 
@@ -25,27 +25,29 @@ Then, you have to login in your Concrete website, go to the Dashboard > Extend C
 
 Simply enter the Edit Mode of a website page.
 
+### Exporting Attributes, Blocks or Areas
+
+Click the "Export as XML" icon you see in the toolbar.
+A panel will appear where you can choose the item to export: page attributes, or specific areas or blocks by selecting them from the displayed page structure.
+
 ### Exporting Single Blocks
 
-When clicking on a block, the context menu will contain a new "Export Block as XML" entry: click it to copy and paste the CIF text.
+Click on a block, then click the "Export block as XML" menu entry to view and copy the CIF representing the block.
 
 ### Exporting Area Styles and/or Blocks
 
-You can also export custom area styles, as well as all the blocks in an area.
-To do so, simply click on the area handle: you'll see a new "Export Area as XML" menu item: click on it to export the custom area style and/or the blocks it contains.
+Click on an area handle, then click the "Export area as XML" menu entry to view and copy the CIF representing the area style and or all the blocks it contains.
 
-### Exporting Blocks and Areas
+### Importing Page Attributes, Blocks or Areas
 
-You can choose an area or block to export by selecting it from the page structure.
-Do to so, simply click the "Export as XML" icon you see in the toolbar.
-A panel will appear where you can choose the item to export.
-
+Click the "Import from XML" icon you see in the toolbar.
+A panel will appear where:
+- you can choose to import page attributes
+- you can also see all the page areas: click one of them to import blocks and/or area styles in the selected area.
 
 ### Importing Blocks and Area Styles
 
-You can import blocks and/or custom area styles into an area by clicking its handle: the context menu will display a new "Import from XML" entry: click it to paste the CIF to be importer.
-
-In the toolbar you'll also see a new "Import from XML" icon: if you click it, you'll see a panel where you can see all the areas in the page. To add data to a specific area, simply click it.
+You can import blocks and/or custom area styles into a specific area by clicking its handle: the context menu will display a new "Import content from XML" entry: click it to paste the CIF to be imported.
 
 ## Do you really want to say thank you?
 
