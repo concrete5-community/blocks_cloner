@@ -265,7 +265,7 @@ class Import extends Dialog
                 $newBlock = $this->importXBlock($enviro->sx, $context, $enviro);
                 $response = $this->buildImportResponse(
                     t2('%s block has been imported', '%s blocks have been imported', 1),
-                    ['newBlockIDs' => [(int) $newBlock->getBlockID()]],
+                    ['newBlockIDs' => [(int) $newBlock->getBlockID()]]
                 );
                 $cn->commit();
                 $rollBack = false;
@@ -911,7 +911,7 @@ class Import extends Dialog
                 $numAttributes++;
             }
             $response = $this->buildImportResponse(
-                t2('%s attribute has been imported', '%s attributes have been imported', $numAttributes),
+                t2('%s attribute has been imported', '%s attributes have been imported', $numAttributes)
             );
             $cn->commit();
             $rollBack = false;
