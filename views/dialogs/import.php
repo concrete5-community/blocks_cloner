@@ -237,7 +237,7 @@ new Vue({
                         } else {
                             ?>
                             if (!doc.documentElement.getAttribute('type')) {
-                                throw new Error(<?= json_encode(t("The XML is invalid (it doesn't specify the block type")) ?>);
+                                throw new Error(<?= json_encode(t("The XML is invalid (it doesn't specify the block type)")) ?>);
                             }
                             break;
                             <?php
@@ -276,7 +276,7 @@ new Vue({
                         } else {
                             ?>
                             if (!doc.documentElement.getAttribute('handle')) {
-                                throw new Error(<?= json_encode(t("The XML is invalid (it doesn't specify the attribute handle")) ?>);
+                                throw new Error(<?= json_encode(t("The XML is invalid (it doesn't specify the attribute handle)")) ?>);
                             }
                             break;
                             <?php
