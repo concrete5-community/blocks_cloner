@@ -10,15 +10,15 @@
     "watch": "webpack --fail-on-warnings --mode=development --watch",
     "prod": "webpack --fail-on-warnings --mode=production"
   },
+  "dependencies": {
+    "diff": "^8.0.2"
+  },
   "devDependencies": {
-    "@types/jquery": "^3.5.32",
+    "@types/jquery": "^3.5.33",
     "prettier": "^3.6.2",
-    "ts-loader": "^9.5.2",
+    "ts-loader": "^9.5.4",
     "typescript": "^5.9.2",
     "webpack": "^5.101.3",
     "webpack-cli": "^6.0.1"
-  },
-  "dependencies": {
-    "diff": "^8.0.2"
   }
 }
