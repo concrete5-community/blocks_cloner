@@ -7,6 +7,7 @@ use Concrete\Core\Area\CustomStyle as AreaCustomStyle;
 use Concrete\Core\Attribute\Category\PageCategory;
 use Concrete\Core\Block\Block;
 use Concrete\Core\Block\CustomStyle as BlockCustomStyle;
+use Concrete\Core\Config\Repository\Repository;
 use Concrete\Core\Database\Connection\Connection;
 use Concrete\Core\Entity\Attribute\Key\PageKey;
 use Concrete\Core\Entity\Block\BlockType\BlockType;
@@ -135,8 +136,8 @@ class Import extends Dialog
             if (isset($references[XmlParser::KEY_BLOCKTYPES])) {
                 $checker = new Checker($this->getPage());
                 $references[XmlParser::KEY_BLOCKTYPES] = array_map(
-                    static function ($blockType) use ($checker) {
-                        if ($blockType instanceof BlockType && !$checker->canAddBlockType($blockType)) {
+                    function ($blockType) use ($checker, $area) {
+                        if ($blockType instanceof BlockType && !$this->canAddBlockType($checker, $blockType, $area)) {
                             return t("You can't add blocks of type %s to this page.", t($blockType->getBlockTypeName()));
                         }
 
@@ -932,5 +933,29 @@ class Import extends Dialog
         $stack = Stack::getByID($this->cID);
 
         return $stack && !$stack->isError();
+    }
+
+    /**
+     * @param \Concrete\Core\Area\Area|null $area
+     */
+    private function canAddBlockType(Checker $pageChecker, BlockType $blockType, $area)
+    {
+        switch ($blockType->getBlockTypeHandle()) {
+
+            case BLOCK_HANDLE_LAYOUT_PROXY:
+                if ($area === null || $area->isGlobalArea()) {
+                    return false;
+                }
+                $config = $this->app->make(Repository::class);
+                if (!$config->get('concrete.design.enable_layouts')) {
+                    return false;
+                }
+                $areaChecker = new Checker($area);
+
+                return (bool) $areaChecker->canAddLayoutToArea();
+
+            default:
+                return $pageChecker->canAddBlockType($blockType);
+        }
     }
 }
