@@ -1,3 +1,4 @@
+import type jQuery from 'jquery';
 import {localize} from './i18n';
 import {type Area, type Block, findParentArea, getEditingStackID, getPageStructure, parseArea, parseBlock} from './page-structure';
 

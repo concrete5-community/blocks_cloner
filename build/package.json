@@ -11,14 +11,14 @@
     "prod": "webpack --fail-on-warnings --mode=production"
   },
   "dependencies": {
-    "diff": "^8.0.2"
+    "diff": "^9.0.0"
   },
   "devDependencies": {
-    "@types/jquery": "^3.5.33",
-    "prettier": "^3.6.2",
-    "ts-loader": "^9.5.4",
-    "typescript": "^5.9.3",
-    "webpack": "^5.102.1",
-    "webpack-cli": "^6.0.1"
+    "@types/jquery": "^3.5.34",
+    "prettier": "^3.9.5",
+    "ts-loader": "^9.6.2",
+    "typescript": "^6.0.3",
+    "webpack": "^5.108.4",
+    "webpack-cli": "^7.2.1"
   }
 }
