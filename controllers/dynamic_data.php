@@ -47,7 +47,7 @@ EOT
     private function buildCCMBlocksClonerDynamicData()
     {
         $stackEditPageID = null;
-        $stackEditPage = Page::getByPath('/dashboard/blocks/stacks');
+        $stackEditPage = Page::getByPath(\STACKS_LISTING_PAGE_PATH);
         if ($stackEditPage && !$stackEditPage->isError()) {
             $checker = new Checker($stackEditPage);
             if ($checker->canViewPage()) {

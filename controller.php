@@ -102,7 +102,7 @@ class Controller extends Package implements ProviderInterface
             return;
         }
         $checker = new Checker($page);
-        if ($page->getCollectionPath() === '/dashboard/blocks/stacks') {
+        if ($page->getCollectionPath() === \STACKS_LISTING_PAGE_PATH) {
             if (!$checker->canViewPage()) {
                 return;
             }

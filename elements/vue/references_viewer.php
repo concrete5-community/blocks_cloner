@@ -14,7 +14,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
 $resolverManager = app(ResolverManagerInterface::class);
 
 $viewStackUrl = '';
-$page = Page::getByPath('/dashboard/blocks/stacks');
+$page = Page::getByPath(STACKS_LISTING_PAGE_PATH);
 if ($page && !$page->isError()) {
     $checker = new Checker($page);
     if ($checker->canViewPage()) {
