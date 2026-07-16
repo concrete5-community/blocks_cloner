@@ -65,7 +65,7 @@ jobs:
       matrix:
         php-version:
           - "5.5"
-          - "8.4"
+          - "8.5"
     steps:
       -
         name: Checkout
