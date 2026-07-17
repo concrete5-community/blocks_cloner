@@ -1,8 +1,84 @@
+import type jQuery from 'jquery';
+
 import {getBlockTypeName} from './i18n';
+import {tryScrollIntoView} from './highlighter';
 
 enum Type {
   Area = 'area',
   Block = 'block',
+}
+
+let editMode = null;
+function getEditMode() {
+  return (editMode ??= window.Concrete.getEditMode());
+}
+
+type CCMMenuOpener = () => void;
+
+function getCCMObject(item: Area | Block): any {
+  switch (item.type) {
+    case Type.Area:
+      return getEditMode().getAreaByID(item.id);
+    case Type.Block:
+      return getEditMode().getBlockByID(item.id);
+  }
+}
+
+function createCCMMenuOpener(item: Area | Block): CCMMenuOpener | undefined {
+  const ccmObject = getCCMObject(item);
+  if (!ccmObject) {
+    return;
+  }
+  const ccmMenu = ccmObject.getMenu?.();
+  if (ccmMenu?.hoverProxy && ccmMenu?.$launcher?.length) {
+    return () => standardCCMMenuOpener(item);
+  }
+  const notch = ccmObject.getNotch?.();
+  console.log('Notch', notch);
+}
+
+function standardCCMMenuOpener(item: Area | Block): void {
+  if (!window.ConcreteMenuManager?.enabled) {
+    return;
+  }
+  const ccmObject = getCCMObject(item);
+  const ccmMenu = ccmObject?.getMenu?.();
+  const numLaunchers = ccmMenu?.$launcher?.length || 0;
+  if (numLaunchers === 0) {
+    return;
+  }
+  const activeMenu = window.ConcreteMenuManager.getActiveMenu();
+  if (activeMenu) {
+    activeMenu.hide();
+  }
+  const launcher = ccmMenu?.$launcher[0] as HTMLElement;
+  const rect = launcher.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const mouseMoveEvent = $.Event('mousemove', {
+    clientX: centerX,
+    clientY: centerY,
+    pageX: centerX + window.scrollX,
+    pageY: centerY + window.scrollY,
+  });
+  if (ccmMenu.hoverProxy(mouseMoveEvent, $(launcher)) === false) {
+    return;
+  }
+  setTimeout(() => {
+    const clickEvent = $.Event('click', {
+      clientX: centerX,
+      clientY: centerY,
+      pageX: centerX + window.scrollX,
+      pageY: centerY + window.scrollY,
+    });
+    window.ConcreteMenuManager.$clickProxy.trigger(clickEvent);
+    setTimeout(() => {
+      const menuEl = document.querySelector('#ccm-popover-menu-container .popover') as HTMLElement | null;
+      if (menuEl) {
+        tryScrollIntoView(menuEl);
+      }
+    }, 200);
+  }, 10);
 }
 
 interface GetPageStructureOptions {
@@ -19,6 +95,7 @@ interface BaseItem extends Container {
   id: number;
   handle: string;
   displayName: string;
+  openContextMenu?: () => void;
 }
 export interface Area extends BaseItem {
   type: Type.Area;
@@ -45,7 +122,7 @@ export function parseArea(element: HTMLElement): Area | null {
   if (!displayName) {
     return null;
   }
-  return {
+  const result: Area = {
     type: Type.Area,
     element,
     id,
@@ -55,6 +132,11 @@ export function parseArea(element: HTMLElement): Area | null {
     enableGridContainer: ['1', 'true'].includes(element.dataset.areaEnableGridContainer || ''),
     children: [],
   };
+  const openContextMenu = createCCMMenuOpener(result);
+  if (openContextMenu) {
+    result.openContextMenu = openContextMenu;
+  }
+  return result;
 }
 
 export function parseBlock(element: HTMLElement): Block | null {
@@ -69,7 +151,7 @@ export function parseBlock(element: HTMLElement): Block | null {
   if (!handle) {
     return null;
   }
-  return {
+  const result: Block = {
     type: Type.Block,
     element,
     id,
@@ -77,6 +159,11 @@ export function parseBlock(element: HTMLElement): Block | null {
     displayName: getBlockTypeName(handle) || handle,
     children: [],
   };
+  const openContextMenu = createCCMMenuOpener(result);
+  if (openContextMenu) {
+    result.openContextMenu = openContextMenu;
+  }
+  return result;
 }
 
 export function getPageStructure(options?: GetPageStructureOptions): Area[] {

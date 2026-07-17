@@ -22,7 +22,7 @@ function checkElementInViewport(el: HTMLElement, callback: (isInViewport: boolea
   observer.observe(el);
 }
 
-function tryScrollIntoView(el: HTMLElement): void {
+export function tryScrollIntoView(el: HTMLElement): void {
   if (!el.scrollIntoView) {
     return;
   }

@@ -139,6 +139,20 @@ class Controller extends Package implements ProviderInterface
                     ],
                 ]
             );
+            $menu->addPageHeaderMenuItem(
+                'page_structure',
+                $this->pkgHandle,
+                [
+                    'icon' => 'bullseye',
+                    'label' => t('View page structure'),
+                    'position' => 'left',
+                    'href' => false,
+                    'linkAttributes' => [
+                        'data-launch-panel' => 'blocks_cloner-page_structure',
+                        'title' => t('View page structure'),
+                    ],
+                ]
+            );
         }
         $assetList = AssetList::getInstance();
         $assetList->register('javascript-localized', 'blocks_cloner-view', '/ccm/blocks-cloner/dynamic-data', ['minify' => false, 'combine' => false, 'version' => $this->pkgVersion], 'blocks_cloner');
@@ -180,6 +194,7 @@ class Controller extends Package implements ProviderInterface
             ->setNamespace('Concrete\Package\BlocksCloner\Controller')
             ->routes('export.php', $this->pkgHandle)
             ->routes('import.php', $this->pkgHandle)
+            ->routes('page_structure.php', $this->pkgHandle)
         ;
     }
 
