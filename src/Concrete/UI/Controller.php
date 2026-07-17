@@ -17,8 +17,6 @@ use Concrete\Core\Tree\Node\Type\FileFolder;
 use Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface;
 use Concrete\Package\BlocksCloner\XmlParser;
 use Doctrine\ORM\EntityManagerInterface;
-use SimpleXMLElement;
-use stdClass;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -107,7 +105,7 @@ abstract class Controller extends CoreController
      *
      * @return array|null returns NULL if some unexpected element name has been found
      */
-    protected function extractChildElements(SimpleXMLElement $parent, array $expectedElementNames)
+    protected function extractChildElements(\SimpleXMLElement $parent, array $expectedElementNames)
     {
         $result = array_fill_keys($expectedElementNames, []);
         foreach ($parent->children() as $child) {
@@ -126,9 +124,9 @@ abstract class Controller extends CoreController
      */
     protected function serializeReferences(array $references)
     {
-        $result = new stdClass();
+        $result = new \stdClass();
         foreach ($references as $referenceType => $items) {
-            $result->{$referenceType} = new stdClass();
+            $result->{$referenceType} = new \stdClass();
             foreach ($items as $itemKey => $item) {
                 $result->{$referenceType}->{$itemKey} = $this->serializeReference($referenceType, $item);
             }

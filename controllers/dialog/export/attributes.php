@@ -9,10 +9,7 @@ use Concrete\Core\Validation\CSRF\Token;
 use Concrete\Package\BlocksCloner\Controller\Dialog\Export;
 use Concrete\Package\BlocksCloner\Subject;
 use Concrete\Package\BlocksCloner\XmlParser;
-use Exception;
 use Punic\Comparer;
-use SimpleXMLElement;
-use Throwable;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -163,7 +160,7 @@ EOT
         ];
     }
 
-    private function exportAttributeValue(PageValue $attributeValue, SimpleXMLElement $xParent)
+    private function exportAttributeValue(PageValue $attributeValue, \SimpleXMLElement $xParent)
     {
         $attributeKey = $attributeValue->getAttributeKey();
         $attributeKeyController = $attributeKey->getController();
@@ -174,9 +171,9 @@ EOT
         $error = null;
         try {
             $attributeKeyController->exportValue($xAttribute);
-        } catch (Exception $x) {
+        } catch (\Exception $x) {
             $error = $x;
-        } catch (Throwable $x) {
+        } catch (\Throwable $x) {
             $error = $x;
         }
         if ($error !== null) {

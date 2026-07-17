@@ -5,7 +5,6 @@ namespace Concrete\Package\BlocksCloner\Plugins;
 use Concrete\Package\BlocksCloner\Conversion\Environment;
 use Concrete\Package\BlocksCloner\Converter;
 use Concrete\Package\BlocksCloner\Plugin\ConvertImport;
-use SimpleXMLElement;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -28,7 +27,7 @@ class Core8To9 implements ConvertImport
      *
      * @see \Concrete\Package\BlocksCloner\Plugin\ConvertImport::applyImportConverterByHandle()
      */
-    public function applyImportConverterByHandle(SimpleXMLElement $xDocument, $handle)
+    public function applyImportConverterByHandle(\SimpleXMLElement $xDocument, $handle)
     {
         if ($handle !== 'from_core8') {
             return false;
@@ -43,7 +42,7 @@ class Core8To9 implements ConvertImport
      *
      * @see \Concrete\Package\BlocksCloner\Plugin\ConvertImport::applyImportConvertersByEnvironment()
      */
-    public function applyImportConvertersByEnvironment(SimpleXMLElement $xDocument, Environment $sourceEnvironment, Environment $targetEnvironment)
+    public function applyImportConvertersByEnvironment(\SimpleXMLElement $xDocument, Environment $sourceEnvironment, Environment $targetEnvironment)
     {
         if (!preg_match('/^8(\.|$)/', $sourceEnvironment->getCoreVersion()) || !preg_match('/^(9|([1-9]\d+))(\.|$)/', $targetEnvironment->getCoreVersion())) {
             return;
@@ -51,7 +50,7 @@ class Core8To9 implements ConvertImport
         $this->convertFrom8($xDocument);
     }
 
-    private function convertFrom8(SimpleXMLElement $xDocument)
+    private function convertFrom8(\SimpleXMLElement $xDocument)
     {
         $converter = new Converter($xDocument);
         $converter

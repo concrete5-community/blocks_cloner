@@ -3,13 +3,6 @@
 namespace Concrete\Package\BlocksCloner;
 
 use Concrete\Core\Error\UserMessageException;
-use DOMDocument;
-use DOMElement;
-use DOMNode;
-use DOMXPath;
-use LibXMLError;
-use RuntimeException;
-use SimpleXMLElement;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -58,16 +51,16 @@ final class Xml
      */
     private function ensureDOMDocument($xml, $reloadIfObject = false)
     {
-        if ($xml instanceof DOMNode) {
+        if ($xml instanceof \DOMNode) {
             $xml = $xml->ownerDocument ?: $xml;
         }
-        if ($xml instanceof DOMDocument) {
+        if ($xml instanceof \DOMDocument) {
             if (!$reloadIfObject) {
                 return $xml;
             }
             $xml = $xml->saveXML();
         }
-        if ($xml instanceof SimpleXMLElement) {
+        if ($xml instanceof \SimpleXMLElement) {
             if (!$reloadIfObject) {
                 $domElement = dom_import_simplexml($xml);
 
@@ -76,12 +69,12 @@ final class Xml
             $xml = $xml->asXML();
         }
         if (!is_string($xml)) {
-            throw new RuntimeException(t('Invalid type of parameter %1$s of function %2$s', '$xml', __METHOD__));
+            throw new \RuntimeException(t('Invalid type of parameter %1$s of function %2$s', '$xml', __METHOD__));
         }
         if (($xml = trim($xml)) === '') {
             throw new UserMessageException(t('The XML is empty'));
         }
-        $xDoc = new DOMDocument('1.0', 'UTF-8');
+        $xDoc = new \DOMDocument('1.0', 'UTF-8');
         $xDoc->preserveWhiteSpace = false;
         $xDoc->formatOutput = true;
         $restoreInternalErrors = libxml_use_internal_errors(true);
@@ -113,14 +106,14 @@ final class Xml
      */
     private function ensureSimpleXMLElement($xml)
     {
-        if ($xml instanceof SimpleXMLElement) {
+        if ($xml instanceof \SimpleXMLElement) {
             return $xml;
         }
-        if ($xml instanceof DOMDocument) {
+        if ($xml instanceof \DOMDocument) {
             $xml = $xml->saveXML();
         }
         if (!is_string($xml)) {
-            throw new RuntimeException(t('Invalid type of parameter %1$s of function %2$s', '$xml', __METHOD__));
+            throw new \RuntimeException(t('Invalid type of parameter %1$s of function %2$s', '$xml', __METHOD__));
         }
         if (($xml = trim($xml)) === '') {
             throw new UserMessageException(t('The XML is empty'));
@@ -130,7 +123,7 @@ final class Xml
             libxml_clear_errors();
             $sx = simplexml_load_string($xml);
             $errors = libxml_get_errors();
-            if ($sx instanceof SimpleXMLElement && empty($errors)) {
+            if ($sx instanceof \SimpleXMLElement && empty($errors)) {
                 return $sx;
             }
         } finally {
@@ -150,7 +143,7 @@ final class Xml
     /**
      * @return string
      */
-    private function describeXmlError(LibXMLError $error)
+    private function describeXmlError(\LibXMLError $error)
     {
         $line = '';
         switch ($error->level) {
@@ -175,9 +168,9 @@ final class Xml
     /**
      * @return \DOMElement[]|\Generator
      */
-    private function listElementsWithoutChildren(DOMDocument $xDoc)
+    private function listElementsWithoutChildren(\DOMDocument $xDoc)
     {
-        $xPath = new DOMXPath($xDoc);
+        $xPath = new \DOMXPath($xDoc);
         foreach ($xPath->query('//*') as $xElement) {
             foreach ($xElement->childNodes as $xChild) {
                 if ($xChild->nodeType === XML_ELEMENT_NODE) {
@@ -191,7 +184,7 @@ final class Xml
     /**
      * @return void
      */
-    private function normalizeXmlElementValue(DOMElement $xElement)
+    private function normalizeXmlElementValue(\DOMElement $xElement)
     {
         $text = '';
         $hasCData = false;
@@ -227,7 +220,7 @@ final class Xml
     /**
      * @return string
      */
-    private function renderDoc(DOMDocument $xDoc)
+    private function renderDoc(\DOMDocument $xDoc)
     {
         $xml = $xDoc->saveXML();
 

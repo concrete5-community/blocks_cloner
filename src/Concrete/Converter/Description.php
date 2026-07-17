@@ -2,9 +2,7 @@
 
 namespace Concrete\Package\BlocksCloner\Converter;
 
-use JsonSerializable;
-
-class Description implements JsonSerializable
+class Description implements \JsonSerializable
 {
     /**
      * @var string

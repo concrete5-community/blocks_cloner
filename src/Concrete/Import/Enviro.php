@@ -40,7 +40,7 @@ class Enviro
     public function __construct(Page $page, $importSubject, Request $request, Token $token, Xml $xmlService)
     {
         $xml = $request->request->get('xml');
-        if (!is_string($xml) || ($xml  = trim($xml)) === '') {
+        if (!is_string($xml) || ($xml = trim($xml)) === '') {
             throw new UserMessageException(t('Please specify the XML to be imported'));
         }
         $this->sx = $xmlService->getSimpleXMLElement($xml);

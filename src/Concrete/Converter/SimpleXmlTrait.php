@@ -2,8 +2,6 @@
 
 namespace Concrete\Package\BlocksCloner\Converter;
 
-use SimpleXMLElement;
-
 defined('C5_EXECUTE') or die('Access Denied.');
 
 trait SimpleXmlTrait
@@ -13,7 +11,7 @@ trait SimpleXmlTrait
      *
      * @return \SimpleXMLElement[]
      */
-    protected function listChildElements(SimpleXMLElement $el, $name)
+    protected function listChildElements(\SimpleXMLElement $el, $name)
     {
         $result = [];
         foreach ($el->children() as $child) {
@@ -30,7 +28,7 @@ trait SimpleXmlTrait
      *
      * @return \SimpleXMLElement
      */
-    protected function getOrCreateFirstChildElement(SimpleXMLElement $el, $name)
+    protected function getOrCreateFirstChildElement(\SimpleXMLElement $el, $name)
     {
         $all = $this->listChildElements($el, $name);
 
@@ -43,7 +41,7 @@ trait SimpleXmlTrait
      *
      * @return void
      */
-    protected function setSimpleXMLElementAttribute(SimpleXMLElement $el, $name, $value)
+    protected function setSimpleXMLElementAttribute(\SimpleXMLElement $el, $name, $value)
     {
         $el[(string) $name] = (string) $value;
     }
@@ -53,7 +51,7 @@ trait SimpleXmlTrait
      *
      * @return void
      */
-    protected function setSimpleXMLElementValue(SimpleXMLElement $el, $value)
+    protected function setSimpleXMLElementValue(\SimpleXMLElement $el, $value)
     {
         $el[0] = $value;
     }

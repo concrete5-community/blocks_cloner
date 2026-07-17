@@ -2,12 +2,9 @@
 
 namespace Concrete\Package\BlocksCloner\Conversion;
 
-use JsonSerializable;
-use stdClass;
-
 defined('C5_EXECUTE') or die('Access Denied.');
 
-final class Environment implements JsonSerializable
+final class Environment implements \JsonSerializable
 {
     /**
      * @var \Concrete\Package\BlocksCloner\Conversion\Environment|null
@@ -69,7 +66,7 @@ final class Environment implements JsonSerializable
     {
         return [
             'core' => $this->coreVersion,
-            'packages' => $this->packagesAndVersions === [] ? new stdClass() : $this->packagesAndVersions,
+            'packages' => $this->packagesAndVersions === [] ? new \stdClass() : $this->packagesAndVersions,
         ];
     }
 }
