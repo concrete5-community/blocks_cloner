@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<concrete5-cif
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://github.com/concretecms/concrete-cif/releases/latest/download/concrete-cif-1.0.xsd"
+    version="1.0"
+>
+    <singlepages>
+        <page path="/dashboard/system/blocks_cloner" name="Blocks Cloner" package="blocks_cloner">
+        </page>
+    </singlepages>
+</concrete5-cif>

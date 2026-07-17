@@ -39,12 +39,12 @@ function setupAreaMenu(menu: Menu, menuElement: JQuery, area: Area): void {
   if (menuElement.find('a[data-ccm-blocks-cloner]').length) {
     return;
   }
-  const $after = menuElement.find('a:last');
+  let $after = menuElement.find('a:last');
   if ($after.length === 0) {
     return;
   }
-  $after
-    .after(
+  if (window.ccmBlocksClonerDynamicData?.importEnabled) {
+    $after = $after.after(
       $('<a data-ccm-blocks-cloner />')
         .attr('dialog-title', localize('importFromXmlIntoAreaName', 'Import content from XML into %s').replace('%s', area.displayName))
         .attr('class', 'dialog-launch dropdown-item')
@@ -53,8 +53,10 @@ function setupAreaMenu(menu: Menu, menuElement: JQuery, area: Area): void {
         .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import?cID=${getEditingCollectionID()}&aID=${area.id}&aHandle=${encodeURIComponent(area.handle)}`)
         .text(localize('importFromXml', 'Import content from XML'))
         .dialog(),
-    )
-    .after(
+    );
+  }
+  if (window.ccmBlocksClonerDynamicData?.exportEnabled) {
+    $after = $after.after(
       $('<a data-ccm-blocks-cloner />')
         .attr('dialog-title', localize('exportAreaNameAsXmlName', 'Export %s area as XML').replace('%s', area.displayName))
         .attr('class', 'dialog-launch dropdown-item')
@@ -64,13 +66,14 @@ function setupAreaMenu(menu: Menu, menuElement: JQuery, area: Area): void {
         .text(localize('exportAreaAsXml', 'Export area as XML'))
         .dialog(),
     );
+  }
 }
 
 function setupBlockMenu(menu: Menu, menuElement: JQuery, block: Block): void {
   if (menuElement.find('a[data-ccm-blocks-cloner]').length) {
     return;
   }
-  const $after = menuElement.find('a:last');
+  let $after = menuElement.find('a:last');
   if ($after.length === 0) {
     return;
   }
@@ -78,16 +81,18 @@ function setupBlockMenu(menu: Menu, menuElement: JQuery, block: Block): void {
   if (area === null) {
     return;
   }
-  $after.after(
-    $('<a data-ccm-blocks-cloner />')
-      .attr('dialog-title', localize('exportBlockTypeNameAsXml', 'Export %s block as XML').replace('%s', block.displayName))
-      .attr('class', 'dialog-launch dropdown-item')
-      .attr('dialog-width', '90%')
-      .attr('dialog-height', '80%')
-      .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export/block?cID=${getEditingCollectionID()}&aHandle=${encodeURIComponent(area.handle)}&bID=${block.id}`)
-      .text(localize('exportBlockAsXml', 'Export block as XML'))
-      .dialog(),
-  );
+  if (window.ccmBlocksClonerDynamicData?.exportEnabled) {
+    $after = $after.after(
+      $('<a data-ccm-blocks-cloner />')
+        .attr('dialog-title', localize('exportBlockTypeNameAsXml', 'Export %s block as XML').replace('%s', block.displayName))
+        .attr('class', 'dialog-launch dropdown-item')
+        .attr('dialog-width', '90%')
+        .attr('dialog-height', '80%')
+        .attr('href', `${window.CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export/block?cID=${getEditingCollectionID()}&aHandle=${encodeURIComponent(area.handle)}&bID=${block.id}`)
+        .text(localize('exportBlockAsXml', 'Export block as XML'))
+        .dialog(),
+    );
+  }
 }
 
 function injectStackMenuItems(stackID: number): void {
@@ -108,8 +113,9 @@ function injectStackMenuItems(stackID: number): void {
   if (!area) {
     return;
   }
-  $(menuElement)
-    .append(
+  const $menuElement = $(menuElement);
+  if (window.ccmBlocksClonerDynamicData?.importEnabled) {
+    $menuElement.append(
       $(`<li${version >= 9 ? ' class="nav-item"' : ''} />`).append(
         $('<a data-ccm-blocks-cloner />')
           .attr('dialog-title', localize('importFromXml', 'Import content from XML'))
@@ -120,8 +126,10 @@ function injectStackMenuItems(stackID: number): void {
           .text(localize('importFromXml', 'Import content from XML'))
           .dialog(),
       ),
-    )
-    .append(
+    );
+  }
+  if (window.ccmBlocksClonerDynamicData?.exportEnabled) {
+    $menuElement.append(
       $(`<li${version >= 9 ? ' class="nav-item"' : ''} />`).append(
         $('<a data-ccm-blocks-cloner />')
           .attr('dialog-title', localize('exportStackAsXml', 'Export stack as XML'))
@@ -133,6 +141,7 @@ function injectStackMenuItems(stackID: number): void {
           .dialog(),
       ),
     );
+  }
 }
 
 export function hook(): void {

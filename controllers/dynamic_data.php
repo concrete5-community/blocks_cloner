@@ -7,6 +7,7 @@ use Concrete\Core\Entity\Block\BlockType\BlockType;
 use Concrete\Core\Http\ResponseFactoryInterface;
 use Concrete\Core\Page\Page;
 use Concrete\Core\Permission\Checker;
+use Concrete\Package\BlocksCloner\GlobalOptions;
 use Concrete\Package\BlocksCloner\Plugin;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -54,6 +55,7 @@ EOT
                 $stackEditPageID = (int) $stackEditPage->getCollectionID();
             }
         }
+        $globalOptions = $this->app->make(GlobalOptions::class);
 
         return 'window.ccmBlocksClonerDynamicData = window.ccmBlocksClonerDynamicData || ' . json_encode([
             'i18n' => [
@@ -67,6 +69,9 @@ EOT
             ],
             'stackEditPageID' => $stackEditPageID,
             'blockTypeNames' => $this->getBlockTypeNames(),
+            'exportEnabled' => $globalOptions->isExportEnabled(),
+            'importEnabled' => $globalOptions->isImportEnabled(),
+            'pageStructureEnabled' => $globalOptions->isPageStructureEnabled(),
         ]) . ';';
     }
 
