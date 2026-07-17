@@ -4,7 +4,6 @@ defined('C5_EXECUTE') or die('Access Denied.');
 
 /**
  * @var Concrete\Package\BlocksCloner\Controller\Panel\Import $controller
- * @var array $scopeItems
  * @var Concrete\Core\View\View $view
  * @var int $cID
  */
