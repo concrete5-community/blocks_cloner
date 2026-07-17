@@ -2,9 +2,19 @@
 
 /*
  * This document has been generated with
- * https://mlocati.github.io/php-cs-fixer-configurator/#version:3.75.0|configurator
+ * https://mlocati.github.io/php-cs-fixer-configurator/#version:3.95.15|configurator
  * you can change this configuration by importing this file.
  */
+
+if (!defined('PhpCsFixer\Console\Application::VERSION')) {
+    fwrite(STDERR, "Your version of PHP CS Fixer is too old: please upgrade it\n");
+    exit(1);
+}
+if (version_compare(PhpCsFixer\Console\Application::VERSION, '3.95.15') < 0) {
+    fprintf(STDERR, "Your version of PHP CS Fixer (%s) is too old: please upgrade it\n", PhpCsFixer\Console\Application::VERSION);
+    exit(1);
+}
+
 $config = new PhpCsFixer\Config();
 
 return $config
@@ -130,6 +140,8 @@ return $config
         'method_chaining_indentation' => false,
         // Replaces `intval`, `floatval`, `doubleval`, `strval` and `boolval` function calls with according type casting operator.
         'modernize_types_casting' => true,
+        // Classes, constants, properties, and methods MUST have visibility declared, and keyword modifiers MUST be in the following order: inheritance modifier (`abstract` or `final`), visibility modifier (`public`, `protected`, or `private`), set-visibility modifier (`public(set)`, `protected(set)`, or `private(set)`), scope modifier (`static`), mutation modifier (`readonly`), type declaration, name.
+        'modifier_keywords' => ['elements' => ['method', 'property']],
         // DocBlocks must start with two asterisks, multiline comments must start with a single asterisk, after the opening slash. Both must end with a single asterisk before the closing slash.
         'multiline_comment_opening_closing' => true,
         // Convert multiline string to `heredoc` or `nowdoc`.
@@ -342,8 +354,6 @@ return $config
         'types_spaces' => true,
         // Unary operators should be placed adjacent to their operands.
         'unary_operator_spaces' => ['only_dec_inc' => true],
-        // Visibility MUST be declared on all properties and methods; `abstract` and `final` MUST be declared before the visibility; `static` MUST be declared after the visibility.
-        'visibility_required' => ['elements' => ['method', 'property']],
         // In array declaration, there MUST be a whitespace after each comma.
         'whitespace_after_comma_in_array' => true,
         // Write conditions in Yoda style (`true`), non-Yoda style (`['equal' => false, 'identical' => false, 'less_and_greater' => false]`) or ignore those conditions (`null`) based on configuration.
