@@ -38,7 +38,7 @@ class GlobalOptions
 
         return $this;
     }
-    
+
     /**
      * @return bool
      */
@@ -56,10 +56,10 @@ class GlobalOptions
     {
         $this->config->set('blocks_cloner::options.importEnabled', $value ? true : false);
         $this->config->save('blocks_cloner::options.importEnabled', $value ? true : false);
-        
+
         return $this;
     }
-    
+
     /**
      * @return bool
      */
@@ -77,7 +77,7 @@ class GlobalOptions
     {
         $this->config->set('blocks_cloner::options.pageStructureEnabled', $value ? true : false);
         $this->config->save('blocks_cloner::options.pageStructureEnabled', $value ? true : false);
-        
+
         return $this;
     }
 

@@ -8,7 +8,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
  * @var Concrete\Core\Validation\CSRF\Token $token
  * @var Concrete\Core\Form\Service\Form $form
  * @var Concrete\Core\Application\Service\UserInterface $interface
-
+ *
  * @var Concrete\Package\BlocksCloner\GlobalOptions $globalOptions
  */
 ?>
@@ -23,7 +23,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
             </label>
         </div>
     </div>
-    
+
     <div class="form-group">
         <div class="form-check">
             <?= $form->checkbox('importEnabled', 1, $globalOptions->isImportEnabled()) ?>
@@ -32,7 +32,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
             </label>
         </div>
     </div>
-    
+
     <div class="form-group">
         <div class="form-check">
             <?= $form->checkbox('pageStructureEnabled', 1, $globalOptions->isPageStructureEnabled()) ?>

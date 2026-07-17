@@ -21,6 +21,7 @@ class BlocksCloner extends DashboardPageController
         }
         if ($this->error->has()) {
             $this->view();
+
             return;
         }
         $globalOptions = $this->app->make(GlobalOptions::class);
