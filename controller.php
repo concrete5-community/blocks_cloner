@@ -77,7 +77,7 @@ class Controller extends Package implements ProviderInterface
      *
      * @see \Concrete\Core\Package\Package::upgrade()
      */
-    public function upgrade(): void
+    public function upgrade()
     {
         parent::upgrade();
         $this->installContentFile('config/install.xml');
