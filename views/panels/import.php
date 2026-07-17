@@ -10,86 +10,79 @@ defined('C5_EXECUTE') or die('Access Denied.');
  */
 
 $view->markHeaderAssetPosition();
+$view->element('panel_style', ['panelID' => 'import'], 'blocks_cloner');
 ?>
-<style>
-#ccm-panel-blocks_cloner-import {
-    background-color: #2a2c30;
-    color: #999;
-}
-#ccm-panel-blocks_cloner-import header {
-    color: #3baaf7;
-    background-color: #202226;
-}
-#ccm-panel-blocks_cloner-import li {
-    color: #999;
-}
-#ccm-panel-blocks_cloner-import li a {
-    padding: 0;
-}
-</style>
-<section id="blocks_cloner-import" v-cloak>
-    <header><?= t('Import from XML') ?></header>
-    <div style="margin-top: 10px" class="text-center">
-        <a
-            class="dialog-launch text-nowap"
-            href="#"
-            dialog-title="<?= h(t('Import page attributes from XML')) ?>"
-            dialog-width="90%"
-            dialog-height="80%"
-            v-bind:href="`${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import?cID=<?= $cID ?>`"
-        ><?= t('Import page attributes') ?></a>
-    </div>
-    <header><?= t('Import content into') ?></header>
-    <div v-if="items.length === 0" class="alert alert-info">
-        <?= t('No areas found in the page') ?>
-    </div>
-    <menu v-else>
-        <li
-            v-for="item in flatItems"
-            v-bind:key="item.id"
-            class="text-nowrap"
-            v-bind:style="{'margin-left': (item.depth * 1) + 'rem'}"
-        >
+<div id="blocks_cloner-import" v-cloak>
+    <section>
+        <header><?= t('Import from XML') ?></header>
+        <div class="section-body">
             <a
-                v-if="item.type !== 'area' || item.children.length > 0"
-                style="text-decoration: none; display: inline"
-                href="javascript:void(0)"
-                v-on:click.prevent="item.expanded = item.children.length === 0 || !item.expanded"
-            >
-                {{ item.expanded ? '\u229f' : '\u229e' }}
-                <span
-                    v-if="item.type !== 'area'"
-                    v-on:mouseenter="highlight(item, true)"
-                    v-on:mouseleave="highlight(item, false)"
-                >
-                    {{ item.displayName }}
-                </span>
-            </a>
-            <span v-else style="opacity: 0.5">&#x22A1;</span>
-            <a
-                v-if="item.type === 'area'"
-                style="text-decoration: none; display: inline"
-                v-bind:dialog-title="`<?= t('Import content from XML into %s', '${item.displayName}') ?>`"
-                class="dialog-launch"
+                class="dialog-launch text-nowap"
+                href="#"
+                dialog-title="<?= h(t('Import page attributes from XML')) ?>"
                 dialog-width="90%"
                 dialog-height="80%"
-                v-bind:href="`${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import?cID=<?= $cID ?>&aID=${item.id}&aHandle=${encodeURIComponent(item.handle)}`"
-                v-on:mouseenter="highlight(item, true)"
-                v-on:mouseleave="highlight(item, false)"
-            >
-                <strong>
-                    {{ item.displayName }}
-                    <span v-if="item.isGlobal">(<?= tc('Area', 'sitewide') ?>)</span>
-                </strong>
-            </a>
-        </li>
-    </menu>
-    <div style="margin-top: 10px" class="text-center">
-        <a class="small" href="#" v-on:click.prevent="setAllExpanded(true)"><?= t('Expand All') ?></a>
-        |
-        <a class="small" href="#" v-on:click.prevent="setAllExpanded(false)"><?= t('Collapse All') ?></a>
-    </div>
-</section>
+                v-bind:href="`${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import?cID=<?= $cID ?>`"
+            ><?= t('Import page attributes') ?></a>
+        </div>
+    </section>
+    <section>
+        <header><?= t('Import content into') ?></header>
+        <div class="section-body">
+            <div v-if="items.length === 0" class="alert alert-info">
+                <?= t('No areas found in the page') ?>
+            </div>
+            <div v-else>
+                <menu class="blocks_cloner-ccmtree">
+                    <li
+                        v-for="item in flatItems"
+                        v-bind:key="item.id"
+                        class="text-nowrap"
+                        v-bind:style="{'margin-left': (item.depth * 1) + 'rem'}"
+                    >
+                        <a
+                            v-if="item.type !== 'area' || item.children.length > 0"
+                            style="text-decoration: none; display: inline"
+                            href="javascript:void(0)"
+                            v-on:click.prevent="item.expanded = item.children.length === 0 || !item.expanded"
+                        >
+                            {{ item.expanded ? '\u229f' : '\u229e' }}
+                            <span
+                                v-if="item.type !== 'area'"
+                                v-on:mouseenter="highlight(item, true)"
+                                v-on:mouseleave="highlight(item, false)"
+                            >
+                                {{ item.displayName }}
+                            </span>
+                        </a>
+                        <span v-else style="opacity: 0.5">&#x22A1;</span>
+                        <a
+                            v-if="item.type === 'area'"
+                            style="text-decoration: none; display: inline"
+                            v-bind:dialog-title="`<?= t('Import content from XML into %s', '${item.displayName}') ?>`"
+                            class="dialog-launch"
+                            dialog-width="90%"
+                            dialog-height="80%"
+                            v-bind:href="`${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/import?cID=<?= $cID ?>&aID=${item.id}&aHandle=${encodeURIComponent(item.handle)}`"
+                            v-on:mouseenter="highlight(item, true)"
+                            v-on:mouseleave="highlight(item, false)"
+                        >
+                            <strong>
+                                {{ item.displayName }}
+                                <span v-if="item.isGlobal">(<?= tc('Area', 'sitewide') ?>)</span>
+                            </strong>
+                        </a>
+                    </li>
+                </menu>
+                <div style="margin-top: 10px" class="text-center">
+                    <a class="small" href="#" v-on:click.prevent="setAllExpanded(true)"><?= t('Expand All') ?></a>
+                    |
+                    <a class="small" href="#" v-on:click.prevent="setAllExpanded(false)"><?= t('Collapse All') ?></a>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
 <?php
 $view->markFooterAssetPosition();
 ?>
