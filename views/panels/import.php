@@ -124,7 +124,7 @@ new Vue({
                 previousState = {};
                 const walk = (item) => {
                     previousState[`${item.type}@${item.id}`] = {expanded: item.expanded}
-                    item.children.forEach((child) => walk(child));  
+                    item.children.forEach((child) => walk(child));
                 }
                 this.items.forEach((item) => walk(item));
             }
