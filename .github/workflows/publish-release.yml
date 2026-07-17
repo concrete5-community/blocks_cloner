@@ -1,13 +1,13 @@
-name: Attach ZIP to GitHub Release
+name: Publish Release
 
 on:
-  release:
-    types:
-      - published
+  push:
+    tags:
+      - '*'
 
 jobs:
-  attach-zip:
-    name: Attach ZIP to release
+  publish-release:
+    name: Publish Release
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -23,8 +23,9 @@ jobs:
         name: Checkout
         uses: actions/checkout@v7
       -
-        name: Create and attach ZIP
+        name: Create release
         uses: concrete5-community/gh-package-release-attach@main
         with:
+          publish-release: true
           remove-files: |
             composer.json

@@ -1,4 +1,4 @@
-[![Build](https://github.com/concrete5-community/blocks_cloner/actions/workflows/build.yml/badge.svg)](https://github.com/concrete5-community/blocks_cloner/actions/workflows/build.yml)
+[![Continuous Integration](https://github.com/concrete5-community/blocks_cloner/actions/workflows/ci.yml/badge.svg)](https://github.com/concrete5-community/blocks_cloner/actions/workflows/ci.yml)
 
 # Blocks Cloner
 
