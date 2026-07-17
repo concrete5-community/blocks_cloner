@@ -9,75 +9,68 @@ defined('C5_EXECUTE') or die('Access Denied.');
  */
 
 $view->markHeaderAssetPosition();
+$view->element('panel_style', ['panelID' => 'export'], 'blocks_cloner');
 ?>
-<style>
-#ccm-panel-blocks_cloner-export {
-    background-color: #2a2c30;
-    color: #999;
-}
-#ccm-panel-blocks_cloner-export header {
-    color: #3baaf7;
-    background-color: #202226;
-}
-#ccm-panel-blocks_cloner-export li {
-    color: #999;
-}
-#ccm-panel-blocks_cloner-export li a {
-    padding: 0;
-}
-</style>
-<section id="blocks_cloner-export" v-cloak>
-    <header><?= t('Export as XML') ?></header>
-    <div style="margin-top: 10px" class="text-center">
-        <a
-            class="dialog-launch text-nowap"
-            href="#"
-            dialog-title="<?= h(t('Export page attributes as XML')) ?>"
-            dialog-width="90%"
-            dialog-height="80%"
-            v-bind:href="`${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export/attributes?cID=<?= $cID ?>`"
-        ><?= t('Export page attributes') ?></a>
-    </div>
-    <header><?= t('Export content of') ?></header>
-    <div v-if="items.length === 0" class="alert alert-info">
-        <?= t('No blocks found in the page') ?>
-    </div>
-    <menu v-else>
-        <li
-            v-for="item in flatItems"
-            v-bind:key="`${item.type}-${item.id}`"
-            class="text-nowrap"
-            v-bind:style="{'margin-left': (item.depth * 1) + 'rem'}"
-        >
+<div id="blocks_cloner-export" v-cloak>
+    <section>
+        <header><?= t('Export as XML') ?></header>
+        <div class="section-body">
             <a
-                v-if="item.children.length > 0"
-                style="text-decoration: none; display: inline"
-                href="javascript:void(0)"
-                v-on:click.prevent="item.expanded = item.children.length === 0 || !item.expanded"
-            >
-                {{ item.expanded ? '\u229f' : '\u229e' }}
-            </a>
-            <span v-else style="opacity: 0.5">&#x22A1;</span>
-            <a
-                style="text-decoration: none; display: inline"
-                v-bind:dialog-title="item.type === 'block' ? `<?= t('Export %s block as XML', '${item.displayName}') ?>` : `<?= t('Export %s area as XML', '${item.displayName}') ?>`"
-                class="dialog-launch"
+                class="dialog-launch text-nowap"
+                href="#"
+                dialog-title="<?= h(t('Export page attributes as XML')) ?>"
                 dialog-width="90%"
                 dialog-height="80%"
-                v-bind:href="getItemExportUrl(item)"
-                v-on:mouseenter="highlight(item, true)"
-                v-on:mouseleave="highlight(item, false)"
-            >
-                <strong>{{item.displayName }}</strong>
-            </a>
-        </li>
-    </menu>
-    <div style="margin-top: 10px" class="text-center">
-        <a class="small" href="#" v-on:click.prevent="setAllExpanded(true)"><?= t('Expand All') ?></a>
-        |
-        <a class="small" href="#" v-on:click.prevent="setAllExpanded(false)"><?= t('Collapse All') ?></a>
-    </div>
-</section>
+                v-bind:href="`${CCM_DISPATCHER_FILENAME}/ccm/blocks_cloner/dialogs/export/attributes?cID=<?= $cID ?>`"
+            ><?= t('Export page attributes') ?></a>
+        </div>
+    </section>
+    <section>
+        <header><?= t('Export content of') ?></header>
+        <div class="section-body">
+            <div v-if="items.length === 0" class="alert alert-info">
+                <?= t('No blocks found in the page') ?>
+            </div>
+            <div v-else>
+                <menu class="blocks_cloner-ccmtree">
+                    <li
+                        v-for="item in flatItems"
+                        v-bind:key="`${item.type}-${item.id}`"
+                        class="text-nowrap"
+                        v-bind:style="{'margin-left': (item.depth * 1) + 'rem'}"
+                    >
+                        <a
+                            v-if="item.children.length > 0"
+                            style="text-decoration: none; display: inline"
+                            href="javascript:void(0)"
+                            v-on:click.prevent="item.expanded = item.children.length === 0 || !item.expanded"
+                        >
+                            {{ item.expanded ? '\u229f' : '\u229e' }}
+                        </a>
+                        <span v-else style="opacity: 0.5">&#x22A1;</span>
+                        <a
+                            style="text-decoration: none; display: inline"
+                            v-bind:dialog-title="item.type === 'block' ? `<?= t('Export %s block as XML', '${item.displayName}') ?>` : `<?= t('Export %s area as XML', '${item.displayName}') ?>`"
+                            class="dialog-launch"
+                            dialog-width="90%"
+                            dialog-height="80%"
+                            v-bind:href="getItemExportUrl(item)"
+                            v-on:mouseenter="highlight(item, true)"
+                            v-on:mouseleave="highlight(item, false)"
+                        >
+                            <strong>{{item.displayName }}</strong>
+                        </a>
+                    </li>
+                </menu>
+                <div style="margin-top: 10px" class="text-center">
+                    <a class="small" href="#" v-on:click.prevent="setAllExpanded(true)"><?= t('Expand All') ?></a>
+                    |
+                    <a class="small" href="#" v-on:click.prevent="setAllExpanded(false)"><?= t('Collapse All') ?></a>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
 <?php
 $view->markFooterAssetPosition();
 ?>
