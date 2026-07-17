@@ -71,7 +71,6 @@ new Vue({
     el: '#blocks_cloner-page_structure',
     data() {
         return {
-            CCM_DISPATCHER_FILENAME: window.CCM_DISPATCHER_FILENAME,
             refreshing: false,
             items: [],
         };
@@ -79,13 +78,10 @@ new Vue({
     beforeMount() {
         this.refreshPageStructure();
     },
-    mounted() {
-        this.$nextTick(() => setTimeout(() => this.setupLaunchDialogElements(), 100));
-    },
     computed: {
         flatItems() {
             const result = [];
-            const walk = function(item) {
+            const walk = (item) => {
                 result.push(item);
                 if (item.expanded) {
                     item.children.forEach((child) => walk(child));
@@ -96,25 +92,30 @@ new Vue({
         },
     },
     methods: {
-        refreshPageStructure(delayed) {
+        refreshPageStructure(delayed, previousState) {
+            if (!previousState) {
+                previousState = {};
+                const walk = (item) => {
+                    previousState[`${item.type}@${item.id}`] = {expanded: item.expanded}
+                    item.children.forEach((child) => walk(child));  
+                }
+                this.items.forEach((item) => walk(item));
+            }
             this.refreshing = true;
             this.items.splice(0, this.items.length);
             if (delayed) {
-                setTimeout(() => this.refreshPageStructure(), 100);
+                setTimeout(() => this.refreshPageStructure(false, previousState), 100);
                 return;
             }
             const items = window.ccmBlocksCloner.getPageStructure({});
-            const walk = function(item, depth) {
+            const walk = (item, depth) => {
                 item.depth = depth;
-                item.expanded = depth === 0 || item.children.length === 0;
+                item.expanded = previousState[`${item.type}@${item.id}`]?.expanded ?? (depth === 0 || item.children.length === 0);
                 item.children.forEach((child) => walk(child, depth + 1));
             };
             items.forEach((item) => walk(item, 0));
             items.forEach(item => this.items.push(item));
             this.refreshing = false;
-        },
-        setupLaunchDialogElements() {
-            $('#blocks_cloner-page_structure').find('.dialog-launch').dialog();
         },
         highlight(item, highlight) {
             window.ccmBlocksCloner.setElementHighlighted(item.element, highlight, highlight);

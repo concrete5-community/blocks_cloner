@@ -14,7 +14,7 @@ $view->element('panel_style', ['panelID' => 'export'], 'blocks_cloner');
 <div id="blocks_cloner-export" v-cloak>
     <section>
         <header><?= t('Export as XML') ?></header>
-        <div class="section-body">
+        <div class="section-body text-center">
             <a
                 class="dialog-launch text-nowap"
                 href="#"
@@ -26,12 +26,15 @@ $view->element('panel_style', ['panelID' => 'export'], 'blocks_cloner');
         </div>
     </section>
     <section>
-        <header><?= t('Export content of') ?></header>
+        <header>
+            <?= t('Export content of') ?>
+            (<a href="#" v-on:click.prevent="refreshPageStructure(true)" title="<?= t('Refresh') ?>">&#8635;</a>)
+        </header>
         <div class="section-body">
-            <div v-if="items.length === 0" class="alert alert-info">
+            <div v-if="items.length === 0 && !refreshing" class="alert alert-info">
                 <?= t('No blocks found in the page') ?>
             </div>
-            <div v-else>
+            <div v-else-if="!refreshing">
                 <menu class="blocks_cloner-ccmtree">
                     <li
                         v-for="item in flatItems"
@@ -78,37 +81,65 @@ $view->markFooterAssetPosition();
 new Vue({
     el: '#blocks_cloner-export',
     data() {
-        const items = window.ccmBlocksCloner.getPageStructure();
-        const walk = function(item, depth) {
-            item.depth = depth;
-            item.expanded = depth === 0;
-            item.children.forEach((child) => walk(child, depth + 1));
-        };
-        items.forEach((item) => walk(item, 0));
         return {
-            items,
+            CCM_DISPATCHER_FILENAME: window.CCM_DISPATCHER_FILENAME,
+            refreshing: false,
+            items: [],
         };
     },
+    beforeMount() {
+        this.refreshPageStructure();
+    },
     mounted() {
-        this.$nextTick(() => setTimeout(() => this.setupLaunchDialogElements(), 100));
+        this.setupLaunchDialogElements();
     },
     computed: {
         flatItems() {
             const result = [];
-            const walk = function(item) {
+            const walk = (item) => {
                 result.push(item);
                 if (item.expanded) {
                     item.children.forEach((child) => walk(child));
                 }
             };
             this.items.forEach((item) => walk(item));
-            this.$nextTick(() => setTimeout(() => this.setupLaunchDialogElements(), 10));
+            this.setupLaunchDialogElements();
             return result;
         },
     },
     methods: {
-        setupLaunchDialogElements() {
-            $('#blocks_cloner-export').find('.dialog-launch').dialog();
+        refreshPageStructure(delayed, previousState) {
+            if (!previousState) {
+                previousState = {};
+                const walk = (item) => {
+                    previousState[`${item.type}@${item.id}`] = {expanded: item.expanded}
+                    item.children.forEach((child) => walk(child));  
+                }
+                this.items.forEach((item) => walk(item));
+            }
+            this.refreshing = true;
+            this.items.splice(0, this.items.length);
+            if (delayed) {
+                setTimeout(() => this.refreshPageStructure(false, previousState), 100);
+                return;
+            }
+            const items = window.ccmBlocksCloner.getPageStructure();
+            const walk = (item, depth) => {
+                item.depth = depth;
+                item.expanded = previousState[`${item.type}@${item.id}`]?.expanded ?? (depth === 0);
+                item.children.forEach((child) => walk(child, depth + 1));
+            };
+            items.forEach((item) => walk(item, 0));
+            items.forEach(item => this.items.push(item));
+            this.refreshing = false;
+            this.setupLaunchDialogElements();
+        },
+        setupLaunchDialogElements(immediate) {
+            if (immediate) {
+                $('#blocks_cloner-export').find('.dialog-launch').dialog();
+            } else {
+                this.$nextTick(() => setTimeout(() => this.setupLaunchDialogElements(true), 100));
+            }
         },
         highlight(item, highlight) {
             window.ccmBlocksCloner.setElementHighlighted(item.element, highlight, highlight);
