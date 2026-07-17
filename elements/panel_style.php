@@ -25,7 +25,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
 <?php
 if (version_compare(APP_VERSION, '9') < 0) {
     ?>
-    #blocks_cloner-<?= $panelID ?> {
+    #ccm-panel-blocks_cloner-<?= $panelID ?> {
         background-color: #2a2c30;
         color: #999;
     }
