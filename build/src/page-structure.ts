@@ -33,8 +33,6 @@ function createCCMMenuOpener(item: Area | Block): CCMMenuOpener | undefined {
   if (ccmMenu?.hoverProxy && ccmMenu?.$launcher?.length) {
     return () => standardCCMMenuOpener(item);
   }
-  const notch = ccmObject.getNotch?.();
-  console.log('Notch', notch);
 }
 
 function standardCCMMenuOpener(item: Area | Block): void {
