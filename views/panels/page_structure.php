@@ -49,6 +49,7 @@ $view->element('panel_style', ['panelID' => 'page_structure'], 'blocks_cloner');
                             style="text-decoration: none; display: inline; margin-left: 0.3rem"
                             href="#"
                             v-on:click.prevent.stop="item.openContextMenu()"
+                            title="<?= t('Open context menu') ?>"
                         >
                             &#9776;
                         </a>
