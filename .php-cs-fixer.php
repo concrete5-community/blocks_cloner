@@ -31,7 +31,7 @@ return $config
         // Converts backtick operators to `shell_exec` calls.
         'backtick_to_shell_exec' => true,
         // Binary operators should be surrounded by space as configured.
-        'binary_operator_spaces' => ['default' => 'at_least_single_space'],
+        'binary_operator_spaces' => ['default' => 'single_space'],
         // There MUST be one blank line after the namespace declaration.
         'blank_line_after_namespace' => true,
         // Ensure there is no code on the same line as the PHP open tag and it is followed by a blank line.
@@ -100,6 +100,8 @@ return $config
         'function_to_constant' => true,
         // Replace `get_class` calls on object variables with class keyword syntax.
         'get_class_to_class_keyword' => true,
+        // Imports or fully qualifies global classes/functions/constants.
+        'global_namespace_import' => ['import_classes' => false],
         // Convert `heredoc` to `nowdoc` where possible.
         'heredoc_to_nowdoc' => true,
         // Function `implode` must be called with 2 arguments in the documented order.
@@ -171,7 +173,7 @@ return $config
         // Remove useless (semicolon) statements.
         'no_empty_statement' => true,
         // Removes extra blank lines and/or blank lines following configuration.
-        'no_extra_blank_lines' => ['tokens' => ['use']],
+        'no_extra_blank_lines' => ['tokens' => ['attribute', 'case', 'continue', 'curly_brace_block', 'default', 'extra', 'parenthesis_brace_block', 'square_brace_block', 'switch', 'throw', 'use']],
         // Replace accidental usage of homoglyphs (non ascii characters) in names.
         'no_homoglyph_names' => true,
         // Remove leading slashes in `use` clauses.
@@ -273,7 +275,7 @@ return $config
         // Fixes casing of PHPDoc tags.
         'phpdoc_tag_casing' => ['tags' => ['inheritdoc']],
         // Forces PHPDoc tags to be either regular annotations or inline.
-        'phpdoc_tag_type' => ['tags' =>  ['inheritdoc' => 'inline']],
+        'phpdoc_tag_type' => ['tags' => ['inheritdoc' => 'inline']],
         // PHPDoc should start and end with content, excluding the very first and last line of the docblocks.
         'phpdoc_trim' => true,
         // Removes extra blank lines after summary and after description in PHPDoc.

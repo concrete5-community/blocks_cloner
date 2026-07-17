@@ -5,7 +5,6 @@ namespace Concrete\Package\BlocksCloner\Plugin;
 use Concrete\Core\Application\Application;
 use Concrete\Core\File\Service\File;
 use Concrete\Package\BlocksCloner\Plugin;
-use ReflectionClass;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -100,7 +99,7 @@ class Manager
             if (!class_exists($className)) {
                 continue;
             }
-            $classInfo = new ReflectionClass($className);
+            $classInfo = new \ReflectionClass($className);
             if ($classInfo->isAbstract()) {
                 continue;
             }

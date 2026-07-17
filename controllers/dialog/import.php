@@ -34,10 +34,7 @@ use Concrete\Package\BlocksCloner\UI\Controller\Dialog;
 use Concrete\Package\BlocksCloner\Xml;
 use Concrete\Package\BlocksCloner\XmlParser;
 use Doctrine\ORM\EntityManagerInterface;
-use Exception;
-use SimpleXMLElement;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
-use Throwable;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -182,9 +179,9 @@ class Import extends Dialog
                 }
             }
             $result['references'] = $this->serializeReferences($references);
-        } catch (Exception $x) {
+        } catch (\Exception $x) {
             return $this->buildErrorResponse($x);
-        } catch (Throwable $x) {
+        } catch (\Throwable $x) {
             return $this->buildErrorResponse($x);
         }
 
@@ -239,9 +236,9 @@ class Import extends Dialog
             }
 
             return $this->app->make(ResponseFactoryInterface::class)->json(true);
-        } catch (Exception $x) {
+        } catch (\Exception $x) {
             return $this->buildErrorResponse($x);
-        } catch (Throwable $x) {
+        } catch (\Throwable $x) {
             return $this->buildErrorResponse($x);
         }
     }
@@ -270,12 +267,11 @@ class Import extends Dialog
                     $cn->rollBack();
                 }
             }
-        } catch (Exception $x) {
+        } catch (\Exception $x) {
             return $this->buildErrorResponse($x);
-        } catch (Throwable $x) {
+        } catch (\Throwable $x) {
             return $this->buildErrorResponse($x);
         }
-
 
         return $response;
     }
@@ -335,9 +331,9 @@ class Import extends Dialog
                     $cn->rollBack();
                 }
             }
-        } catch (Exception $x) {
+        } catch (\Exception $x) {
             return $this->buildErrorResponse($x);
-        } catch (Throwable $x) {
+        } catch (\Throwable $x) {
             return $this->buildErrorResponse($x);
         }
 
@@ -351,7 +347,7 @@ class Import extends Dialog
     {
         try {
             $xml = $this->request->request->get('xml');
-            if (!is_string($xml) || ($xml  = trim($xml)) === '') {
+            if (!is_string($xml) || ($xml = trim($xml)) === '') {
                 throw new UserMessageException(t('Please specify the XML to be imported'));
             }
             $token = $this->app->make(Token::class);
@@ -360,9 +356,9 @@ class Import extends Dialog
             }
 
             return $this->importAttributesDo("<attributes>{$xml}</attributes>");
-        } catch (Exception $x) {
+        } catch (\Exception $x) {
             return $this->buildErrorResponse($x);
-        } catch (Throwable $x) {
+        } catch (\Throwable $x) {
             return $this->buildErrorResponse($x);
         }
     }
@@ -374,7 +370,7 @@ class Import extends Dialog
     {
         try {
             $xml = $this->request->request->get('xml');
-            if (!is_string($xml) || ($xml  = trim($xml)) === '') {
+            if (!is_string($xml) || ($xml = trim($xml)) === '') {
                 throw new UserMessageException(t('Please specify the XML to be imported'));
             }
             $token = $this->app->make(Token::class);
@@ -383,9 +379,9 @@ class Import extends Dialog
             }
 
             return $this->importAttributesDo($xml);
-        } catch (Exception $x) {
+        } catch (\Exception $x) {
             return $this->buildErrorResponse($x);
-        } catch (Throwable $x) {
+        } catch (\Throwable $x) {
             return $this->buildErrorResponse($x);
         }
     }
@@ -478,9 +474,9 @@ class Import extends Dialog
             }
 
             return $this->app->make(ResponseFactoryInterface::class)->json($result);
-        } catch (Exception $x) {
+        } catch (\Exception $x) {
             return $this->buildErrorResponse($x);
-        } catch (Throwable $x) {
+        } catch (\Throwable $x) {
             return $this->buildErrorResponse($x);
         }
     }
@@ -501,9 +497,9 @@ class Import extends Dialog
             ];
 
             return $this->app->make(ResponseFactoryInterface::class)->json($result);
-        } catch (Exception $x) {
+        } catch (\Exception $x) {
             return $this->buildErrorResponse($x);
-        } catch (Throwable $x) {
+        } catch (\Throwable $x) {
             return $this->buildErrorResponse($x);
         }
     }
@@ -523,7 +519,7 @@ class Import extends Dialog
     /**
      * @return \SimpleXMLElement[]|\Generator
      */
-    private function listBlockNodes(SimpleXMLElement $sx)
+    private function listBlockNodes(\SimpleXMLElement $sx)
     {
         $isDataTable = false;
         switch ($sx->getName()) {
@@ -566,11 +562,11 @@ class Import extends Dialog
     {
         $result = array_values(array_diff($allBlockIDs, [$blockID]));
         if (count($result) === count($allBlockIDs)) {
-            throw new Exception(('Failed to retrieve the ID of the new block'));
+            throw new \Exception(('Failed to retrieve the ID of the new block'));
         }
         $beforeBlockIDIndex = array_search($beforeBlockID, $result, true);
         if ($beforeBlockIDIndex === false) {
-            throw new Exception(('Unable to find the requested block'));
+            throw new \Exception(('Unable to find the requested block'));
         }
         array_splice($result, $beforeBlockIDIndex, 0, [$blockID]);
 
@@ -633,7 +629,7 @@ class Import extends Dialog
     {
         $block = Block::getByID($blockID, $context->page, $context->area);
         if (!$block || $block->isError()) {
-            throw new Exception(('Unable to find the requested block'));
+            throw new \Exception(('Unable to find the requested block'));
         }
 
         return $block;
@@ -645,10 +641,9 @@ class Import extends Dialog
      *
      * @return string
      */
-    private function detectImportSubject(SimpleXMLElement $doc, $area, $isImportingIntoStack)
+    private function detectImportSubject(\SimpleXMLElement $doc, $area, $isImportingIntoStack)
     {
         switch ($doc->getName()) {
-
             case 'block':
                 if ($area === null) {
                     throw new UserMessageException(t('In order to import area contents you have to specify the target area'));
@@ -711,7 +706,7 @@ class Import extends Dialog
      *
      * @return \Concrete\Core\Block\Block
      */
-    private function importXBlock(SimpleXMLElement $xBlock, Context $context, Enviro $enviro)
+    private function importXBlock(\SimpleXMLElement $xBlock, Context $context, Enviro $enviro)
     {
         $initialBlockIDsInArea = $this->getBlockIDsInArea($context);
         if ($enviro->beforeBlockID !== 0 && !in_array($enviro->beforeBlockID, $initialBlockIDsInArea, true)) {
@@ -811,7 +806,7 @@ class Import extends Dialog
      *
      * @return void
      */
-    private function convert(SimpleXMLElement $sx, $conversionMode, array $manualConverterHandles)
+    private function convert(\SimpleXMLElement $sx, $conversionMode, array $manualConverterHandles)
     {
         switch ($conversionMode) {
             case self::CONVERSIONMODE_NONE:
@@ -830,7 +825,7 @@ class Import extends Dialog
     /**
      * @return void
      */
-    private function convertByEnvironment(SimpleXMLElement $sx)
+    private function convertByEnvironment(\SimpleXMLElement $sx)
     {
         $service = $this->app->make(Environment\Service::class);
         try {
@@ -851,7 +846,7 @@ class Import extends Dialog
     /**
      * @return void
      */
-    private function convertByHandles(SimpleXMLElement $sx, array $wantedConverterHandles)
+    private function convertByHandles(\SimpleXMLElement $sx, array $wantedConverterHandles)
     {
         if ($wantedConverterHandles === []) {
             return [];
@@ -941,7 +936,6 @@ class Import extends Dialog
     private function canAddBlockType(Checker $pageChecker, BlockType $blockType, $area)
     {
         switch ($blockType->getBlockTypeHandle()) {
-
             case BLOCK_HANDLE_LAYOUT_PROXY:
                 if ($area === null || $area->isGlobalArea()) {
                     return false;

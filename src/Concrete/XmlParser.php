@@ -13,9 +13,6 @@ use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\Page\Stack\Stack;
 use Concrete\Core\Permission\Checker;
 use Doctrine\ORM\EntityManagerInterface;
-use DOMDocument;
-use DOMElement;
-use SimpleXMLElement;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -141,13 +138,13 @@ final class XmlParser
      */
     private function ensureSimpleXMLElement($xml)
     {
-        if ($xml instanceof SimpleXMLElement) {
+        if ($xml instanceof \SimpleXMLElement) {
             return $xml;
         }
-        if ($xml instanceof DOMDocument) {
+        if ($xml instanceof \DOMDocument) {
             $xml = $xml->documentElement;
         }
-        if ($xml instanceof DOMElement) {
+        if ($xml instanceof \DOMElement) {
             $simpleXml = simplexml_import_dom($xml);
             if (!$simpleXml) {
                 throw new UserMessageException(t('Failed to parse the XML'));
@@ -168,7 +165,7 @@ final class XmlParser
     /**
      * @return \SimpleXMLElement[]|\Generator
      */
-    private function listBlockElements(SimpleXMLElement $sx)
+    private function listBlockElements(\SimpleXMLElement $sx)
     {
         $isDataTable = false;
         switch ($sx->getName()) {
@@ -192,7 +189,7 @@ final class XmlParser
     /**
      * @return \SimpleXMLElement[]|\Generator
      */
-    private function listAttributeElements(SimpleXMLElement $sx)
+    private function listAttributeElements(\SimpleXMLElement $sx)
     {
         switch ($sx->getName()) {
             case 'attributekey':
@@ -210,7 +207,7 @@ final class XmlParser
     /**
      * @return string[]|\Generator
      */
-    private function extractStrings(SimpleXMLElement $el)
+    private function extractStrings(\SimpleXMLElement $el)
     {
         foreach ($this->extractRawStrings($el) as $str) {
             yield $this->removeJsonEscaping($str);
@@ -220,7 +217,7 @@ final class XmlParser
     /**
      * @return string[]|\Generator
      */
-    private function extractRawStrings(SimpleXMLElement $el)
+    private function extractRawStrings(\SimpleXMLElement $el)
     {
         foreach ($el->attributes() as $value) {
             if (is_string($value)) {
@@ -400,7 +397,7 @@ final class XmlParser
         return $this->installedBlockTypes;
     }
 
-    private function inspectBlockElement(SimpleXMLElement $blockElement, array &$result)
+    private function inspectBlockElement(\SimpleXMLElement $blockElement, array &$result)
     {
         $type = isset($blockElement['type']) ? (string) $blockElement['type'] : '';
         if (!isset($result[self::KEY_BLOCKTYPES])) {
@@ -423,7 +420,7 @@ final class XmlParser
         }
     }
 
-    private function inspectCoreStackDisplayBlockElement(SimpleXMLElement $blockElement, array &$result)
+    private function inspectCoreStackDisplayBlockElement(\SimpleXMLElement $blockElement, array &$result)
     {
         if (!isset($blockElement->stack)) {
             return;
@@ -482,7 +479,7 @@ final class XmlParser
         return $this->canImportStacksByPath;
     }
 
-    private function inspectCoreContainerBlockElement(SimpleXMLElement $blockElement, array &$result)
+    private function inspectCoreContainerBlockElement(\SimpleXMLElement $blockElement, array &$result)
     {
         if (!isset($blockElement->container)) {
             return;
@@ -521,7 +518,7 @@ final class XmlParser
         return $this->definedPageAttributeKeys;
     }
 
-    private function inspectAttributeElement(SimpleXMLElement $attributeElement, array &$result)
+    private function inspectAttributeElement(\SimpleXMLElement $attributeElement, array &$result)
     {
         $handle = isset($attributeElement['handle']) ? (string) $attributeElement['handle'] : '';
         if (!isset($result[self::KEY_PAGEATTRIBUTES])) {

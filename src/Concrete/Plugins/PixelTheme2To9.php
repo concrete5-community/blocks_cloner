@@ -6,7 +6,6 @@ use Concrete\Package\BlocksCloner\Conversion\Environment;
 use Concrete\Package\BlocksCloner\Converter;
 use Concrete\Package\BlocksCloner\Plugin\ConvertExport;
 use Concrete\Package\BlocksCloner\Plugin\ConvertImport;
-use SimpleXMLElement;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -29,7 +28,7 @@ class PixelTheme2To9 implements ConvertExport, ConvertImport
      *
      * @see \Concrete\Package\BlocksCloner\Plugin\ConvertExport::applyExportConverterByHandle()
      */
-    public function applyExportConverterByHandle(SimpleXMLElement $xDocument, $handle)
+    public function applyExportConverterByHandle(\SimpleXMLElement $xDocument, $handle)
     {
         if ($handle !== 'pixel2') {
             return false;
@@ -44,7 +43,7 @@ class PixelTheme2To9 implements ConvertExport, ConvertImport
      *
      * @see \Concrete\Package\BlocksCloner\Plugin\ConvertExport::applyExportConvertersByEnvironment()
      */
-    public function applyExportConvertersByEnvironment(SimpleXMLElement $xDocument, Environment $environment)
+    public function applyExportConvertersByEnvironment(\SimpleXMLElement $xDocument, Environment $environment)
     {
         if (!preg_match('/^2(\.|$)/', $environment->getPackageVersion('theme_pixel'))) {
             return;
@@ -69,7 +68,7 @@ class PixelTheme2To9 implements ConvertExport, ConvertImport
      *
      * @see \Concrete\Package\BlocksCloner\Plugin\ConvertImport::applyImportConverterByHandle()
      */
-    public function applyImportConverterByHandle(SimpleXMLElement $xDocument, $handle)
+    public function applyImportConverterByHandle(\SimpleXMLElement $xDocument, $handle)
     {
         if ($handle !== 'pixel2to9') {
             return false;
@@ -84,7 +83,7 @@ class PixelTheme2To9 implements ConvertExport, ConvertImport
      *
      * @see \Concrete\Package\BlocksCloner\Plugin\ConvertImport::applyImportConvertersByEnvironment()
      */
-    public function applyImportConvertersByEnvironment(SimpleXMLElement $xDocument, Environment $sourceEnvironment, Environment $targetEnvironment)
+    public function applyImportConvertersByEnvironment(\SimpleXMLElement $xDocument, Environment $sourceEnvironment, Environment $targetEnvironment)
     {
         if (!preg_match('/^2(\.|$)/', $sourceEnvironment->getPackageVersion('theme_pixel')) || !preg_match('/^9(\.|$)/', $targetEnvironment->getPackageVersion('theme_pixel9'))) {
             return;
@@ -92,7 +91,7 @@ class PixelTheme2To9 implements ConvertExport, ConvertImport
         $this->convert2to9($xDocument);
     }
 
-    private function fixExport2(SimpleXMLElement $xDocument)
+    private function fixExport2(\SimpleXMLElement $xDocument)
     {
         $converter = new Converter($xDocument);
         $converter
@@ -109,7 +108,7 @@ class PixelTheme2To9 implements ConvertExport, ConvertImport
         ;
     }
 
-    private function convert2to9(SimpleXMLElement $xDocument)
+    private function convert2to9(\SimpleXMLElement $xDocument)
     {
         $converter = new Converter($xDocument);
         $converter

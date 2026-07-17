@@ -6,9 +6,6 @@ use Concrete\Core\Error\UserMessageException;
 use Concrete\Core\Package\PackageService;
 use Concrete\Package\BlocksCloner\Conversion\Environment;
 use Concrete\Package\BlocksCloner\Xml;
-use DOMComment;
-use DOMDocument;
-use DOMXPath;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -58,7 +55,7 @@ final class Service
     /**
      * @return void
      */
-    public function addCurrentEnvironmentToDoc(DOMDocument $doc)
+    public function addCurrentEnvironmentToDoc(\DOMDocument $doc)
     {
         $data = json_encode($this->getCurrentEnvironment(), JSON_UNESCAPED_SLASHES);
         $data = ' ' . self::XML_ENVIRONMENT_PREFIX . ' ' . str_replace('--', '-' . self::UNICODE_SOFT_HYPHEN_UTF8 . '-', $data) . ' ';
@@ -87,7 +84,7 @@ final class Service
     public function extractEnvironmentFromXml($xml)
     {
         $doc = $this->xmlService->getDOMDocument($xml);
-        $xpath = new DOMXPath($doc);
+        $xpath = new \DOMXPath($doc);
         $comments = $xpath->query('//comment()');
         $result = null;
         foreach ($comments as $comment) {
@@ -107,7 +104,7 @@ final class Service
     /**
      * @return \Concrete\Package\BlocksCloner\Conversion\Environment|null
      */
-    private function extractEnvironmentFromComment(DOMComment $comment)
+    private function extractEnvironmentFromComment(\DOMComment $comment)
     {
         $commentText = trim((string) $comment->textContent);
         if (strpos($commentText, self::XML_ENVIRONMENT_PREFIX) !== 0) {

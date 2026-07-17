@@ -4,6 +4,9 @@ interface DynamicData {
   readonly i18n: Record<string, string>;
   readonly stackEditPageID: number | null;
   readonly blockTypeNames: Readonly<Record<string, string>>;
+  readonly exportEnabled: boolean;
+  readonly importEnabled: boolean;
+  readonly pageStructureEnabled: boolean;
 }
 
 declare global {

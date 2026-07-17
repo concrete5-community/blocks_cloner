@@ -2,9 +2,6 @@
 
 namespace Concrete\Package\BlocksCloner;
 
-use Closure;
-use SimpleXMLElement;
-
 defined('C5_EXECUTE') or die('Access Denied.');
 
 class Converter
@@ -14,7 +11,7 @@ class Converter
      */
     private $xDocument;
 
-    public function __construct(SimpleXMLElement $xDocument)
+    public function __construct(\SimpleXMLElement $xDocument)
     {
         $this->xDocument = $xDocument;
     }
@@ -27,7 +24,7 @@ class Converter
     public function blocks($blockTypeHandle)
     {
         $xBlockElements = $this->extractBlockElements(
-            static function (SimpleXMLElement $xBlock) use ($blockTypeHandle) {
+            static function (\SimpleXMLElement $xBlock) use ($blockTypeHandle) {
                 return (string) $xBlock['type'] === $blockTypeHandle;
             }
         );
@@ -38,11 +35,11 @@ class Converter
     /**
      * @return \SimpleXMLElement[]
      */
-    private function extractBlockElements(Closure $filter)
+    private function extractBlockElements(\Closure $filter)
     {
         $result = [];
         $walk = null;
-        $walk = static function (SimpleXMLElement $xElement, $xParentElement = null) use (&$walk, $filter, &$result) {
+        $walk = static function (\SimpleXMLElement $xElement, $xParentElement = null) use (&$walk, $filter, &$result) {
             switch ($xElement->getName()) {
                 case 'attributekey':
                     return;

@@ -8,7 +8,6 @@ use Concrete\Package\BlocksCloner\Controller\Dialog\Export;
 use Concrete\Package\BlocksCloner\Edit\Context;
 use Concrete\Package\BlocksCloner\Subject;
 use Concrete\Package\BlocksCloner\XmlParser;
-use SimpleXMLElement;
 
 defined('C5_EXECUTE') or die('Access Denied.');
 
@@ -84,7 +83,7 @@ class Area extends Export
     /**
      * @return \SimpleXMLElement[]|array|null
      */
-    private function extractComponents(SimpleXMLElement $temporaryDocument)
+    private function extractComponents(\SimpleXMLElement $temporaryDocument)
     {
         // Structure for normal areas
         $structure = $this->extractChildElements($temporaryDocument, ['area']);

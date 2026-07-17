@@ -3,9 +3,7 @@
 namespace BlocksCloner\Test;
 
 use Concrete\Package\BlocksCloner\Xml;
-use DOMDocument;
 use PHPUnit\Framework\TestCase;
-use SimpleXMLElement;
 
 class XmlServiceTest extends TestCase
 {
@@ -20,15 +18,15 @@ class XmlServiceTest extends TestCase
         $xml = '<root />';
 
         $sx = $xmlService->getSimpleXMLElement($xml);
-        $this->assertInstanceOf(SimpleXMLElement::class, $sx);
+        $this->assertInstanceOf(\SimpleXMLElement::class, $sx);
         $doc = $xmlService->getDOMDocument($xml);
-        $this->assertInstanceOf(DOMDocument::class, $doc);
+        $this->assertInstanceOf(\DOMDocument::class, $doc);
 
         $this->assertSame($sx, $xmlService->getSimpleXMLElement($sx));
-        $this->assertInstanceOf(DOMDocument::class, $xmlService->getDOMDocument($sx));
+        $this->assertInstanceOf(\DOMDocument::class, $xmlService->getDOMDocument($sx));
 
         $this->assertSame($doc, $xmlService->getDOMDocument($doc));
-        $this->assertInstanceOf(SimpleXMLElement::class, $xmlService->getSimpleXMLElement($sx));
+        $this->assertInstanceOf(\SimpleXMLElement::class, $xmlService->getSimpleXMLElement($sx));
     }
 
     /**

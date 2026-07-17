@@ -59,6 +59,30 @@ class Controller extends Package implements ProviderInterface
         return [];
     }
 
+    /**
+     * {@inheritdoc}
+     *
+     * @see \Concrete\Core\Package\Package::install()
+     */
+    public function install()
+    {
+        $result = parent::install();
+        $this->installContentFile('config/install.xml');
+
+        return $result;
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @see \Concrete\Core\Package\Package::upgrade()
+     */
+    public function upgrade()
+    {
+        parent::upgrade();
+        $this->installContentFile('config/install.xml');
+    }
+
     public function on_start()
     {
         $this->app->extend(
@@ -73,19 +97,23 @@ class Controller extends Package implements ProviderInterface
         if (!$user->isRegistered()) {
             return;
         }
+        $globalOptions = $this->app->make(GlobalOptions::class);
+        if ($globalOptions->isEverythingDisabled()) {
+            return;
+        }
         $this->app->make('router')->get('/ccm/blocks-cloner/dynamic-data', DynamicData::class . '::view');
         $this->app->make('director')->addListener(
             'on_page_view',
-            function ($event) {
+            function ($event) use ($globalOptions) {
                 if (!$event instanceof PageEvent) {
                     return;
                 }
-                $this->inject($event->getPageObject(), $event->getUserObject());
+                $this->inject($globalOptions, $event->getPageObject(), $event->getUserObject());
             }
         );
         $request = $this->app->make(Request::class);
         if (strpos($request->getPath(), '/ccm/blocks_cloner/') === 0) {
-            $this->registerRoutes($request->query->getInt('cID'));
+            $this->registerRoutes($globalOptions, $request->query->getInt('cID'));
             $this->registerRoutesAssets();
         }
     }
@@ -96,7 +124,7 @@ class Controller extends Package implements ProviderInterface
      *
      * @return void
      */
-    private function inject($page, $user)
+    private function inject(GlobalOptions $globalOptions, $page, $user)
     {
         if (!$page instanceof Page || $page->isError()) {
             return;
@@ -111,48 +139,54 @@ class Controller extends Package implements ProviderInterface
                 return;
             }
             $menu = $this->app->make('helper/concrete/ui/menu');
-            $menu->addPageHeaderMenuItem(
-                'export',
-                $this->pkgHandle,
-                [
-                    'icon' => 'download',
-                    'label' => t('Export as XML'),
-                    'position' => 'left',
-                    'href' => false,
-                    'linkAttributes' => [
-                        'data-launch-panel' => 'blocks_cloner-export',
-                        'title' => t('Export as XML'),
-                    ],
-                ]
-            );
-            $menu->addPageHeaderMenuItem(
-                'import',
-                $this->pkgHandle,
-                [
-                    'icon' => 'upload',
-                    'label' => t('Import from XML'),
-                    'position' => 'left',
-                    'href' => false,
-                    'linkAttributes' => [
-                        'data-launch-panel' => 'blocks_cloner-import',
-                        'title' => t('Import from XML'),
-                    ],
-                ]
-            );
-            $menu->addPageHeaderMenuItem(
-                'page_structure',
-                $this->pkgHandle,
-                [
-                    'icon' => 'bullseye',
-                    'label' => t('View page structure'),
-                    'position' => 'left',
-                    'href' => false,
-                    'linkAttributes' => [
-                        'data-launch-panel' => 'blocks_cloner-page_structure',
-                        'title' => t('View page structure'),
-                    ],
-                ]
-            );
+            if ($globalOptions->isExportEnabled()) {
+                $menu->addPageHeaderMenuItem(
+                    'export',
+                    $this->pkgHandle,
+                    [
+                        'icon' => 'download',
+                        'label' => t('Export as XML'),
+                        'position' => 'left',
+                        'href' => false,
+                        'linkAttributes' => [
+                            'data-launch-panel' => 'blocks_cloner-export',
+                            'title' => t('Export as XML'),
+                        ],
+                    ]
+                );
+            }
+            if ($globalOptions->isImportEnabled()) {
+                $menu->addPageHeaderMenuItem(
+                    'import',
+                    $this->pkgHandle,
+                    [
+                        'icon' => 'upload',
+                        'label' => t('Import from XML'),
+                        'position' => 'left',
+                        'href' => false,
+                        'linkAttributes' => [
+                            'data-launch-panel' => 'blocks_cloner-import',
+                            'title' => t('Import from XML'),
+                        ],
+                    ]
+                );
+            }
+            if ($globalOptions->isPageStructureEnabled()) {
+                $menu->addPageHeaderMenuItem(
+                    'page_structure',
+                    $this->pkgHandle,
+                    [
+                        'icon' => 'bullseye',
+                        'label' => t('View page structure'),
+                        'position' => 'left',
+                        'href' => false,
+                        'linkAttributes' => [
+                            'data-launch-panel' => 'blocks_cloner-page_structure',
+                            'title' => t('View page structure'),
+                        ],
+                    ]
+                );
+            }
         }
         $assetList = AssetList::getInstance();
         $assetList->register('javascript-localized', 'blocks_cloner-view', '/ccm/blocks-cloner/dynamic-data', ['minify' => false, 'combine' => false, 'version' => $this->pkgVersion], 'blocks_cloner');
@@ -174,7 +208,7 @@ class Controller extends Package implements ProviderInterface
      *
      * @return void
      */
-    private function registerRoutes($cID)
+    private function registerRoutes(GlobalOptions $globalOptions, $cID)
     {
         if (!$cID || $cID < 1) {
             return;
@@ -188,14 +222,20 @@ class Controller extends Package implements ProviderInterface
             return;
         }
         $router = $this->app->make('router');
-        $router
+        $routeGroupBuilder = $router
             ->buildGroup()
             ->setPrefix('/ccm/blocks_cloner')
             ->setNamespace('Concrete\Package\BlocksCloner\Controller')
-            ->routes('export.php', $this->pkgHandle)
-            ->routes('import.php', $this->pkgHandle)
-            ->routes('page_structure.php', $this->pkgHandle)
         ;
+        if ($globalOptions->isExportEnabled()) {
+            $routeGroupBuilder->routes('export.php', $this->pkgHandle);
+        }
+        if ($globalOptions->isImportEnabled()) {
+            $routeGroupBuilder->routes('import.php', $this->pkgHandle);
+        }
+        if ($globalOptions->isPageStructureEnabled()) {
+            $routeGroupBuilder->routes('page_structure.php', $this->pkgHandle);
+        }
     }
 
     private function registerRoutesAssets()
