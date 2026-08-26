@@ -24,13 +24,31 @@ function getCCMObject(item: Area | Block): any {
   }
 }
 
-function createCCMMenuOpener(item: Area | Block): CCMMenuOpener | undefined {
+type NonEmptyJQuery = JQuery & {0: HTMLElement};
+
+type CCMMenuLike = {
+  hoverProxy: Function;
+  $launcher: NonEmptyJQuery;
+};
+
+function getCCMMenu(item: Area | Block): CCMMenuLike | null {
   const ccmObject = getCCMObject(item);
   if (!ccmObject) {
-    return;
+    return null;
   }
   const ccmMenu = ccmObject.getMenu?.();
   if (ccmMenu?.hoverProxy && ccmMenu?.$launcher?.length) {
+    return ccmMenu;
+  }
+  const ccmNotchMenu = ccmObject.getNotchMenu?.();
+  if (ccmNotchMenu?.hoverProxy && ccmNotchMenu?.$launcher?.length) {
+    return ccmNotchMenu;
+  }
+  return null;
+}
+
+function createCCMMenuOpener(item: Area | Block): CCMMenuOpener | undefined {
+  if (getCCMMenu(item)) {
     return () => standardCCMMenuOpener(item);
   }
 }
@@ -39,20 +57,18 @@ function standardCCMMenuOpener(item: Area | Block): void {
   if (!window.ConcreteMenuManager?.enabled) {
     return;
   }
-  const ccmObject = getCCMObject(item);
-  const ccmMenu = ccmObject?.getMenu?.();
-  const numLaunchers = ccmMenu?.$launcher?.length || 0;
-  if (numLaunchers === 0) {
+  const ccmMenu = getCCMMenu(item);
+  if (!ccmMenu) {
     return;
   }
   const activeMenu = window.ConcreteMenuManager.getActiveMenu();
   if (activeMenu) {
     activeMenu.hide();
   }
-  const launcher = ccmMenu?.$launcher[0] as HTMLElement;
-  const rect = launcher.getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2;
-  const centerY = rect.top + rect.height / 2;
+  const launcher = ccmMenu.$launcher[0];
+  const launcherRect = launcher.getBoundingClientRect();
+  const centerX = launcherRect.left + launcherRect.width / 2;
+  const centerY = launcherRect.top + launcherRect.height / 2;
   const mouseMoveEvent = $.Event('mousemove', {
     clientX: centerX,
     clientY: centerY,
