@@ -20,7 +20,7 @@ class Controller extends Package implements ProviderInterface
 {
     protected $pkgHandle = 'blocks_cloner';
 
-    protected $pkgVersion = '2.1.1';
+    protected $pkgVersion = '2.2.0';
 
     /**
      * {@inheritdoc}
