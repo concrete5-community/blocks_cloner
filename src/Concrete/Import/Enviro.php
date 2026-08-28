@@ -97,9 +97,9 @@ class Enviro
                 if ($currentBlocks + $numberOfBlocksToBeAdded >= $maxBlocks) {
                     throw new UserMessageException(
                         t2(
-                            $maxBlocks,
                             'This area accepts up to %s block (and this limit is already reached)',
-                            'This area accepts up to %s blocks (and this limit is already reached)'
+                            'This area accepts up to %s blocks (and this limit is already reached)',
+                            $maxBlocks
                         )
                     );
                 }
