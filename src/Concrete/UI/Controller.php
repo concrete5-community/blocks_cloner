@@ -120,7 +120,7 @@ abstract class Controller extends CoreController
     }
 
     /**
-     * @return array
+     * @return \stdClass
      */
     protected function serializeReferences(array $references)
     {

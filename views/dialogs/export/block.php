@@ -7,7 +7,7 @@ defined('C5_EXECUTE') or die('Access Denied.');
  * @var Concrete\Core\View\View $view
  * @var int $cID
  * @var string $xml
- * @var array $references
+ * @var stdClass $references
  * @var Concrete\Core\Url\Resolver\Manager\ResolverManagerInterface $resolverManager
  */
 

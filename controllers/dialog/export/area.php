@@ -81,7 +81,7 @@ class Area extends Export
     }
 
     /**
-     * @return \SimpleXMLElement[]|array|null
+     * @return array|null
      */
     private function extractComponents(\SimpleXMLElement $temporaryDocument)
     {
