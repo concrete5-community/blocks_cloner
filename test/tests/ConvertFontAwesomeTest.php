@@ -5,6 +5,8 @@ namespace BlocksCloner\Test;
 use Concrete\Package\BlocksCloner\Conversion\FontAwesome;
 use PHPUnit\Framework\TestCase;
 
+defined('C5_EXECUTE') or die('Access Denied.');
+
 class ConvertFontAwesomeTest extends TestCase
 {
     /**
@@ -23,7 +25,7 @@ class ConvertFontAwesomeTest extends TestCase
     public function testConvert4To5($input, $expectedOutput)
     {
         $actualOutput = self::getFontAwesome()->convertFontAwesomeIcon4To5($input);
-        $this->assertSame($expectedOutput, $actualOutput);
+        static::assertSame($expectedOutput, $actualOutput);
     }
 
     /**

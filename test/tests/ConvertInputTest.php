@@ -7,6 +7,8 @@ use Concrete\Package\BlocksCloner\Plugin;
 use Concrete\Package\BlocksCloner\Xml;
 use PHPUnit\Framework\TestCase;
 
+defined('C5_EXECUTE') or die('Access Denied.');
+
 class ConvertInputTest extends TestCase
 {
     const ASSETS_REL_DIR = 'test/assets/xml/convert-input';
@@ -31,7 +33,7 @@ class ConvertInputTest extends TestCase
         $targetEnvironment = $this->readTargetEnvironment("{$baseName}.json");
         $sx = $this->readSimpleXml("{$baseName}-in.xml");
         $sourceEnvironment = self::getEnvironmentService()->extractEnvironmentFromXml($sx);
-        $this->assertNotNull($sourceEnvironment, "The file {$baseName}-in.xml doesn't contain the source environment");
+        static::assertNotNull($sourceEnvironment, "The file {$baseName}-in.xml doesn't contain the source environment");
         $expectedXml = $this->readXml("{$baseName}-out.xml");
         $pluginManager = app(Plugin\Manager::class);
         array_map(
@@ -41,7 +43,7 @@ class ConvertInputTest extends TestCase
             $pluginManager->getConvertImportPlugins()
         );
         $xmlService = self::getXmlService();
-        $this->assertSame($expectedXml, $xmlService->normalize($sx));
+        static::assertSame($expectedXml, $xmlService->normalize($sx));
     }
 
     /**
@@ -112,14 +114,14 @@ class ConvertInputTest extends TestCase
     {
         $file = BC_ROOT_DIR . '/' . self::ASSETS_REL_DIR . '/' . $fileRelative;
         $json = @file_get_contents($file);
-        $this->assertTrue(is_string($json), "Failed to load file {$fileRelative}");
+        static::assertTrue(is_string($json), "Failed to load file {$fileRelative}");
         $data = @json_decode($json, true);
-        $this->assertTrue(is_array($data), "Failed to decode the file {$fileRelative}");
-        $this->assertTrue(
+        static::assertTrue(is_array($data), "Failed to decode the file {$fileRelative}");
+        static::assertTrue(
             isset($data['targetEnvironment']['core']) && is_string($data['targetEnvironment']['core']),
             "The file {$fileRelative} is missing the targetEnvironment.core key (or it's not a string)"
         );
-        $this->assertTrue(
+        static::assertTrue(
             isset($data['targetEnvironment']['packages']) && is_array($data['targetEnvironment']['packages']),
             "The file {$fileRelative} is missing the targetEnvironment.core packages (or it's not an array)"
         );
@@ -136,7 +138,7 @@ class ConvertInputTest extends TestCase
     {
         $file = BC_ROOT_DIR . '/' . self::ASSETS_REL_DIR . '/' . $fileRelative;
         $xml = @file_get_contents($file);
-        $this->assertTrue(is_string($xml), "Failed to load file {$fileRelative}");
+        static::assertTrue(is_string($xml), "Failed to load file {$fileRelative}");
 
         return $xml;
     }

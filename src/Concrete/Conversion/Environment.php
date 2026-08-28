@@ -56,7 +56,7 @@ final class Environment implements \JsonSerializable
      *
      * @see \JsonSerializable::jsonSerialize()
      */
-    #[\ReturnTypeWillChange]
+    #[\ReturnTypeWillChange()]
     public function jsonSerialize()
     {
         return [

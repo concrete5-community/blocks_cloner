@@ -2,6 +2,8 @@
 
 namespace Concrete\Package\BlocksCloner\Conversion;
 
+defined('C5_EXECUTE') or die('Access Denied.');
+
 class FontAwesome
 {
     /**
