@@ -392,22 +392,8 @@ class Import extends Dialog
     public function getDesigns()
     {
         try {
-            $blockIDsByAreaHandles = json_decode(
-                (string) $this->request->request->get('blockIDsByAreaHandles'),
-                true,
-                0 | (defined('JSON_THROW_ON_ERROR') ? JSON_THROW_ON_ERROR : 0)
-            );
-            if (!is_array($blockIDsByAreaHandles)) {
-                throw new UserMessageException(t('Access Denied'));
-            }
-            $areas = json_decode(
-                (string) $this->request->request->get('areas'),
-                true,
-                0 | (defined('JSON_THROW_ON_ERROR') ? JSON_THROW_ON_ERROR : 0)
-            );
-            if (!is_array($areas)) {
-                throw new UserMessageException(t('Access Denied'));
-            }
+            $blockIDsByAreaHandles = $this->decodeJsonArray($this->request->request->get('blockIDsByAreaHandles'));
+            $areas = $this->decodeJsonArray($this->request->request->get('areas'));
             $result = [];
             foreach ($blockIDsByAreaHandles as $areaHandle => $blockIDs) {
                 $area = Area::get($this->getPage(), $areaHandle);
@@ -514,6 +500,30 @@ class Import extends Dialog
         $message = $error instanceof UserMessageException ? $error->getMessage() : (string) $error;
 
         return $this->app->make(ResponseFactoryInterface::class)->json(['error' => $message]);
+    }
+
+    /**
+     * @param string|mixed $json
+     *
+     * @throws \Concrete\Core\Error\UserMessageException
+     *
+     * @return array
+     */
+    private function decodeJsonArray($json)
+    {
+        if (!is_string($json)) {
+            throw new UserMessageException(t('Access Denied'));
+        }
+        try {
+            $decoded = json_decode($json, true, 512, defined('JSON_THROW_ON_ERROR') ? JSON_THROW_ON_ERROR : 0);
+        } catch (\JsonException $x) {
+            throw new UserMessageException(t('Access Denied'));
+        }
+        if (!is_array($decoded)) {
+            throw new UserMessageException(t('Access Denied'));
+        }
+
+        return $decoded;
     }
 
     /**
