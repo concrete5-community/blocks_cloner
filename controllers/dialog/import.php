@@ -859,7 +859,7 @@ class Import extends Dialog
     private function convertByHandles(\SimpleXMLElement $sx, array $wantedConverterHandles)
     {
         if ($wantedConverterHandles === []) {
-            return [];
+            return;
         }
         $wantedConverterHandles = array_unique($wantedConverterHandles);
         $plugins = $this->app->make(Plugin\Manager::class)->getConvertImportPlugins();
