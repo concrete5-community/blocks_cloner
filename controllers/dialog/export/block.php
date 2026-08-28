@@ -58,7 +58,7 @@ class Block extends Export
             }
         }
         if ($blockElement === null) {
-            throw new UserMessageException(t('Unable to detect the structure of the exported area'));
+            throw new UserMessageException(t('Unable to detect the structure of the exported block'));
         }
         $this->convert($blockElement);
         $this->set('xml', $this->formatXml($blockElement, true));
