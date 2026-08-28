@@ -858,7 +858,7 @@ class Import extends Dialog
             foreach ($wantedConverterHandles as $handle) {
                 if ($plugin->applyImportConverterByHandle($sx, $handle)) {
                     if (in_array($handle, $appliedHandles, true)) {
-                        throw new UserMessageException("More than one import converter found with the handle '%s'", $handle);
+                        throw new UserMessageException(t("More than one import converter found with the handle '%s'", $handle));
                     }
                     $appliedHandles[] = $handle;
                 }
@@ -866,7 +866,7 @@ class Import extends Dialog
         }
         $missingConverters = array_diff($wantedConverterHandles, $appliedHandles);
         if ($missingConverters !== []) {
-            throw new UserMessageException('Unable to find the import converters with these handles: %s', "'" . implode("', '", $missingConverters) . "'");
+            throw new UserMessageException(t('Unable to find the import converters with these handles: %s', "'" . implode("', '", $missingConverters) . "'"));
         }
     }
 
