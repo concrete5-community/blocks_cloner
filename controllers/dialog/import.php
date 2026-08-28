@@ -227,7 +227,7 @@ class Import extends Dialog
             foreach ($fileInfos as $fileInfo) {
                 $name = $fileInfo['name'];
                 $prefix = '';
-                if (preg_match('/^([0-9]{12}]*)\_(.*)$/', $name, $matches)) {
+                if (preg_match('/^([0-9]{12})_(.*)$/', $name, $matches)) {
                     $prefix = $matches[1];
                     $name = $matches[2];
                 }
