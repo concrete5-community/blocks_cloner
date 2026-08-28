@@ -46,7 +46,7 @@ class Area extends Export
                     $domArea = dom_import_simplexml($temporaryDocument->area);
                     $domStyle = dom_import_simplexml($styleDocument->area->style);
                     $domStyle2 = $domArea->ownerDocument->importNode($domStyle, true);
-                    $domArea->insertBefore($domStyle2, $domArea->firstChildElement);
+                    $domArea->insertBefore($domStyle2, $domArea->firstChild);
                 }
             }
         }
