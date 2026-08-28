@@ -94,7 +94,7 @@ class Enviro
             }
             if ($maxBlocks > 0) {
                 $currentBlocks = $area->getTotalBlocksInAreaEditMode();
-                if ($currentBlocks + $numberOfBlocksToBeAdded >= $maxBlocks) {
+                if ($currentBlocks + $numberOfBlocksToBeAdded > $maxBlocks) {
                     throw new UserMessageException(
                         t2(
                             'This area accepts up to %s block (and this limit is already reached)',
