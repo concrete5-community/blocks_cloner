@@ -130,39 +130,6 @@ final class XmlParser
     }
 
     /**
-     * @param \SimpleXMLElement|\DOMDocument|\DOMElement|string $xml
-     *
-     * @throws \Concrete\Core\Error\UserMessageException
-     *
-     * @return \SimpleXMLElement
-     */
-    private function ensureSimpleXMLElement($xml)
-    {
-        if ($xml instanceof \SimpleXMLElement) {
-            return $xml;
-        }
-        if ($xml instanceof \DOMDocument) {
-            $xml = $xml->documentElement;
-        }
-        if ($xml instanceof \DOMElement) {
-            $simpleXml = simplexml_import_dom($xml);
-            if (!$simpleXml) {
-                throw new UserMessageException(t('Failed to parse the XML'));
-            }
-        }
-        if (is_string($xml)) {
-            $simpleXml = simplexml_load_string($xml);
-            if (!$simpleXml) {
-                throw new UserMessageException(t('Failed to parse the XML'));
-            }
-
-            return $simpleXml;
-        }
-
-        throw new UserMessageException(t('Failed to parse the XML'));
-    }
-
-    /**
      * @return \SimpleXMLElement[]|\Generator
      */
     private function listBlockElements(\SimpleXMLElement $sx)
