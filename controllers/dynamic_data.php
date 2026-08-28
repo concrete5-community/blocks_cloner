@@ -115,6 +115,8 @@ function setup()
         return false;
     }
     fn({$jsonConverters});
+
+    return true;
 }
 
 if (!setup()) {
