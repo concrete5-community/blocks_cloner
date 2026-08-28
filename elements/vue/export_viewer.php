@@ -20,7 +20,7 @@ ob_start();
     <div style="flex-grow: 2">
         <div style="display: flex; flex-direction: column; height: 100%;">
             <div>
-                <strong style="color: #777777"><?= t('XML Data')?></strong>
+                <strong style="color: #777777"><?= t('XML Data') ?></strong>
             </div>
             <textarea
                 ref="textarea"

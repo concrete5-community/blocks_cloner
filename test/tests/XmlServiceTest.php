@@ -5,6 +5,8 @@ namespace BlocksCloner\Test;
 use Concrete\Package\BlocksCloner\Xml;
 use PHPUnit\Framework\TestCase;
 
+defined('C5_EXECUTE') or die('Access Denied.');
+
 class XmlServiceTest extends TestCase
 {
     /**
@@ -18,15 +20,15 @@ class XmlServiceTest extends TestCase
         $xml = '<root />';
 
         $sx = $xmlService->getSimpleXMLElement($xml);
-        $this->assertInstanceOf(\SimpleXMLElement::class, $sx);
+        static::assertInstanceOf(\SimpleXMLElement::class, $sx);
         $doc = $xmlService->getDOMDocument($xml);
-        $this->assertInstanceOf(\DOMDocument::class, $doc);
+        static::assertInstanceOf(\DOMDocument::class, $doc);
 
-        $this->assertSame($sx, $xmlService->getSimpleXMLElement($sx));
-        $this->assertInstanceOf(\DOMDocument::class, $xmlService->getDOMDocument($sx));
+        static::assertSame($sx, $xmlService->getSimpleXMLElement($sx));
+        static::assertInstanceOf(\DOMDocument::class, $xmlService->getDOMDocument($sx));
 
-        $this->assertSame($doc, $xmlService->getDOMDocument($doc));
-        $this->assertInstanceOf(\SimpleXMLElement::class, $xmlService->getSimpleXMLElement($sx));
+        static::assertSame($doc, $xmlService->getDOMDocument($doc));
+        static::assertInstanceOf(\SimpleXMLElement::class, $xmlService->getSimpleXMLElement($sx));
     }
 
     /**
@@ -38,12 +40,12 @@ class XmlServiceTest extends TestCase
     {
         $inFile = BC_ROOT_DIR . "/{$baseName}-in.xml";
         $inXml = @file_get_contents($inFile);
-        $this->assertTrue(is_string($inXml), "Failed to load file {$baseName}-in.xml");
+        static::assertTrue(is_string($inXml), "Failed to load file {$baseName}-in.xml");
         $outFile = BC_ROOT_DIR . "/{$baseName}-out.xml";
         $outXml = @file_get_contents($outFile);
-        $this->assertTrue(is_string($outXml), "Failed to load file {$baseName}-out.xml");
+        static::assertTrue(is_string($outXml), "Failed to load file {$baseName}-out.xml");
         $actualXml = $this->getXmlService()->normalize($inXml);
-        $this->assertSame($outXml, $actualXml);
+        static::assertSame($outXml, $actualXml);
     }
 
     /**

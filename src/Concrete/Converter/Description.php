@@ -2,6 +2,8 @@
 
 namespace Concrete\Package\BlocksCloner\Converter;
 
+defined('C5_EXECUTE') or die('Access Denied.');
+
 class Description implements \JsonSerializable
 {
     /**
@@ -45,7 +47,7 @@ class Description implements \JsonSerializable
      *
      * @see \JsonSerializable::jsonSerialize()
      */
-    #[\ReturnTypeWillChange]
+    #[\ReturnTypeWillChange()]
     public function jsonSerialize()
     {
         return [
