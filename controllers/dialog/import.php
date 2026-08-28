@@ -751,7 +751,7 @@ class Import extends Dialog
 
     /**
      * @param int|null $id
-     * @param bool $fallbackToRoot;
+     * @param bool $fallbackToRoot
      *
      * @throws \Concrete\Core\Error\UserMessageException
      *
