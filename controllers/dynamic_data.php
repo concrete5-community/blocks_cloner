@@ -101,7 +101,7 @@ EOT
             $converters = array_merge($converters, $plugin->getImportConverters());
         }
         if ($converters === []) {
-            return;
+            return '';
         }
         $jsonConverters = json_encode($converters);
 
