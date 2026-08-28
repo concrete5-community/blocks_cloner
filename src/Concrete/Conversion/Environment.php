@@ -7,11 +7,6 @@ defined('C5_EXECUTE') or die('Access Denied.');
 final class Environment implements \JsonSerializable
 {
     /**
-     * @var \Concrete\Package\BlocksCloner\Conversion\Environment|null
-     */
-    private static $current = null;
-
-    /**
      * @var string
      */
     private $coreVersion;
