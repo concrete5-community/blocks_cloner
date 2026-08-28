@@ -666,7 +666,7 @@ class Import extends Dialog
                     throw new UserMessageException(t('In order to import area contents you have to specify the target area'));
                 }
                 $structure = $this->extractChildElements($doc, ['style', 'blocks']);
-                if ($structure === null || count($structure['style']) > 1 && count($structure['blocks']) > 1) {
+                if ($structure === null || count($structure['style']) > 1 || count($structure['blocks']) > 1) {
                     break;
                 }
                 $xStyle = array_shift($structure['style']);
