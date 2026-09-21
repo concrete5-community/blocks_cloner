@@ -11,9 +11,7 @@ enum Type {
 let editMode: EditMode | null = null;
 function getEditMode(): EditMode | null {
   if (editMode === null) {
-    // window.concreteEditMode is created by an inline script on document ready:
-    // it may still be missing when this function is first called, so don't cache its absence
-    editMode = getEditingStackID() ? (window.concreteEditMode ?? null) : window.Concrete.getEditMode();
+    editMode = window.Concrete?.getEditMode?.() ?? window.concreteEditMode ?? null;
   }
   return editMode;
 }
