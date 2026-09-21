@@ -19,7 +19,7 @@ declare global {
     readonly CCM_CID: number;
     readonly CCM_DISPATCHER_FILENAME: string;
     readonly Concrete: {
-      getEditMode(): EditMode;
+      getEditMode?(): EditMode;
     };
     readonly concreteEditMode?: EditMode;
     readonly ConcreteEvent?: {
