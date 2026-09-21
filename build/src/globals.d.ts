@@ -10,15 +10,18 @@ interface DynamicData {
 }
 
 declare global {
+  interface EditMode {
+    getAreaByID(id: number): any;
+    getBlockByID(id: number): any;
+  }
+
   interface Window {
     readonly CCM_CID: number;
     readonly CCM_DISPATCHER_FILENAME: string;
     readonly Concrete: {
-      getEditMode(): {
-        getAreaByID(id: number): any;
-        getBlockByID(id: number): any;
-      };
+      getEditMode(): EditMode;
     };
+    readonly concreteEditMode?: EditMode;
     readonly ConcreteEvent?: {
       subscribe(event: string, callback: (e: any, args: any) => void): void;
     };

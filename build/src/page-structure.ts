@@ -8,9 +8,14 @@ enum Type {
   Block = 'block',
 }
 
-let editMode = null;
-function getEditMode() {
-  return (editMode ??= window.Concrete.getEditMode());
+let editMode: EditMode | null = null;
+function getEditMode(): EditMode | null {
+  if (editMode === null) {
+    // window.concreteEditMode is created by an inline script on document ready:
+    // it may still be missing when this function is first called, so don't cache its absence
+    editMode = getEditingStackID() ? (window.concreteEditMode ?? null) : window.Concrete.getEditMode();
+  }
+  return editMode;
 }
 
 type CCMMenuOpener = () => void;
@@ -18,9 +23,9 @@ type CCMMenuOpener = () => void;
 function getCCMObject(item: Area | Block): any {
   switch (item.type) {
     case Type.Area:
-      return getEditMode().getAreaByID(item.id);
+      return getEditMode()?.getAreaByID(item.id);
     case Type.Block:
-      return getEditMode().getBlockByID(item.id);
+      return getEditMode()?.getBlockByID(item.id);
   }
 }
 
