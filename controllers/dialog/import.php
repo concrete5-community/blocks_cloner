@@ -290,13 +290,13 @@ class Import extends Dialog
                 $areaStyleData = [];
                 $context = Context::forWriting($this->getPage(), $enviro->area);
                 if (isset($enviro->sx->style)) {
-                    $oldCustomStyle = $this->getPage()->getAreaCustomStyle($context->area);
+                    $oldCustomStyle = $this->getPage()->getAreaCustomStyle($context->pageSpecificArea);
                     $oldCustomStyleSet = $oldCustomStyle ? $oldCustomStyle->getStyleSet() : null;
                     if ($oldCustomStyleSet) {
                         $areaStyleData['oldAreaStyleInlineStylesetID'] = (int) $oldCustomStyleSet->getID();
                     }
                     $newCustomStyleSet = StyleSet::import($enviro->sx->style);
-                    $this->getPage()->setCustomStyleSet($context->pageSpecificArea, $newCustomStyleSet);
+                    $context->page->setCustomStyleSet($context->area, $newCustomStyleSet);
                     $newCustomStyle = new AreaCustomStyle($newCustomStyleSet, $context->pageSpecificArea, $this->getPage()->getCollectionThemeObject());
                     $newCss = (string) $newCustomStyle->getCSS();
                     if ($newCss !== '') {
@@ -441,7 +441,7 @@ class Import extends Dialog
                     throw new UserMessageException(t('Unable to find the requested area'));
                 }
                 $context = Context::forReading($this->getPage(), $area);
-                $customStyle = $this->getPage()->getAreaCustomStyle($context->area);
+                $customStyle = $this->getPage()->getAreaCustomStyle($context->pageSpecificArea);
                 $customStyleSet = $customStyle ? $customStyle->getStyleSet() : null;
                 if (!$customStyleSet) {
                     continue;
